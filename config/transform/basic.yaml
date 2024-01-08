@@ -1,0 +1,12 @@
+script_location: '/../mleo_masters/transform/basic.py'  
+
+order: [color-jitter, up-down, left-right]
+p_left_right_flip: 0.5
+p_up_down_flip: 0.5
+p_color_jitter: 0.1
+
+#Color jitter parameters
+color_jitter_brightness: 0.2
+color_jitter_contrast: 0.2
+color_jitter_saturation: 0.2
+color_jitter_hue: 0.2
