@@ -1,6 +1,6 @@
 script_location: '/../mleo_masters/transform/basic.py'  
 
-order: [color-jitter, up-down, left-right]
+order: [up-down, left-right]
 p_left_right_flip: 0.5
 p_up_down_flip: 0.5
 p_color_jitter: 0.1
