@@ -73,17 +73,16 @@ class ExampleDataset(Dataset):
     #called by data_set = ExampleDataset(config, part)
     #data_point = data_set[i], where i is the index of the desired object
     def __getitem__(self, index):
-        img = self.data[index]
+        #here we should also crop, and apply transforms
+        img = self.data[index][:, :, :3] #take only RGB
         img = np.transpose(img, (2, 0, 1)) #transpose so channel before size
-        label = self.data[index]
+        label = self.data[index][:, :, :3] #take only RGB
         label = np.transpose(img, (2, 0, 1)) 
         return torch.tensor(img, dtype = torch.float), torch.tensor(label, dtype = torch.long)
     
     def __len__(self):
         # Return the number of samples in the dataset
         return len(self.data)
-
-        
 
 
 #NOTE: Given the from of loop these functions should be in any dataset module that you design (given that you keep it unchanged)
@@ -112,10 +111,10 @@ class DotDict(dict):
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
-#config = DotDict(config_data)
+
 #config_path = '../config/dataset/read_set.yaml'
 #config_data = load_config(config_path)
-
+#config = DotDict(config_data)
 
 #train_set = train_set(config)
 #val_set = val_set(config)

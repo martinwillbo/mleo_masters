@@ -24,7 +24,7 @@ def loop(config, train_set, val_set, writer = None):
     #NOTE: There is a implementation difference here between dataset and model, we could have used the same scheme for the model.
     #Just showcasing two ways of doing things. This approach is 'simpler' but offers less modularity (which is always not bad).
     #If we intend to mainly work with one model and don't need to wrap it in custom code or whatever this is fine.
-    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = False, num_classes = config.model.n_class,
+    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
                                 dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
 
 
