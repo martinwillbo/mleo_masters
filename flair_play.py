@@ -2,21 +2,22 @@
 import os
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+
 import numpy as np
 import tifffile as tiff
 from PIL import Image
 import torch
 
 # Global vars
-BASE_PATH_DATA = '../datasets/flair/flair_2_toy_dataset'
-SPLIT_TO_USE = 'train'
+BASE_PATH_DATA = '../datasets/flair_2_toy_dataset'
+SPLIT_TO_USE = 'train' #Which split to use
 AERIAL_BASE_PATH = os.path.join(BASE_PATH_DATA, 'flair_2_toy_aerial_' + SPLIT_TO_USE)
 LABEL_BASE_PATH = os.path.join(BASE_PATH_DATA, 'flair_2_toy_labels_' + SPLIT_TO_USE)
 SENTINEL_BASE_PATH = os.path.join(BASE_PATH_DATA, 'flair_2_toy_sen_' + SPLIT_TO_USE)
 
 # Create list of all full paths to tif files within (subfolders of)
 # AERIAL_BASE_PATH
-aerial_tif_paths = []
+aerial_tif_paths = [] #vector of all aearial photos
 for root, dirs, files in os.walk(AERIAL_BASE_PATH):
     for file in files:
         if file.endswith(".tif"):
@@ -109,6 +110,7 @@ def plot_data(path_idx=0):
 
 if True:
     for i in range(5):
+        print(label_tif_paths)
         plot_data(i)
 
 # Sanity check (the below code simply to check that GPU-cuda stuff works)

@@ -1,0 +1,8 @@
+
+script_location: '/../mleo_masters/dataset/example_set.py' 
+path: '../datasets'
+norm_path: 'path_to_norm_stats'
+scale: True
+transform: None
+base_path_data: '../datasets/flair_2_toy_dataset'
+validation_size: 0.3

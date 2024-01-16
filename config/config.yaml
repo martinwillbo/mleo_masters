@@ -11,24 +11,25 @@ defaults:
   - transform: basic
 
 seed: 42
-device: cuda:0 #or cpu, or cuda:# on machines with more than one GPU
-use_transform: True
+device: cpu #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
+use_transform: False #should be true but have not implemented transforms
 batch_size: 16
 eval_every: 10
 save_model_freq: 500 #Don't do this to often, max a couple of times over a couple of thousand epochs. If no intention of warm starting training it is not needed at all.
 val_batch_size: 16 #I typically set this as large as VRAM allows
-num_workers: 16 #Set this based on machine, I think it's best to max it, usually faster training that way.
+num_workers: 1 #Set this based on machine, I think it's best to max it, usually faster training that way, was 16
 crop_size: 512
 lr: 0.0002
 max_epochs: 1000
 save_optimizer: False #Set this to true if you want to be able to keep training the model at a later stage, as of now the code has no support for this.
 weight_decay: 0
 optimizer: adam
+beta1: 0.9 #first moment in adam optimizer
 
 model:
   pretrained: False
   pretrained_backbone: True
-  n_class: ???
-  n_channels: ???
+  n_class: 13 #for flair dataset
+  n_channels: 5 #for flair data_set
 
 
