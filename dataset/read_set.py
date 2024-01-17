@@ -31,6 +31,9 @@ class ExampleDataset(Dataset):
         #path to labels
         LABEL_BASE_PATH = os.path.join(self.base_path_data, 'flair_2_toy_labels_' + 'train')
 
+        #here we should also save stds and norms of things
+
+        #can write nicer code for this, not two loops, but I'll wait for the real data
         input_tif_paths = [] #vector of all aearial photos
         for root, dirs, files in os.walk(INPUT_BASE_PATH):
             for file in files:
@@ -62,11 +65,16 @@ class ExampleDataset(Dataset):
         #read all input files
         for i, path in tqdm(enumerate(input_tif_paths)):
             img = np.array(tifffile.imread(path))
+            if self.config.scale:
+                img = self._rescale_to_power_of_two(img, False)
             self.data.append(img)
 
         for i, path in tqdm(enumerate(label_tif_paths)):
             label = np.array(tifffile.imread(path))
+            if self.config.scale:
+                label = self._rescale_to_power_of_two(label, True)
             self.labels.append(label)
+
 
         #print(self.data) #38 rows: 38 images, 512x512 pixels, 5 channels
 
@@ -83,6 +91,19 @@ class ExampleDataset(Dataset):
     def __len__(self):
         # Return the number of samples in the dataset
         return len(self.data)
+
+    def _rescale_to_power_of_two(data, is_label):
+        #good to resize since computers likes powers of two
+        h = data.shape[0]
+        w = data.shape[1]
+        power_h = math.ceil(np.log2(h) / np.log2(2))
+        power_w = math.ceil(np.log2(w) / np.log2(2))
+        if 2**power_h != h or 2**power_w != w:
+            if not is_label: #i.e. is normal image, guess it just depends on nbr channels
+                data = cv2.resize(data, dsize=(2**power_h, 2**power_w), interpolation=cv2.INTER_CUBIC)
+            else: 
+                data = cv2.resize(data, dsize=(2**power_h, 2**power_w), interpolation=cv2.INTER_NEAREST)
+        return data
 
 
 #NOTE: Given the from of loop these functions should be in any dataset module that you design (given that you keep it unchanged)
