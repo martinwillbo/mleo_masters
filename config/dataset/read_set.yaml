@@ -2,10 +2,12 @@
 script_location: '/../mleo_masters/dataset/example_set.py' 
 path: '../datasets'
 norm_path: 'path_to_norm_stats'
-scale: True
+scale: False
 transform: None
 base_path_data: '../datasets/flair_2_toy_dataset'
 validation_size: 0.3
+crop: True
+crop_size: 200 #pixels for size of img, have x and y if needed
 
 #all things that are done on the entire data set, with no probability involved etc., should be done in the read file,
 #the rest in transform/aug

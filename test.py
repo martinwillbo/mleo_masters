@@ -41,8 +41,9 @@ config_data = load_config(config_path)
 config_dataset = DotDict(config_data_dataset)
 config = DotDict(config_data)
 
-train_set = train_set(config_dataset)
-val_set = val_set(config_dataset)
+#Use dataloader, which has builtin features for not loading all the data to the heap simultaniously, but only one batch at the time
+#train_set = train_set(config_dataset)
+#val_set = val_set(config_dataset)
 
 #print(train_set[0][0].shape) #first index is image, second is input v.s. label, then [512, 512, 5]
 
@@ -53,4 +54,4 @@ torch.manual_seed(config.seed)
 torch.cuda.manual_seed(config.seed)
 
 #NOTE: Don't have to use tensorboard to log experiments, but should implement something else if so (Aleksis have code for this).
-loop.loop(config, train_set, val_set)
+loop.loop(config)
