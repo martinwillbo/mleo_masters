@@ -5,14 +5,14 @@ import matplotlib.image as mpimg
 import numpy as np
 import tifffile as tiff
 from PIL import Image
-import torch
+#import torch
 
 # Global vars
-BASE_PATH_DATA = '../datasets/flair/flair_2_toy_dataset'
-SPLIT_TO_USE = 'train'
-AERIAL_BASE_PATH = os.path.join(BASE_PATH_DATA, 'flair_2_toy_aerial_' + SPLIT_TO_USE)
-LABEL_BASE_PATH = os.path.join(BASE_PATH_DATA, 'flair_2_toy_labels_' + SPLIT_TO_USE)
-SENTINEL_BASE_PATH = os.path.join(BASE_PATH_DATA, 'flair_2_toy_sen_' + SPLIT_TO_USE)
+BASE_PATH_DATA = '/raid/aleksispi/master-theses/agnes-malte-spring2024/'
+SPLIT_TO_USE = 'test'
+AERIAL_BASE_PATH = os.path.join(BASE_PATH_DATA, 'flair_2_aerial_' + SPLIT_TO_USE)
+LABEL_BASE_PATH = os.path.join(BASE_PATH_DATA, 'flair_2_labels_' + SPLIT_TO_USE)
+SENTINEL_BASE_PATH = os.path.join(BASE_PATH_DATA, 'flairtoy_sen_' + SPLIT_TO_USE)
 
 # Create list of all full paths to tif files within (subfolders of)
 # AERIAL_BASE_PATH
