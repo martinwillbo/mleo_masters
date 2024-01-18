@@ -5,7 +5,7 @@ import random
 import loop
 from torch.utils.tensorboard import SummaryWriter
 
-@hydra.main(config_path='config', config_name='config')
+@hydra.main(config_path='config', config_name='config', version_base = '1.3.2')
 def main(config):
     
     random.seed(config.seed)

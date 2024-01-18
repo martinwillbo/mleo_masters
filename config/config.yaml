@@ -2,22 +2,18 @@
 #I usually have this included so that my 'test/debugging' runs of the code don't clutter the repo or my proper experiment logging folder with outputs.
 hydra:
   run:
-    dir: /../sink/${now:%Y-%m-%d_%H-%M-%S}
+    dir: ../sink #/../sink/${now:%Y-%m-%d_%H-%M-%S}
+  
 
 #Note that config hierarchy introduces the design problem of deciding where config options should reside :)
 #For example when working with EO data, is the crop size dataset dependent or not? 
 defaults:
-  - dataset: example_dataset
+  - _self_
+  - dataset: read_set
   - transform: basic
 
 #now I have all settings here instead, it is kind of strange
-dataset:
-  script_location: 'dataset/read_set.py'
-  scale: False
-  base_path_data: '../datasets/flair_2_toy_dataset'
-  validation_size: 0.3
-  crop: True
-  crop_size: 200
+
 
 seed: 42
 device: cpu #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
@@ -38,7 +34,7 @@ beta1: 0.9 #first moment in adam optimizer
 model:
   pretrained: False
   pretrained_backbone: True
-  n_class: 13 #for flair dataset
+  n_class: 20 #for flair dataset (really 13, but don't know with indexing, might need a class called 13)
   n_channels: 5 #for flair data_set
 
 

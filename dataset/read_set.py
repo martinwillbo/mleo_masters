@@ -83,7 +83,7 @@ class ExampleDataset(Dataset):
     def __getitem__(self, index):
         #here we should also crop, and apply transforms
         img = self.data[index][:3, :, :] #take only RGBd
-        label = self.data[index][:3, :, :] #take only RGB
+        label = self.labels[index][:, :] #take only RGB
     
         if self.part == 'val': #don't do transformations on validation data!
             return torch.tensor(img, dtype = torch.float), torch.tensor(label, dtype = torch.long)
