@@ -80,6 +80,8 @@ class DatasetClass(Dataset):
                 temp_data.append(data)
             else:
                 temp_data.append(data)
+            if i == 1000:
+                return temp_data
 
         return temp_data
 
