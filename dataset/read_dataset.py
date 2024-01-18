@@ -72,6 +72,8 @@ class DatasetClass(Dataset):
         temp_data = []
         for i, path in tqdm(enumerate(tif_paths)):
             data = np.array(tifffile.imread(path))
+            if is_label: #classes are 1 to 19, have to be 0 to 18
+                data = data - 1 
             if not is_label:
                 data = np.transpose(data, (2,0,1))
             if self.config.dataset.crop:
@@ -82,9 +84,9 @@ class DatasetClass(Dataset):
                 temp_data.append(data)
             else:
                 temp_data.append(data)
-            if i == 1000:
+            if i == 200:
                 return temp_data
-            if i == 200 and self.part == 'val':
+            if i == 20 and self.part == 'val':
                 return temp_data
 
         return temp_data
