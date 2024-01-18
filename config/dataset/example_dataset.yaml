@@ -1,5 +1,0 @@
-
-script_location: '/../mleo_masters/dataset/example_set.py' 
-path: path_to_my_dataset
-norm_path: path_to_norm_stats
-scale: True

@@ -1,4 +1,4 @@
-script_location: '/../mleo_masters/transform/basic.py'  
+script_location: 'transform/basic.py'  
 
 order: [up-down, left-right]
 p_left_right_flip: 0.5

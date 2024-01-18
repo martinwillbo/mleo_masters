@@ -4,15 +4,15 @@ import numpy as np
 import util
 from tqdm import tqdm
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
-from torchvision.models.segmentation.deeplabv3 import DeepLabV3, DeepLabHead
+#from torchvision.models.segmentation.deeplabv3 import DeepLabV3, DeepLabHead
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 
-def loop(config, train_set, val_set, writer = None):
+def loop(config, writer = None):
 
-    #dataset_module = util.load_module(config.dataset.script_location)
-    #train_set = dataset_module.train_set(config)
-    #val_set = dataset_module.val_set(config)
+    dataset_module = util.load_module(config.dataset.script_location)
+    train_set = dataset_module.train_set(config)
+    val_set = dataset_module.val_set(config)
     #NOTE: Just outlining the 'interface' of this way of structuring the experiment code
     #test_set = dataset_module.test_set(config)
 
@@ -27,6 +27,7 @@ def loop(config, train_set, val_set, writer = None):
     model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
                                 dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
 
+    #add first layer so to have 5 channels, or switch net to one which can take params
 
     if config.optimizer == 'adam':
         #TODO: Introduce config option for betas
@@ -59,6 +60,8 @@ def loop(config, train_set, val_set, writer = None):
             y = y.to(config.device)
             #NOTE: dlv3_r50 returns a dictionary
             y_pred = model(x)['out']
+            
+            #print( y.max().item()): max class is 19, v strange
             l = train_loss(y_pred, y)
             l.backward()
             optimizer.step()
