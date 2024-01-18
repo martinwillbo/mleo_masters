@@ -11,7 +11,7 @@ defaults:
   - transform: basic
 
 seed: 42
-device: cpu #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
+device: cuda:0 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
 use_transform: False
 batch_size: 16
 eval_every: 10
