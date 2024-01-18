@@ -84,9 +84,9 @@ class DatasetClass(Dataset):
                 temp_data.append(data)
             else:
                 temp_data.append(data)
-            if i == 200:
+            if i == 20:
                 return temp_data
-            if i == 20 and self.part == 'val':
+            if i == 2 and self.part == 'val':
                 return temp_data
 
         return temp_data
