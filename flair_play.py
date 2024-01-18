@@ -1,15 +1,15 @@
 # Imports
-import os
+import os, sys
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 import numpy as np
 import tifffile as tiff
 from PIL import Image
-import torch
+#import torch
 
 # Global vars
-BASE_PATH_DATA = '../datasets/flair_2_toy_dataset'
+BASE_PATH_DATA = '/raid/aleksispi/master-theses/agnes-malte-spring2024/flair_2_toy_dataset'
 SPLIT_TO_USE = 'train' #Which split to use
 AERIAL_BASE_PATH = os.path.join(BASE_PATH_DATA, 'flair_2_toy_aerial_' + SPLIT_TO_USE)
 LABEL_BASE_PATH = os.path.join(BASE_PATH_DATA, 'flair_2_toy_labels_' + SPLIT_TO_USE)
@@ -39,7 +39,10 @@ for root, dirs, files in os.walk(SENTINEL_BASE_PATH):
              sentinel_data_paths.append(os.path.join(root, file))
         elif file.endswith("_masks.npy"):
             sentinel_mask_paths.append(os.path.join(root, file))
-             
+#print(len(aerial_tif_paths))
+#print(len(label_tif_paths))
+#print(len(sentinel_data_paths))
+#print(len(sentinel_mask_paths))
 # Assert that the number of aerial and sentinel tifs are the same
 assert len(aerial_tif_paths) == len(label_tif_paths) == len(sentinel_data_paths) == len(sentinel_mask_paths)
 
