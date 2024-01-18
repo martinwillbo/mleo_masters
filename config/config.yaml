@@ -26,8 +26,8 @@ optimizer: adam
 beta1: 0.9
 
 model:
-  pretrained: None #can also use enum, rad docs
-  pretrained_backbone: ResNet50_Weights.IMAGENET1K_V1 #default setting
+  pretrained: False #can also use enum, rad docs
+  pretrained_backbone: ResNet50_Weights.IMAGENET1K_V1 #default
   n_class: 19
   n_channels: 3
 
