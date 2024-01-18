@@ -42,6 +42,8 @@ class DatasetClass(Dataset):
         print(len(temp_Y))
         self.X.extend(temp_X)
         self.Y.extend(temp_Y)
+        print(self.Y.max().item())
+        print(self.Y.min().item())
     
     def __getitem__(self, index):
         if self.config.dataset.using_priv:
