@@ -4,11 +4,11 @@ import numpy as np
 import util
 from tqdm import tqdm
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
-from torchvision.models.segmentation.deeplabv3 import DeepLabV3, DeepLabHead
+#from torchvision.models.segmentation.deeplabv3 import DeepLabV3, DeepLabHead
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 
-def loop(config, model, writer = None):
+def loop(config, writer = None):
 
     dataset_module = util.load_module(config.dataset.script_location)
     train_set = dataset_module.train_set(config)
@@ -24,8 +24,8 @@ def loop(config, model, writer = None):
     #NOTE: There is a implementation difference here between dataset and model, we could have used the same scheme for the model.
     #Just showcasing two ways of doing things. This approach is 'simpler' but offers less modularity (which is always not bad).
     #If we intend to mainly work with one model and don't need to wrap it in custom code or whatever this is fine.
-    #model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
-    #                            dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
+                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
 
     #add first layer so to have 5 channels, or switch net to one which can take params
 
