@@ -14,7 +14,7 @@ def main(config):
     torch.cuda.manual_seed(config.seed)
 
     #NOTE: Don't have to use tensorboard to log experiments, but should implement something else if so (Aleksis have code for this).
-    writer = SummaryWriter(log_dir='info/')
+    writer = SummaryWriter(log_dir='raid/dlgroupmsc/test1')
     loop.loop(config)
 
 if __name__ == '__main__':
