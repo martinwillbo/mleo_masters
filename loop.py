@@ -26,7 +26,7 @@ def loop(config, writer = None):
     #If we intend to mainly work with one model and don't need to wrap it in custom code or whatever this is fine.
     model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
                                 dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
-
+    model.to(config.device)
     #add first layer so to have 5 channels, or switch net to one which can take params
 
     if config.optimizer == 'adam':
