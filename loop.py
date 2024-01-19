@@ -77,13 +77,13 @@ def loop(config, writer = None):
             print("Calculating y_pred & loss")
             with autocast():
                 y_pred = model(x)['out']
-                loss = train_loss(y_pred, y)
+                l = train_loss(y_pred, y)
             #y_pred = model(x)['out']
             #print("Calculating loss")
             #l = train_loss(y_pred, y)
             print("Stepping backward")
             optimizer.zero_grad()
-            scaler.scale(loss).backward()
+            scaler.scale(l).backward()
             #l.backward()
             print("Optimizing")
             scaler.step(optimizer)
