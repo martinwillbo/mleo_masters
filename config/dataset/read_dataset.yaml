@@ -8,9 +8,10 @@ X_path: 'flair_aerial'
 #Y_path: 'flair_2_toy_labels'
 Y_path: 'flair_labels'
 val_set_size: 0.2
-crop: True
+det_crop: False #don't have both det_crop and random_crop on
+crop_step_size: 512 #will not be used if random cropping is on
 crop_size: 8
-crop_step_size: 512
+random_crop: True
 using_priv: False
 scale: False
 

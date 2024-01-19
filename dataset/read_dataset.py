@@ -16,6 +16,10 @@ class DatasetClass(Dataset):
         self.X = []
         self.Y = []
 
+        #Read in desiread transform
+        transform_module = util.load_module(self.config.transform.script_location)
+        self.transform = transform_model.get_transform(self.config)
+
         path_var = part
         if part == 'val':
             path_var = 'train'
@@ -38,7 +42,7 @@ class DatasetClass(Dataset):
             Y_tif_paths = Y_tif_paths[split_point:]
 
         #print('Constructing ' + self.part + ' set...')
-        if config.dataset.crop:
+        if config.dataset.det_crop:
             self.crop_coordinates = self._get_crop_coordinates(self._read_data(X_tif_paths[0], is_label=False)) #use one img for cropping coords
             num_crops = len(self.crop_coordinates)
             self.X_tif_paths = [path for path in X_tif_paths for _ in range(num_crops)]
@@ -65,15 +69,21 @@ class DatasetClass(Dataset):
         if self.part == 'val':
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
        
-        if self.config.dataset.crop:
+        if self.config.dataset.det_crop:
             #get exactly one crop
             crop_coords = self.crop_coordinates[index % len(self.crop_coordinates)]
             x = x[:, crop_coords[0]:crop_coords[2], crop_coords[1]:crop_coords[3]]
             y = y[crop_coords[0]:crop_coords[2], crop_coords[1]:crop_coords[3]]
+
+        elif self.config.random_crop:
+            x,y = self._random_crop(x,y)
         
         if self.config.dataset.scale:
             x = self._rescale(x, is_label = False)
             y = self._rescale(y, is_label = True)
+
+        if self.tranform is not None:
+            x, y = self.transform.apply(x,y)
 
          #if transforms, we need to add here
         return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
@@ -107,7 +117,7 @@ class DatasetClass(Dataset):
                 data = data - 1 
             if not is_label:
                 data = np.transpose(data, (2,0,1))
-            if self.config.dataset.crop:
+            if self.config.dataset.det_crop:
                 data_list = self._crop(data, is_label)
                 temp_data.extend(data_list)
             elif self.config.dataset.scale:
@@ -150,6 +160,17 @@ class DatasetClass(Dataset):
                 coordinates = (start_h, start_w, end_h, end_w)
                 crop_coordinates.append(coordinates)
         return crop_coordinates
+
+    def _random_crop(self, x, y):
+        start_h = random.randint(0, x.shape[1] - self.config.dataset.crop_size)
+        end_h = start_h + self.config.dataset.crop_size
+        start_w = random.randint(0, x.shape[2] - self.config.dataset.crop_size)
+        end_w = start_w + self.config.dataset.crop_size
+        x = x[:, start_h:end_h, start_w:end_w]
+        y = y[index][start_h:end_h, start_w:end_w]
+        return x,y
+
+
 
 
     def _crop_old(self, data, is_label):
