@@ -21,11 +21,12 @@ class DatasetClass(Dataset):
         transform_module = util.load_module(self.config.transform.script_location)
         self.transform = transform_module.get_transform(self.config)
 
-        self.layer_means = self.config.dataset.mean
-        self.layer_stds = self.config.dataset.std
+        self.layer_means = np.array(self.config.dataset.mean)
+        self.layer_stds = np.array(self.config.dataset.std)
         if not self.config.dataset.using_priv:
             self.layer_means = self.layer_means[0:3] #only bgr
             self.layer_stds = self.std_means[0:3]
+        
         path_var = part
         if part == 'val':
             path_var = 'train'
@@ -91,7 +92,14 @@ class DatasetClass(Dataset):
         if self.transform is not None:
             x, y = self.transform.apply(x,y)
 
-         #if transforms, we need to add here
+        #NOTE: These operations expect shape (H,W,C)
+        #Normalize imahes
+        x = np.transpose(x, (1,2,0)).astype(float)
+        x -= self.layer_means
+        x /= self.layer_stds
+        #NOTE: Pytorch models typically expect shape (C, H, W)
+        x = np.transpose(x, (2,0,1))
+        
         return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
     
     def __len__(self):
