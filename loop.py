@@ -28,7 +28,9 @@ def loop(config, writer = None):
     model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
                                 dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     model.to(config.device)
-    print('Model size: ' + str(sys.getsizeof(model)*8))
+    num_params = sum(p.numel() for p in model.parameters())
+    size_in_bits = num_params * 32
+    print(f"Model size: {size_in_bits} bits")
     #add first layer so to have 5 channels, or switch net to one which can take params
 
     if config.optimizer == 'adam':
@@ -58,10 +60,22 @@ def loop(config, writer = None):
         epoch_miou_prec_rec = []
         model.train()
         train_iter = iter(train_loader)
-        print(sys.getsizeof(train_iter))
+        
         for batch in tqdm(train_iter):
             optimizer.zero_grad()
             x, y = batch
+            ###
+            batch_size_in_bits = 0
+            for tensor in [x, y]:
+                num_elements = tensor.numel()  # Number of elements in the tensor
+                element_size_in_bits = tensor.element_size() * 8  # Size of one element in bits
+                batch_size_in_bits += num_elements * element_size_in_bits
+
+            # Estimate the total size of the data in the DataLoader
+            total_batches = len(train_loader)
+            total_size_in_bits = batch_size_in_bits * total_batches
+            print(f"Estimated total size of data in DataLoader: {total_size_in_bits} bits")
+            ###
             x = x.to(config.device)
             y = y.to(config.device)
             #NOTE: dlv3_r50 returns a dictionary
