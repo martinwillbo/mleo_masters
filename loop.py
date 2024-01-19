@@ -76,8 +76,9 @@ def loop(config, writer = None):
             print("Stepping backward")
             l.backward()
             print("Optimizing")
-            #optimizer.step()
+            optimizer.step()
             #NOTE: If you have a learning rate scheduler this is to place to step it. 
+            print("Doing some calculations")
             y_pred = torch.argmax(y_pred, dim=1)
             y_pred = y_pred.cpu().contiguous()
             y = y.cpu().contiguous()
