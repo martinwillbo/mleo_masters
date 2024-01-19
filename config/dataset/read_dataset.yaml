@@ -8,8 +8,8 @@ X_path: 'flair_aerial'
 #Y_path: 'flair_2_toy_labels'
 Y_path: 'flair_labels'
 val_set_size: 0.2
-crop: False
-crop_size: 7
+crop: True
+crop_size: 8
 crop_step_size: 512
 using_priv: False
 scale: False
