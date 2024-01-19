@@ -58,6 +58,7 @@ def loop(config, writer = None):
         epoch_miou_prec_rec = []
         model.train()
         train_iter = iter(train_loader)
+        print(sys.getsizeof(train_iter))
         for batch in tqdm(train_iter):
             optimizer.zero_grad()
             x, y = batch
