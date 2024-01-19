@@ -1,7 +1,7 @@
 from torch.utils.data import DataLoader
 import util
 import torch
-import tqdm
+from tqdm import tqdm
 
 def stats(config):
     dataset_module = util.load_module(config.dataset.script_location)
