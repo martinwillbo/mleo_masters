@@ -37,6 +37,10 @@ def loop(config, writer = None):
         #TODO: Introduce config option for betas
         optimizer = Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay, betas=(config.beta1, 0.999))
 
+    if config.optimizer == 'SGD':
+        optimizer = SGD(model.parameters(), lr=config.lr, momentum=config.momentum, weight_decay=config.weight_decay)
+
+
     if config.use_transform:
         transform_module = util.load_module(config.transform.script_location)
         transform = transform_module.get_transform(config)
@@ -81,9 +85,9 @@ def loop(config, writer = None):
             print("Doing some calculations")
             print("1")
             y_pred = torch.argmax(y_pred, dim=1)
-            #y_pred = y_pred.cpu().contiguous()
+            y_pred = y_pred.cpu().contiguous()
             print("2")
-            #y = y.cpu().contiguous()
+            y = y.cpu().contiguous()
             y_pred_flat = y_pred.view(-1).numpy()
             print("3")
             y_flat = y.view(-1).numpy()
@@ -92,12 +96,15 @@ def loop(config, writer = None):
             for i in range(config.model.n_class):
                 y_flat_i = y_flat == i
                 num_i = np.count_nonzero(y_flat_i)
+                print(num_i)
                 pred_flat_i = y_pred_flat == i
                 num_pred_i = np.count_nonzero(pred_flat_i)
                 intersection_i = np.logical_and(y_flat_i, pred_flat_i)
                 union_i = np.logical_or(y_flat_i, pred_flat_i)
                 num_intersection_i = np.count_nonzero(intersection_i)
+                print(num_intersection_i)
                 num_union_i = np.count_nonzero(union_i)
+                print(num_union_i)
                 if num_union_i > 0:
                     iou_prec_rec[0,i] = num_intersection_i/num_union_i
                 if num_pred_i > 0:

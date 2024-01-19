@@ -22,8 +22,9 @@ lr: 0.0002
 max_epochs: 1000
 save_optimizer: False #Set this to true if you want to be able to keep training the model at a later stage, as of now the code has no support for this.
 weight_decay: 0
-optimizer: adam
+optimizer: SGD
 beta1: 0.9
+momentum: 0.9
 
 model:
   pretrained: False #None does not work, but they seem to want it
