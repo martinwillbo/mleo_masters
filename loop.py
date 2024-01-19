@@ -67,11 +67,15 @@ def loop(config, writer = None):
             x = x.to(config.device)
             y = y.to(config.device)
             #NOTE: dlv3_r50 returns a dictionary
+            print("Calculating y_pred")
             y_pred = model(x)['out']
             
             #print( y.max().item()): max class is 19, v strange
+            print("Calculating loss")
             l = train_loss(y_pred, y)
+            print("Stepping backward")
             l.backward()
+            print("Optimizing")
             optimizer.step()
             #NOTE: If you have a learning rate scheduler this is to place to step it. 
             y_pred = torch.argmax(y_pred, dim=1)
