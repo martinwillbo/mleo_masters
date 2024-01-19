@@ -29,7 +29,8 @@ def stats(config):
     train_iter = iter(train_loader)
     for X, _ in tqdm(train_iter):
         X = X[:, :3, :, :]
-        X_diff = X - channel_sums
+        X_reshaped = X.view(1, 3, 1, 1)
+        X_diff = X_reshaped - channel_sums
         channel_squared_diff += (X_diff**2).sum(dim=(0, 2, 3))
     variance = (channel_squared_diff / (batch_size * num_batches * 512 * 512))
     std = torch.sqrt(variance)
