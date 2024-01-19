@@ -76,7 +76,7 @@ class DatasetClass(Dataset):
             x = x[:, crop_coords[0]:crop_coords[2], crop_coords[1]:crop_coords[3]]
             y = y[crop_coords[0]:crop_coords[2], crop_coords[1]:crop_coords[3]]
 
-        elif self.config.random_crop:
+        elif self.config.dataset.random_crop:
             x,y = self._random_crop(x,y)
         
         if self.config.dataset.scale:
