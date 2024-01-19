@@ -11,6 +11,7 @@ def stats(config):
     # Initialize variables for accumulating channel-wise sums
     channel_sums = torch.zeros(3)
     channel_squared_diff = torch.zeros(3)
+    num_batches = 0
     for X, _ in train_loader:
         batch_size = X.size(0)
         num_batches += 1
