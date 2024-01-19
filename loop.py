@@ -110,6 +110,7 @@ def loop(config, writer = None):
                 if num_i > 0:
                     iou_prec_rec[2,i] = num_intersection_i / num_i
             epoch_miou_prec_rec.append(iou_prec_rec)
+            print(epoch_miou_prec_rec)
             epoch_loss.append(l.item())
         
         print(epoch_miou_prec_rec)
