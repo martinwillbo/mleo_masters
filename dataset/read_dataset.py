@@ -72,8 +72,22 @@ class DatasetClass(Dataset):
                 if file.endswith(".tif"):
                     tif_paths.append(os.path.join(root, file))
         return tif_paths
+
+    def _read_data(self, tif_path, is_label):
+        print(tif_path)
+        data = np.array(tifffile.imread(tif_path))
+        if is_label: #classes are 1 to 19, have to be 0 to 18
+                data = data - 1 
+            if not is_label:
+                data = np.transpose(data, (2,0,1))
+            if self.config.dataset.crop:
+                data = self._crop(data, is_label)[0]
+            elif self.config.dataset.scale:
+                data = self._rescale(data, is_label)[0] #shady, only gets first crop
+        return data
+
     
-    def _read_data(self, tif_paths, is_label):
+    def _read_data_old(self, tif_paths, is_label):
         temp_data = []
         for i, path in tqdm(enumerate(tif_paths)):
             data = np.array(tifffile.imread(path))
