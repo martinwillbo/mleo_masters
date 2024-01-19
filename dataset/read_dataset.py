@@ -104,7 +104,7 @@ class DatasetClass(Dataset):
     def _read_data(self, tif_path, is_label):
         data = np.array(tifffile.imread(tif_path))
         if is_label: #classes are 1 to 19, have to be 0 to 18
-            if self.config.n_class < 19: #group last classes as in challenge
+            if self.config.model.n_class < 19: #group last classes as in challenge
                 data[data > 12] = 13
             data = data - 1 
         if not is_label:
