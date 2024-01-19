@@ -13,7 +13,7 @@ defaults:
 seed: 42
 device: cuda:2 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
 use_transform: False
-batch_size: 4096
+batch_size: 1024
 eval_every: 10
 save_model_freq: 500 #Don't do this to often, max a couple of times over a couple of thousand epochs. If no intention of warm starting training it is not needed at all.
 val_batch_size: 8 #I typically set this as large as VRAM allows
