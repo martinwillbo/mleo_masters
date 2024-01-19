@@ -1,6 +1,7 @@
 from torch.utils.data import DataLoader
 import util
 import torch
+import tqdm
 
 def stats(config):
     dataset_module = util.load_module(config.dataset.script_location)
@@ -12,7 +13,9 @@ def stats(config):
     channel_sums = torch.zeros(3)
     channel_squared_diff = torch.zeros(3)
     num_batches = 0
-    for X, _ in train_loader:
+    train_iter = iter(train_loader)
+
+    for X, _ in tqdm(train_iter):
         batch_size = X.size(0)
         num_batches += 1
         X = X[:, :3, :, :]
@@ -20,7 +23,10 @@ def stats(config):
         channel_sums += X.sum(dim=(0, 2, 3))
     # Calculate mean and standard deviation across all batches
     mean = channel_sums / (num_batches * batch_size * 512 * 512)
-    for X, _ in train_loader:
+    print(mean)
+
+    train_iter = iter(train_loader)
+    for X, _ in tqdm(train_iter):
         X = X[:, :3, :, :]
         X_diff = X - channel_sums
         channel_squared_diff += (X_diff**2).sum(dim=(0, 2, 3))
