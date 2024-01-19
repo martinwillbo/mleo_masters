@@ -62,8 +62,8 @@ class DatasetClass(Dataset):
         return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
     
     def __len__(self):
-        assert len(self.X) == len(self.Y)
-        return len(self.X)
+        assert len(self.X_tif_paths) == len(self.Y_tif_paths)
+        return len(self.X_tif_paths)
     
     def _read_paths(self, BASE_PATH):
         tif_paths = []
