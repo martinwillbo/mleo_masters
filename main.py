@@ -16,7 +16,7 @@ def main(config):
 
     #NOTE: Don't have to use tensorboard to log experiments, but should implement something else if so (Aleksis have code for this).
     #name more cleverly
-    mean, std = stats(config)
+    mean, std = stats.stats(config)
     print(mean)
     print(std)
     #writer = SummaryWriter(log_dir='/raid/dlgroupmsc/writer_${now:%Y-%m-%d_%H-%M-%S}')
