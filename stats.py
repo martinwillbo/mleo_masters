@@ -17,7 +17,7 @@ def stats(config):
 
     for X, _ in tqdm(train_iter):
         num_batches += 1
-        X = X[:, :3, :, :]
+        X = X[:, :, :, :]
         # Calculate channel-wise sums and squared sums
         channel_sums += X.sum(dim=(0, 2, 3))
         print(channel_sums)
