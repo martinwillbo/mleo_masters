@@ -36,9 +36,15 @@ class DatasetClass(Dataset):
             Y_tif_paths = Y_tif_paths[split_point:]
 
         #print('Constructing ' + self.part + ' set...')
-
-        self.X_tif_paths = X_tif_paths
-        self.Y_tif_paths = Y_tif_paths
+        if config.dataset.crop:
+            self.crop_coordinates = _get_crop_coordinates(_read_data(X_tif_paths[0], is_label=False)) #use one img for cropping coords
+            num_crops = len(self.crop_coordinates)
+            self.X_tif_paths = [path for path in X_tif_paths for _ in range(num_crops)]
+            self.Y_tif_paths = [path for path in Y_tif_paths for _ in range(num_crops)]
+        else:
+            self.X_tif_paths = X_tif_paths
+            self.Y_tif_paths = Y_tif_paths
+        
 
         #temp_X = self._read_data(X_tif_paths, is_label = False)
         #temp_Y = self._read_data(Y_tif_paths, is_label = True)
@@ -56,7 +62,18 @@ class DatasetClass(Dataset):
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
         if self.part == 'val':
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
-        #if transforms, we need to add here
+       
+        if self.config.dataset.crop:
+            #get exactly one crop
+            crop_coords = self.crop_coordinates[index % len(self.crop_coordinates)]
+            x = x[:, crop_coords[0]:crop_coords[2], crop_coords[1]:crop_coords[3]]
+            y = y[:, crop_coords[0]:crop_coords[2], crop_coords[1]:crop_coords[3]]
+        
+        if self.config.dataset.scale:
+            x = self._rescale(x, is_label = False)
+            y = self._rescale(y, is_label = True)
+
+         #if transforms, we need to add here
         return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
     
     def __len__(self):
@@ -72,16 +89,11 @@ class DatasetClass(Dataset):
         return tif_paths
 
     def _read_data(self, tif_path, is_label):
-        print(tif_path)
         data = np.array(tifffile.imread(tif_path))
         if is_label: #classes are 1 to 19, have to be 0 to 18
             data = data - 1 
         if not is_label:
             data = np.transpose(data, (2,0,1))
-        if self.config.dataset.crop:
-            data = self._crop(data, is_label)[0]
-        elif self.config.dataset.scale:
-            data = self._rescale(data, is_label)[0] #shady, only gets first crop
         return data
 
     
@@ -122,7 +134,23 @@ class DatasetClass(Dataset):
         if not is_label:
             data  = np.transpose(data, (2, 0, 1))
         return data
-    def _crop(self, data, is_label):
+
+    def _get_crop_coordinates(self, data):
+    h, w = data.shape[1], data.shape[2] #x,y has the same shape
+    crop_size = self.config.dataset.crop_size
+    crop_step_size = self.config.dataset.crop_step_size
+    crop_coordinates = []
+    for start_h in range(0, h - crop_size + 1, crop_step_size):
+        for start_w in range(0, w - crop_size + 1, crop_step_size):
+            end_h = start_h + crop_size
+            end_w = start_w + crop_size
+            # Store the crop coordinates as a tuple
+            coordinates = (start_h, start_w, end_h, end_w)
+            crop_coordinates.append(coordinates)
+    return crop_coordinates
+
+
+    def _crop_old(self, data, is_label):
         if is_label:
             h, w = data.shape[0], data.shape[1]
         else:
