@@ -73,7 +73,8 @@ def loop(config, writer = None):
 
             # Estimate the total size of the data in the DataLoader
             total_batches = len(train_loader)
-            total_size_in_bits = batch_size_in_bits * total_batches/1000000000
+            print(len(train_loader))
+            total_size_in_bits = batch_size_in_bits/1000000000
             print(f"Estimated total size of data in DataLoader: {total_size_in_bits} GB")
             ###
             x = x.to(config.device)
