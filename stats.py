@@ -1,5 +1,7 @@
 from torch.utils.data import DataLoader
 import util
+import torch
+
 def stats(config):
     dataset_module = util.load_module(config.dataset.script_location)
     #NOTE: Just outlining the 'interface' of this way of structuring the experiment code
