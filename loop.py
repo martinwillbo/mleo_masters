@@ -29,8 +29,8 @@ def loop(config, writer = None):
                                 dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     model.to(config.device)
     num_params = sum(p.numel() for p in model.parameters())
-    size_in_bits = num_params * 32
-    print(f"Model size: {size_in_bits} bits")
+    size_in_bits = num_params * 32/1000000000
+    print(f"Model size: {size_in_bits} GB")
     #add first layer so to have 5 channels, or switch net to one which can take params
 
     if config.optimizer == 'adam':
@@ -73,8 +73,8 @@ def loop(config, writer = None):
 
             # Estimate the total size of the data in the DataLoader
             total_batches = len(train_loader)
-            total_size_in_bits = batch_size_in_bits * total_batches
-            print(f"Estimated total size of data in DataLoader: {total_size_in_bits} bits")
+            total_size_in_bits = batch_size_in_bits * total_batches/1000000000
+            print(f"Estimated total size of data in DataLoader: {total_size_in_bits} GB")
             ###
             x = x.to(config.device)
             y = y.to(config.device)
