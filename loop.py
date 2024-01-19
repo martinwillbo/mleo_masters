@@ -6,7 +6,7 @@ from tqdm import tqdm
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 #from torchvision.models.segmentation.deeplabv3 import DeepLabV3, DeepLabHead
 from torch.utils.data import DataLoader
-from torch.optim import Adam
+from torch.optim import Adam, SGD
 import sys
 
 def loop(config, writer = None):
