@@ -29,8 +29,8 @@ def loop(config, writer = None):
                                 dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     model.to(config.device)
     num_params = sum(p.numel() for p in model.parameters())
-    size_in_bits = num_params * 32/1000000000
-    print(f"Model size: {size_in_bits} GB")
+    size_in_bits = num_params * 32/1000000/8
+    print(f"Model size: {size_in_bits} MB")
     #add first layer so to have 5 channels, or switch net to one which can take params
 
     if config.optimizer == 'adam':
@@ -68,7 +68,7 @@ def loop(config, writer = None):
             batch_size_in_bits = 0
             for tensor in [x, y]:
                 num_elements = tensor.numel()  # Number of elements in the tensor
-                element_size_in_bits = tensor.element_size() * 8  # Size of one element in bits
+                element_size_in_bits = tensor.element_size() # Size of one element in bits
                 batch_size_in_bits += num_elements * element_size_in_bits
 
             # Estimate the total size of the data in the DataLoader
