@@ -47,6 +47,9 @@ def loop(config, writer = None):
 
     #NOTE: Can also include a check for early stopping counter here.
     while epoch < config.max_epochs:
+        print(torch.cuda.current_device())
+        print(torch.cuda.is_available())
+        print(next(model.parameters()).device)
         
         print('Epoch: '+str(epoch))
         epoch_loss = []
