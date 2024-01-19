@@ -4,7 +4,7 @@ def stats(config):
     dataset_module = util.load_module(config.dataset.script_location)
     #NOTE: Just outlining the 'interface' of this way of structuring the experiment code
     train_set = dataset_module.train_set(config)
-    train_loader = DataLoader(train_set, batch_size = config.train_batch_size, shuffle = False, num_workers = config.num_workers,
+    train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = False, num_workers = config.num_workers,
                             pin_memory = True)
     # Initialize variables for accumulating channel-wise sums
     channel_sums = torch.zeros(3)
