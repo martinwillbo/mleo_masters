@@ -70,6 +70,8 @@ def loop(config, writer = None):
             x, y = batch
             x = x.to(config.device)
             y = y.to(config.device)
+            print(x.shape)
+            print(y.shape)
             #NOTE: dlv3_r50 returns a dictionary
             print("Calculating y_pred")
             y_pred = model(x)['out']
@@ -83,28 +85,22 @@ def loop(config, writer = None):
             optimizer.step()
             #NOTE: If you have a learning rate scheduler this is to place to step it. 
             print("Doing some calculations")
-            print("1")
             y_pred = torch.argmax(y_pred, dim=1)
             y_pred = y_pred.cpu().contiguous()
-            print("2")
             y = y.cpu().contiguous()
             y_pred_flat = y_pred.view(-1).numpy()
-            print("3")
             y_flat = y.view(-1).numpy()
             iou_prec_rec = np.nan * np.empty((3, config.model.n_class))
             print("Running loop")
             for i in range(config.model.n_class):
                 y_flat_i = y_flat == i
                 num_i = np.count_nonzero(y_flat_i)
-                print(num_i)
                 pred_flat_i = y_pred_flat == i
                 num_pred_i = np.count_nonzero(pred_flat_i)
                 intersection_i = np.logical_and(y_flat_i, pred_flat_i)
                 union_i = np.logical_or(y_flat_i, pred_flat_i)
                 num_intersection_i = np.count_nonzero(intersection_i)
-                print(num_intersection_i)
                 num_union_i = np.count_nonzero(union_i)
-                print(num_union_i)
                 if num_union_i > 0:
                     iou_prec_rec[0,i] = num_intersection_i/num_union_i
                 if num_pred_i > 0:
