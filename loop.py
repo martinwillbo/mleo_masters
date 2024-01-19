@@ -64,19 +64,6 @@ def loop(config, writer = None):
         for batch in tqdm(train_iter):
             optimizer.zero_grad()
             x, y = batch
-            ###
-            batch_size_in_bits = 0
-            for tensor in [x, y]:
-                num_elements = tensor.numel()  # Number of elements in the tensor
-                element_size_in_bits = tensor.element_size() # Size of one element in bits
-                batch_size_in_bits += num_elements * element_size_in_bits
-
-            # Estimate the total size of the data in the DataLoader
-            total_batches = len(train_loader)
-            print(len(train_loader))
-            total_size_in_bits = batch_size_in_bits/1000000000
-            print(f"Estimated total size of data in DataLoader: {total_size_in_bits} GB")
-            ###
             x = x.to(config.device)
             y = y.to(config.device)
             #NOTE: dlv3_r50 returns a dictionary
