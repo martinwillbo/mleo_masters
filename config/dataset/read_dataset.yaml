@@ -12,7 +12,7 @@ crop: False
 crop_size: 200
 crop_step_size: 100
 using_priv: False
-scale: True
+scale: False
 
 #all things that are done on the entire data set, with no probability involved etc., should be done in the read file,
 #the rest in transform/aug
