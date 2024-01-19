@@ -34,23 +34,28 @@ class DatasetClass(Dataset):
         if self.part == 'val':
             X_tif_paths = X_tif_paths[split_point:]
             Y_tif_paths = Y_tif_paths[split_point:]
-        print('Constructing ' + self.part + ' set...')
 
-        temp_X = self._read_data(X_tif_paths, is_label = False)
-        temp_Y = self._read_data(Y_tif_paths, is_label = True)
-        print(len(temp_X))
-        print(len(temp_Y))
-        self.X.extend(temp_X)
-        self.Y.extend(temp_Y)
-        print(min(item.min().item() for item in self.Y))
-        print(max(item.max().item() for item in self.Y))
+        #print('Constructing ' + self.part + ' set...')
+
+        self.X_tif_paths = X_tif_paths
+        self.Y_tif_paths = Y_tif_paths
+
+        #temp_X = self._read_data(X_tif_paths, is_label = False)
+        #temp_Y = self._read_data(Y_tif_paths, is_label = True)
+        #print(len(temp_X))
+        #print(len(temp_Y))
+        #self.X.extend(temp_X)
+        #self.Y.extend(temp_Y)
+        #print(min(item.min().item() for item in self.Y))
+        #print(max(item.max().item() for item in self.Y))
     
     def __getitem__(self, index):
-        if self.config.dataset.using_priv:
-            x = self.X[index]
-        else:
-            x = self.X[index][:3,:,:]
-        y = self.Y[index]
+        x = self._read_data(self.X_tif_paths[index], is_label = False)
+        if not self.config.dataset.using_priv:
+            x = x[:3,:,:]
+        y = self._read_data(self.Y_tif_paths[index], is_label = True)
+        print(min(item.min().item() for item in self.Y))
+        print(max(item.max().item() for item in self.Y))
         if self.part == 'val':
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
         #if transforms, we need to add here
