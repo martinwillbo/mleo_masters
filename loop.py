@@ -107,14 +107,14 @@ def loop(config, writer = None):
                     iou_prec_rec[0,i] = num_intersection_i/num_union_i
                 if num_pred_i > 0:
                     iou_prec_rec[1,i] = num_intersection_i / num_pred_i
-                    print("I am here")
-                    print(num_intersection_i / num_pred_i)
                 if num_i > 0:
                     iou_prec_rec[2,i] = num_intersection_i / num_i
             epoch_miou_prec_rec.append(iou_prec_rec)
             epoch_loss.append(l.item())
         
+        print(epoch_miou_prec_rec)
         epoch_miou_prec_rec = np.nanmean(np.stack(epoch_miou_prec_rec, axis = 0), axis = 0)
+        print(epoch_miou_prec_rec)
         writer.add_scalar('train/loss', np.mean(epoch_loss), epoch)
         print('Epoch mean loss: '+str(np.mean(epoch_loss)))
         writer.add_scalar('train/miou', np.mean(epoch_miou_prec_rec[0,:]), epoch)
