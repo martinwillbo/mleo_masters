@@ -37,7 +37,7 @@ class DatasetClass(Dataset):
 
         #print('Constructing ' + self.part + ' set...')
         if config.dataset.crop:
-            self.crop_coordinates = self._get_crop_coordinates(_read_data(X_tif_paths[0], is_label=False)) #use one img for cropping coords
+            self.crop_coordinates = self._get_crop_coordinates(self._read_data(X_tif_paths[0], is_label=False)) #use one img for cropping coords
             num_crops = len(self.crop_coordinates)
             self.X_tif_paths = [path for path in X_tif_paths for _ in range(num_crops)]
             self.Y_tif_paths = [path for path in Y_tif_paths for _ in range(num_crops)]
