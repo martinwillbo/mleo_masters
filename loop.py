@@ -72,6 +72,7 @@ def loop(config, writer = None):
             y = y.to(config.device)
             print(x.shape)
             print(y.shape)
+            break
             #NOTE: dlv3_r50 returns a dictionary
             print("Calculating y_pred")
             y_pred = model(x)['out']
