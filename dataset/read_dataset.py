@@ -19,7 +19,7 @@ class DatasetClass(Dataset):
 
         #Read in desiread transform
         transform_module = util.load_module(self.config.transform.script_location)
-        self.transform = transform_model.get_transform(self.config)
+        self.transform = transform_module.get_transform(self.config)
 
         path_var = part
         if part == 'val':
