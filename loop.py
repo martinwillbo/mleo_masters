@@ -28,7 +28,7 @@ def loop(config, writer = None):
     model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
                                 dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     model.to(config.device)
-    print('Model size: ' + sys.getsizeof(model)*8)
+    print('Model size: ' + str(sys.getsizeof(model)*8))
     #add first layer so to have 5 channels, or switch net to one which can take params
 
     if config.optimizer == 'adam':
