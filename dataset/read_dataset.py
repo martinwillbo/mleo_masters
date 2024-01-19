@@ -136,18 +136,18 @@ class DatasetClass(Dataset):
         return data
 
     def _get_crop_coordinates(self, data):
-    h, w = data.shape[1], data.shape[2] #x,y has the same shape
-    crop_size = self.config.dataset.crop_size
-    crop_step_size = self.config.dataset.crop_step_size
-    crop_coordinates = []
-    for start_h in range(0, h - crop_size + 1, crop_step_size):
-        for start_w in range(0, w - crop_size + 1, crop_step_size):
-            end_h = start_h + crop_size
-            end_w = start_w + crop_size
-            # Store the crop coordinates as a tuple
-            coordinates = (start_h, start_w, end_h, end_w)
-            crop_coordinates.append(coordinates)
-    return crop_coordinates
+        h, w = data.shape[1], data.shape[2] #x,y has the same shape
+        crop_size = self.config.dataset.crop_size
+        crop_step_size = self.config.dataset.crop_step_size
+        crop_coordinates = []
+        for start_h in range(0, h - crop_size + 1, crop_step_size):
+            for start_w in range(0, w - crop_size + 1, crop_step_size):
+                end_h = start_h + crop_size
+                end_w = start_w + crop_size
+                # Store the crop coordinates as a tuple
+                coordinates = (start_h, start_w, end_h, end_w)
+                crop_coordinates.append(coordinates)
+        return crop_coordinates
 
 
     def _crop_old(self, data, is_label):
