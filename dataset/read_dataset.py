@@ -22,7 +22,10 @@ class DatasetClass(Dataset):
         self.transform = transform_module.get_transform(self.config)
 
         self.layer_means = self.config.dataset.mean
-
+        self.layer_stds = self.config.dataset.std
+        if not self.config.using_priv:
+            self.layer_means = self.layer_means[0:3] #only bgr
+            self.layer_stds = self.std_means[0:3]
         path_var = part
         if part == 'val':
             path_var = 'train'

@@ -12,7 +12,7 @@ det_crop: False #don't have both det_crop and random_crop on
 crop_step_size: 512 #will not be used if random cropping is on
 crop_size: 8
 random_crop: False
-using_priv: False
+using_priv: True
 scale: False
 
 mean: [112.4055, 116.6569, 107.9584] #B is the first channel, then G, then R
