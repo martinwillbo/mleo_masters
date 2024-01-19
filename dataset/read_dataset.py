@@ -77,13 +77,13 @@ class DatasetClass(Dataset):
         print(tif_path)
         data = np.array(tifffile.imread(tif_path))
         if is_label: #classes are 1 to 19, have to be 0 to 18
-                data = data - 1 
-            if not is_label:
-                data = np.transpose(data, (2,0,1))
-            if self.config.dataset.crop:
-                data = self._crop(data, is_label)[0]
-            elif self.config.dataset.scale:
-                data = self._rescale(data, is_label)[0] #shady, only gets first crop
+            data = data - 1 
+        if not is_label:
+            data = np.transpose(data, (2,0,1))
+        if self.config.dataset.crop:
+            data = self._crop(data, is_label)[0]
+        elif self.config.dataset.scale:
+            data = self._rescale(data, is_label)[0] #shady, only gets first crop
         return data
 
     
