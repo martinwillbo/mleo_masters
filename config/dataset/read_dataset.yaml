@@ -15,5 +15,9 @@ random_crop: False
 using_priv: False
 scale: False
 
+BGR_mean: 112.4055, 116.6569, 107.9584 #B is the first channel
+
+
+
 #all things that are done on the entire data set, with no probability involved etc., should be done in the read file,
 #the rest in transform/aug
