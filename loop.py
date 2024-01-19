@@ -76,7 +76,7 @@ def loop(config, writer = None):
             print("Stepping backward")
             l.backward()
             print("Optimizing")
-            optimizer.step()
+            #optimizer.step()
             #NOTE: If you have a learning rate scheduler this is to place to step it. 
             y_pred = torch.argmax(y_pred, dim=1)
             y_pred = y_pred.cpu().contiguous()
@@ -84,6 +84,7 @@ def loop(config, writer = None):
             y_pred_flat = y_pred.view(-1).numpy()
             y_flat = y.view(-1).numpy()
             iou_prec_rec = np.nan * np.empty((3, config.model.n_class))
+            print("Running loop")
             for i in range(config.model.n_class):
                 y_flat_i = y_flat == i
                 num_i = np.count_nonzero(y_flat_i)
@@ -99,7 +100,7 @@ def loop(config, writer = None):
                     iou_prec_rec[1,i] = num_intersection_i / num_pred_i
                 if num_i > 0:
                     iou_prec_rec[2,i] = num_intersection_i / num_i
-
+            print("Done with loop")
             epoch_miou_prec_rec.append(iou_prec_rec)
             epoch_loss.append(l.item())
         
