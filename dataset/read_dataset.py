@@ -7,6 +7,8 @@ import torch
 import os
 import cv2
 import math
+import sys
+
 class DatasetClass(Dataset):
     def __init__(self, config, part):
         self.config = config
@@ -45,7 +47,7 @@ class DatasetClass(Dataset):
             self.X_tif_paths = X_tif_paths
             self.Y_tif_paths = Y_tif_paths
         
-
+        print('Tif size: ' + sys.getsizeof(self.X_tif_paths)*8)
         #temp_X = self._read_data(X_tif_paths, is_label = False)
         #temp_Y = self._read_data(Y_tif_paths, is_label = True)
         #print(len(temp_X))
