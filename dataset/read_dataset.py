@@ -21,7 +21,7 @@ class DatasetClass(Dataset):
         transform_module = util.load_module(self.config.transform.script_location)
         self.transform = transform_module.get_transform(self.config)
 
-        self.layer_means = self.config.means
+        self.layer_means = self.config.dataset.means
 
         path_var = part
         if part == 'val':
