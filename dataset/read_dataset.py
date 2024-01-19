@@ -54,8 +54,6 @@ class DatasetClass(Dataset):
         if not self.config.dataset.using_priv:
             x = x[:3,:,:]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
-        print(min(item.min().item() for item in self.Y))
-        print(max(item.max().item() for item in self.Y))
         if self.part == 'val':
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
         #if transforms, we need to add here
