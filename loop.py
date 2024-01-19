@@ -4,10 +4,10 @@ import numpy as np
 import util
 from tqdm import tqdm
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
-#from torchvision.models.segmentation.deeplabv3 import DeepLabV3, DeepLabHead
 from torch.utils.data import DataLoader
 from torch.optim import Adam, SGD
 import sys
+from torch.cuda.amp import autocast, GradScaler
 
 def loop(config, writer = None):
 
@@ -32,6 +32,9 @@ def loop(config, writer = None):
     size_in_bits = num_params * 32/1000000/8
     print(f"Model size: {size_in_bits} MB")
     #add first layer so to have 5 channels, or switch net to one which can take params
+
+    # Initialize GradScaler
+    scaler = GradScaler()
 
     if config.optimizer == 'adam':
         #TODO: Introduce config option for betas
@@ -66,24 +69,27 @@ def loop(config, writer = None):
         train_iter = iter(train_loader)
         
         for batch in tqdm(train_iter):
-            optimizer.zero_grad()
+            #optimizer.zero_grad()
             x, y = batch
             x = x.to(config.device)
             y = y.to(config.device)
-            print(x.shape)
-            print(y.shape)
-            continue
             #NOTE: dlv3_r50 returns a dictionary
-            print("Calculating y_pred")
-            y_pred = model(x)['out']
-            
-            #print( y.max().item()): max class is 19, v strange
-            print("Calculating loss")
-            l = train_loss(y_pred, y)
+            print("Calculating y_pred & loss")
+            with autocast():
+                y_pred = model(x)['out']
+                loss = train_loss(y_pred, y)
+            #y_pred = model(x)['out']
+            #print("Calculating loss")
+            #l = train_loss(y_pred, y)
             print("Stepping backward")
-            l.backward()
+            optimizer.zero_grad()
+            scaler.scale(loss).backward()
+            #l.backward()
             print("Optimizing")
-            optimizer.step()
+            scaler.step(optimizer)
+            scaler.update()
+
+            #optimizer.step()
             #NOTE: If you have a learning rate scheduler this is to place to step it. 
             print("Doing some calculations")
             y_pred = torch.argmax(y_pred, dim=1)
