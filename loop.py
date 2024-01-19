@@ -74,31 +74,26 @@ def loop(config, writer = None):
             x = x.to(config.device)
             y = y.to(config.device)
             #NOTE: dlv3_r50 returns a dictionary
-            print("Calculating y_pred & loss")
             with autocast():
                 y_pred = model(x)['out']
                 l = train_loss(y_pred, y)
             #y_pred = model(x)['out']
             #print("Calculating loss")
             #l = train_loss(y_pred, y)
-            print("Stepping backward")
             optimizer.zero_grad()
             scaler.scale(l).backward()
             #l.backward()
-            print("Optimizing")
             scaler.step(optimizer)
             scaler.update()
 
             #optimizer.step()
             #NOTE: If you have a learning rate scheduler this is to place to step it. 
-            print("Doing some calculations")
             y_pred = torch.argmax(y_pred, dim=1)
             y_pred = y_pred.cpu().contiguous()
             y = y.cpu().contiguous()
             y_pred_flat = y_pred.view(-1).numpy()
             y_flat = y.view(-1).numpy()
             iou_prec_rec = np.nan * np.empty((3, config.model.n_class))
-            print("Running loop")
             for i in range(config.model.n_class):
                 y_flat_i = y_flat == i
                 num_i = np.count_nonzero(y_flat_i)
@@ -114,7 +109,6 @@ def loop(config, writer = None):
                     iou_prec_rec[1,i] = num_intersection_i / num_pred_i
                 if num_i > 0:
                     iou_prec_rec[2,i] = num_intersection_i / num_i
-            print("Done with loop")
             epoch_miou_prec_rec.append(iou_prec_rec)
             epoch_loss.append(l.item())
         
@@ -161,7 +155,7 @@ def loop(config, writer = None):
                     if num_i > 0:
                         iou_prec_rec[2,i] = num_intersection_i / num_i
                 val_miou_prec_rec.append(iou_prec_rec)
-                val_loss.append(l.item())
+                val_loss.append(l.item()) #is this really the correct loss, shouldn't we calc l_val
 
             val_miou_prec_rec = np.nanmean(np.stack(val_miou_prec_rec, axis = 0), axis = 0)
             l_val = np.mean(val_loss)
