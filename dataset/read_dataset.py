@@ -169,7 +169,6 @@ class DatasetClass(Dataset):
         end_h = start_h + self.config.dataset.crop_size
         start_w = random.randint(0, x.shape[2] - self.config.dataset.crop_size)
         end_w = start_w + self.config.dataset.crop_size
-        print(start_h, start_w)
         x = x[:, start_h:end_h, start_w:end_w]
         y = y[start_h:end_h, start_w:end_w]
         return x,y
