@@ -20,7 +20,6 @@ class DatasetClass(Dataset):
         #Read in desiread transform
         transform_module = util.load_module(self.config.transform.script_location)
         self.transform = transform_module.get_transform(self.config)
-        self.transform = None
 
         self.layer_means = np.array(self.config.dataset.mean)
         self.layer_stds = np.array(self.config.dataset.std)
@@ -90,7 +89,7 @@ class DatasetClass(Dataset):
             x = self._rescale(x, is_label = False)
             y = self._rescale(y, is_label = True)
 
-        if self.transform is not None:
+        if self.config.use_transform:
             x, y = self.transform.apply(x,y)
 
         #NOTE: These operations expect shape (H,W,C)

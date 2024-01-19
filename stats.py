@@ -27,6 +27,7 @@ def stats(config):
 
     train_iter = iter(train_loader)
     for X, _ in tqdm(train_iter):
+        #DOES NOT WORK
         X = X[:, :, :, :]
         channel_reshaped = channel_sums.view(1, 5, 1, 1)
         X_diff = X - channel_reshaped
