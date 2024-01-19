@@ -104,6 +104,8 @@ class DatasetClass(Dataset):
     def _read_data(self, tif_path, is_label):
         data = np.array(tifffile.imread(tif_path))
         if is_label: #classes are 1 to 19, have to be 0 to 18
+            if self.config.n_class < 19: #group last classes as in challenge
+                data[data > 12] = 13
             data = data - 1 
         if not is_label:
             data = np.transpose(data, (2,0,1))
@@ -167,6 +169,7 @@ class DatasetClass(Dataset):
         end_h = start_h + self.config.dataset.crop_size
         start_w = random.randint(0, x.shape[2] - self.config.dataset.crop_size)
         end_w = start_w + self.config.dataset.crop_size
+        print(start_h, start_w)
         x = x[:, start_h:end_h, start_w:end_w]
         y = y[start_h:end_h, start_w:end_w]
         return x,y

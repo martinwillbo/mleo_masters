@@ -112,7 +112,6 @@ def loop(config, writer = None):
             epoch_miou_prec_rec.append(iou_prec_rec)
             epoch_loss.append(l.item())
         
-        print(epoch_miou_prec_rec)
         epoch_miou_prec_rec = np.nanmean(np.stack(epoch_miou_prec_rec, axis = 0), axis = 0)
         print(epoch_miou_prec_rec)
         writer.add_scalar('train/loss', np.mean(epoch_loss), epoch)

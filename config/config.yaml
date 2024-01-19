@@ -29,6 +29,6 @@ momentum: 0.9
 model:
   pretrained: False #None does not work, but they seem to want it
   pretrained_backbone: ResNet50_Weights.IMAGENET1K_V1 #default, can also use enum, read docs
-  n_class: 19
+  n_class: 13 #13 for grouped, 19 for all
   n_channels: 3
 
