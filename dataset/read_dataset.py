@@ -67,7 +67,7 @@ class DatasetClass(Dataset):
             #get exactly one crop
             crop_coords = self.crop_coordinates[index % len(self.crop_coordinates)]
             x = x[:, crop_coords[0]:crop_coords[2], crop_coords[1]:crop_coords[3]]
-            y = y[:, crop_coords[0]:crop_coords[2], crop_coords[1]:crop_coords[3]]
+            y = y[crop_coords[0]:crop_coords[2], crop_coords[1]:crop_coords[3]]
         
         if self.config.dataset.scale:
             x = self._rescale(x, is_label = False)
