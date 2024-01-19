@@ -88,25 +88,27 @@ def loop(config, writer = None):
 
             #optimizer.step()
             #NOTE: If you have a learning rate scheduler this is to place to step it. 
-            y_pred = torch.argmax(y_pred, dim=1)
+            y_pred = torch.argmax(y_pred, dim=1) #sets class to each dp
             y_pred = y_pred.cpu().contiguous()
             y = y.cpu().contiguous()
-            y_pred_flat = y_pred.view(-1).numpy()
+            y_pred_flat = y_pred.view(-1).numpy() 
             y_flat = y.view(-1).numpy()
-            iou_prec_rec = np.nan * np.empty((3, config.model.n_class))
-            for i in range(config.model.n_class):
-                y_flat_i = y_flat == i
-                num_i = np.count_nonzero(y_flat_i)
-                pred_flat_i = y_pred_flat == i
+            iou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vec
+            for i in range(config.model.n_class): #for all classes
+                y_flat_i = y_flat == i #sets ones where y_flat is equal to i
+                num_i = np.count_nonzero(y_flat_i) #count nbr of occurances of class i in true y
+                pred_flat_i = y_pred_flat == i 
                 num_pred_i = np.count_nonzero(pred_flat_i)
-                intersection_i = np.logical_and(y_flat_i, pred_flat_i)
-                union_i = np.logical_or(y_flat_i, pred_flat_i)
-                num_intersection_i = np.count_nonzero(intersection_i)
-                num_union_i = np.count_nonzero(union_i)
-                if num_union_i > 0:
+                intersection_i = np.logical_and(y_flat_i, pred_flat_i) #where they match
+                union_i = np.logical_or(y_flat_i, pred_flat_i) #everything together
+                num_intersection_i = np.count_nonzero(intersection_i) #how big is the intersection
+                num_union_i = np.count_nonzero(union_i) #how big is the union
+                if num_union_i > 0: 
                     iou_prec_rec[0,i] = num_intersection_i/num_union_i
                 if num_pred_i > 0:
                     iou_prec_rec[1,i] = num_intersection_i / num_pred_i
+                    print("I am here")
+                    print(num_intersection_i / num_pred_i)
                 if num_i > 0:
                     iou_prec_rec[2,i] = num_intersection_i / num_i
             epoch_miou_prec_rec.append(iou_prec_rec)
