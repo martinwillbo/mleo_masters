@@ -15,7 +15,8 @@ random_crop: False
 using_priv: False
 scale: False
 
-BGR_mean: 112.4055, 116.6569, 107.9584 #B is the first channel
+mean: [112.4055, 116.6569, 107.9584] #B is the first channel, then G, then R
+std: []
 
 
 

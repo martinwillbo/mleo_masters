@@ -10,8 +10,8 @@ def stats(config):
     train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = False, num_workers = config.num_workers,
                             pin_memory = True)
     # Initialize variables for accumulating channel-wise sums
-    channel_sums = torch.zeros(3)
-    channel_squared_diff = torch.zeros(3)
+    channel_sums = torch.zeros(5)
+    channel_squared_diff = torch.zeros(5)
     num_batches = 0
     train_iter = iter(train_loader)
 
@@ -27,8 +27,8 @@ def stats(config):
 
     train_iter = iter(train_loader)
     for X, _ in tqdm(train_iter):
-        X = X[:, :3, :, :]
-        channel_reshaped = channel_sums.view(1, 3, 1, 1)
+        X = X[:, :, :, :]
+        channel_reshaped = channel_sums.view(1, 5, 1, 1)
         X_diff = X - channel_reshaped
         channel_squared_diff += (X_diff**2).sum(dim=(0, 2, 3))
     variance = (channel_squared_diff / (config.batchsize * num_batches * 512 * 512))
