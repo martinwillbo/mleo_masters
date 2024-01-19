@@ -83,7 +83,7 @@ class DatasetClass(Dataset):
             x = self._rescale(x, is_label = False)
             y = self._rescale(y, is_label = True)
 
-        if self.tranform is not None:
+        if self.transform is not None:
             x, y = self.transform.apply(x,y)
 
          #if transforms, we need to add here
@@ -170,9 +170,6 @@ class DatasetClass(Dataset):
         x = x[:, start_h:end_h, start_w:end_w]
         y = y[start_h:end_h, start_w:end_w]
         return x,y
-
-
-
 
     def _crop_old(self, data, is_label):
         if is_label:
