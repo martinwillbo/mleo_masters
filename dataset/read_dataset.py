@@ -98,12 +98,12 @@ class DatasetClass(Dataset):
             x, y = self.transform.apply(x,y)
 
         #NOTE: These operations expect shape (H,W,C)
-        #Normalize imahes
-        #x = np.transpose(x, (1,2,0)).astype(float)
-        #x -= self.layer_means
-        #x /= self.layer_stds
+        #Normalize images, after transform
+        x = np.transpose(x, (1,2,0)).astype(float)
+        x -= self.layer_means
+        x /= self.layer_stds
         #NOTE: Pytorch models typically expect shape (C, H, W)
-        #x = np.transpose(x, (2,0,1))
+        x = np.transpose(x, (2,0,1))
         
         return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
     
@@ -121,6 +121,7 @@ class DatasetClass(Dataset):
 
     def _read_data(self, tif_path, is_label):
         data = np.array(tifffile.imread(tif_path))
+        data = data.astype(np.uint8) #all data is uint8
         if is_label: #classes are 1 to 19, have to be 0 to 18
             if self.config.model.n_class < 19: #group last classes as in challenge
                 data[data > 12] = 13

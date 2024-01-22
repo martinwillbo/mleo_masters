@@ -11,8 +11,8 @@ val_set_size: 0.2
 det_crop: False #don't have both det_crop and random_crop on
 crop_step_size: 512 #will not be used if random cropping is on
 crop_size: 8
-random_crop: False
-using_priv: True
+random_crop: True
+using_priv: False
 scale: False
 
 mean: [113.7693, 118.0902, 109.2753, 102.3808, 16.7343] #B is the first channel, then G, then R (only on train, not val)
