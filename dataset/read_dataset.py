@@ -146,8 +146,8 @@ class DatasetClass(Dataset):
                 data = np.transpose(data, (2,0,1))
                 if not self.config.dataset.using_priv:
                     data = data[:3,:,:]
-            if self.config.dataset.det_crop_old:
-                data_list = self._crop(data, is_label)
+            if self.config.dataset.det_crop:
+                data_list = self.det_crop_old(data, is_label)
                 temp_data.extend(data_list)
             elif self.config.dataset.scale:
                 data = self._rescale(data, is_label)
