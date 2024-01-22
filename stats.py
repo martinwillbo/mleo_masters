@@ -18,7 +18,6 @@ def stats(config):
 
     for X, _ in tqdm(train_iter):
         num_img += len(X)
-        num_batches += 1
         X = X[:, :, :, :]
         print(X.mean(dim=(0,2,3)))
         # Calculate channel-wise sums and squared sums
