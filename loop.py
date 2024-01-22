@@ -43,11 +43,11 @@ def loop(config, writer = None):
     if config.optimizer == 'SGD':
         optimizer = SGD(model.parameters(), lr=config.lr, momentum=config.momentum, weight_decay=config.weight_decay)
 
-
-    if config.use_transform:
-        transform_module = util.load_module(config.transform.script_location)
-        transform = transform_module.get_transform(config)
-        train_set.set_transform(transform)
+    #WHY WOULD WE SET THE TRANSFORM HERE? Seems more reasonable to set it in __get_item__
+    #if config.use_transform:
+    #    transform_module = util.load_module(config.transform.script_location)
+    #    transform = transform_module.get_transform(config)
+    #    train_set.set_transform(transform)
 
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
     train_loss = nn.CrossEntropyLoss()
