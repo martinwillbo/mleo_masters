@@ -1,7 +1,7 @@
 
 script_location: 'dataset/read_dataset.py'
 #path: '../datasets/flair_2_toy_dataset'
-path: '/../datasets/flair'
+path: '../datasets/flair'
 norm_path: path_to_norm_stats
 #X_path: 'flair_2_toy_aerial'
 X_path: 'flair_aerial'
