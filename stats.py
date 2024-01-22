@@ -31,6 +31,8 @@ def stats(config):
         X = X[:, :, :, :]
         channel_reshaped = channel_sums.view(1, 5, 1, 1)
         X_diff = X - channel_reshaped
+        print(X_diff)
+        print(X_diff.mean())
         channel_squared_diff += (X_diff**2).sum(dim=(0, 2, 3))
     
     variance = (channel_squared_diff / (config.batch_size * num_batches * 512 * 512))
