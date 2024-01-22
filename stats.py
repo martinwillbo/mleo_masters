@@ -18,6 +18,7 @@ def stats(config):
     for X, _ in tqdm(train_iter):
         num_batches += 1
         X = X[:, :, :, :]
+        print(X.mean(dim=(0,2,3)))
         # Calculate channel-wise sums and squared sums
         channel_sums += X.sum(dim=(0, 2, 3))
     # Calculate mean and standard deviation across all batches
@@ -33,7 +34,6 @@ def stats(config):
         print(channel_reshaped)
         X_diff = X - channel_reshaped
         print(X_diff.mean(dim=(0,2,3)))
-        print(X_diff[0])
         channel_squared_diff += (X_diff**2).sum(dim=(0, 2, 3))
     
     variance = (channel_squared_diff / (config.batch_size * num_batches * 512 * 512))
