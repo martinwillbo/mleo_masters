@@ -54,7 +54,7 @@ class DatasetClass(Dataset):
             Y_tif_paths = Y_tif_paths[split_point:]
 
         #print('Constructing ' + self.part + ' set...')
-        if config.dataset.det_crop:
+        if config.dataset.det_crop: #THIS IS BROKEN WITH THE SHUFFLING
             self.crop_coordinates = self._get_crop_coordinates(self._read_data(X_tif_paths[0], is_label=False)) #use one img for cropping coords
             num_crops = len(self.crop_coordinates)
             self.X_tif_paths = [path for path in X_tif_paths for _ in range(num_crops)]
@@ -64,8 +64,8 @@ class DatasetClass(Dataset):
             self.Y_tif_paths = Y_tif_paths
         
         print('Tif size: ' + str(sys.getsizeof(self.X_tif_paths)*8)) #takes like 3MB
-        #temp_X = self._read_data(X_tif_paths, is_label = False)
-        #temp_Y = self._read_data(Y_tif_paths, is_label = True)
+        #temp_X = self._read_data_old(X_tif_paths, is_label = False)
+        #temp_Y = self._read_data_old(Y_tif_paths, is_label = True)
         #print(len(temp_X))
         #print(len(temp_Y))
         #self.X.extend(temp_X)
@@ -75,8 +75,6 @@ class DatasetClass(Dataset):
     
     def __getitem__(self, index):
         x = self._read_data(self.X_tif_paths[index], is_label = False)
-        if not self.config.dataset.using_priv:
-            x = x[:3,:,:]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
         if self.part == 'val':
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
@@ -128,6 +126,8 @@ class DatasetClass(Dataset):
             data = data - 1 
         if not is_label:
             data = np.transpose(data, (2,0,1))
+            if not self.config.dataset.using_priv:
+                data = data[:3,:,:]
         return data
 
     
@@ -135,10 +135,15 @@ class DatasetClass(Dataset):
         temp_data = []
         for i, path in tqdm(enumerate(tif_paths)):
             data = np.array(tifffile.imread(path))
+            data = data.astype(np.uint8) #all data is uint8
             if is_label: #classes are 1 to 19, have to be 0 to 18
+                if self.config.model.n_class < 19: #group last classes as in challenge
+                    data[data > 12] = 13
                 data = data - 1 
             if not is_label:
                 data = np.transpose(data, (2,0,1))
+                if not self.config.dataset.using_priv:
+                    data = data[:3,:,:]
             if self.config.dataset.det_crop:
                 data_list = self._crop(data, is_label)
                 temp_data.extend(data_list)
