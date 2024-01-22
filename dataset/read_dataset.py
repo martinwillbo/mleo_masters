@@ -29,6 +29,8 @@ class DatasetClass(Dataset):
             path_var = 'train'
         X_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.X_path + '_' + path_var)
         Y_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.Y_path + '_' + path_var)
+        print(X_BASE_PATH)
+        
         X_tif_paths = self._read_paths(X_BASE_PATH)
         Y_tif_paths = self._read_paths(Y_BASE_PATH)
         combined = list(zip(X_tif_paths, Y_tif_paths))
