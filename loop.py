@@ -78,7 +78,8 @@ def loop(config, writer = None):
             y = y.to(config.device)
             #NOTE: dlv3_r50 returns a dictionary
             with autocast():
-                y_pred = model(x)['out']
+                #y_pred = model(x)['out']
+                y_pred = model(x)
                 l = train_loss(y_pred, y)
             #y_pred = model(x)['out']
             #print("Calculating loss")
