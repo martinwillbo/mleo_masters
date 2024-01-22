@@ -16,6 +16,7 @@ def stats(config):
     train_iter = iter(train_loader)
 
     for X, _ in tqdm(train_iter):
+        print(len(X))
         num_batches += 1
         X = X[:, :, :, :]
         print(X.mean(dim=(0,2,3)))

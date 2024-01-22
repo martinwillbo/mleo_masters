@@ -40,7 +40,6 @@ class DatasetClass(Dataset):
         random.shuffle(combined)
         X_tif_paths, Y_tif_paths = zip(*combined)
         X_tif_paths, Y_tif_paths = list(X_tif_paths), list(Y_tif_paths)
-        print(X_tif_paths[:10])
 
         assert len(X_tif_paths) == len(Y_tif_paths)
 
