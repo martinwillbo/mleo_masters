@@ -1,7 +1,7 @@
 
 script_location: 'dataset/read_dataset.py'
 #path: '../datasets/flair_2_toy_dataset'
-path: '/raid/aleksispi/master-theses/agnes-malte-spring2024'
+path: '/Exjobb RISE/mleo_masters'
 norm_path: path_to_norm_stats
 #X_path: 'flair_2_toy_aerial'
 X_path: 'flair_aerial'
@@ -12,7 +12,7 @@ crop: False
 crop_size: 200
 crop_step_size: 100
 using_priv: False
-scale: True
+scale: 
 
 #all things that are done on the entire data set, with no probability involved etc., should be done in the read file,
 #the rest in transform/aug
