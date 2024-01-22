@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam, SGD
 import sys
 from torch.cuda.amp import autocast, GradScaler
-from fcnpytorch import FCN8s as FCN8s #smaller net!
+from fcnpytorch import fcn8s as FCN8s #smaller net!
 
 def loop(config, writer = None):
 
