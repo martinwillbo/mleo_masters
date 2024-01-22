@@ -15,8 +15,8 @@ random_crop: False
 using_priv: True
 scale: False
 
-mean: [111.9395, 116.1909, 107.5178, 100.7342, 16.4652] #B is the first channel, then G, then R
-std: [52.0012, 45.6826, 44.9341, 39.1731, 29.3537]
+mean: [113.7693, 118.0902, 109.2753, 102.3808, 16.7343] #B is the first channel, then G, then R (only on train, not val)
+std: [52.3925, 46.0153, 45.2657, 39.4576, 29.5914]
 
 
 
