@@ -40,5 +40,3 @@ def stats(config):
     print(f"Mean across channels: {mean}")
     print(f"Standard deviation across channels: {std}")
     return mean, std
-
-

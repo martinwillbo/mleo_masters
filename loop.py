@@ -4,9 +4,11 @@ import numpy as np
 import util
 from tqdm import tqdm
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
-#from torchvision.models.segmentation.deeplabv3 import DeepLabV3, DeepLabHead
 from torch.utils.data import DataLoader
-from torch.optim import Adam
+from torch.optim import Adam, SGD
+import sys
+from torch.cuda.amp import autocast, GradScaler
+from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 
 def loop(config, writer = None):
 
@@ -24,19 +26,31 @@ def loop(config, writer = None):
     #NOTE: There is a implementation difference here between dataset and model, we could have used the same scheme for the model.
     #Just showcasing two ways of doing things. This approach is 'simpler' but offers less modularity (which is always not bad).
     #If we intend to mainly work with one model and don't need to wrap it in custom code or whatever this is fine.
-    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
-                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    #model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
+    #                            dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    
+    model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
     model.to(config.device)
+    num_params = sum(p.numel() for p in model.parameters())
+    size_in_bits = num_params * 32/1000000/8
+    print(f"Model size: {size_in_bits} MB")
     #add first layer so to have 5 channels, or switch net to one which can take params
+
+    # Initialize GradScaler
+    scaler = GradScaler()
 
     if config.optimizer == 'adam':
         #TODO: Introduce config option for betas
         optimizer = Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay, betas=(config.beta1, 0.999))
 
-    if config.use_transform:
-        transform_module = util.load_module(config.transform.script_location)
-        transform = transform_module.get_transform(config)
-        train_set.set_transform(transform)
+    if config.optimizer == 'SGD':
+        optimizer = SGD(model.parameters(), lr=config.lr, momentum=config.momentum, weight_decay=config.weight_decay)
+
+    #WHY WOULD WE SET THE TRANSFORM HERE? Seems more reasonable to set it in __get_item__
+    #if config.use_transform:
+    #    transform_module = util.load_module(config.transform.script_location)
+    #    transform = transform_module.get_transform(config)
+    #    train_set.set_transform(transform)
 
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
     train_loss = nn.CrossEntropyLoss()
@@ -56,45 +70,54 @@ def loop(config, writer = None):
         epoch_miou_prec_rec = []
         model.train()
         train_iter = iter(train_loader)
+        
         for batch in tqdm(train_iter):
-            optimizer.zero_grad()
+            #optimizer.zero_grad()
             x, y = batch
             x = x.to(config.device)
             y = y.to(config.device)
             #NOTE: dlv3_r50 returns a dictionary
-            y_pred = model(x)['out']
-            
-            #print( y.max().item()): max class is 19, v strange
-            l = train_loss(y_pred, y)
-            l.backward()
-            optimizer.step()
+            with autocast():
+                #y_pred = model(x)['out']
+                y_pred = model(x)
+                l = train_loss(y_pred, y)
+            #y_pred = model(x)['out']
+            #print("Calculating loss")
+            #l = train_loss(y_pred, y)
+            optimizer.zero_grad()
+            scaler.scale(l).backward()
+            #l.backward()
+            scaler.step(optimizer)
+            scaler.update()
+
+            #optimizer.step()
             #NOTE: If you have a learning rate scheduler this is to place to step it. 
-            y_pred = torch.argmax(y_pred, dim=1)
+            y_pred = torch.argmax(y_pred, dim=1) #sets class to each dp
             y_pred = y_pred.cpu().contiguous()
             y = y.cpu().contiguous()
-            y_pred_flat = y_pred.view(-1).numpy()
+            y_pred_flat = y_pred.view(-1).numpy() 
             y_flat = y.view(-1).numpy()
-            iou_prec_rec = np.nan * np.empty((3, config.model.n_class))
-            for i in range(config.model.n_class):
-                y_flat_i = y_flat == i
-                num_i = np.count_nonzero(y_flat_i)
-                pred_flat_i = y_pred_flat == i
+            iou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vec
+            for i in range(config.model.n_class): #for all classes
+                y_flat_i = y_flat == i #sets ones where y_flat is equal to i
+                num_i = np.count_nonzero(y_flat_i) #count nbr of occurances of class i in true y
+                pred_flat_i = y_pred_flat == i 
                 num_pred_i = np.count_nonzero(pred_flat_i)
-                intersection_i = np.logical_and(y_flat_i, pred_flat_i)
-                union_i = np.logical_or(y_flat_i, pred_flat_i)
-                num_intersection_i = np.count_nonzero(intersection_i)
-                num_union_i = np.count_nonzero(union_i)
-                if num_union_i > 0:
+                intersection_i = np.logical_and(y_flat_i, pred_flat_i) #where they match
+                union_i = np.logical_or(y_flat_i, pred_flat_i) #everything together
+                num_intersection_i = np.count_nonzero(intersection_i) #how big is the intersection
+                num_union_i = np.count_nonzero(union_i) #how big is the union
+                if num_union_i > 0: 
                     iou_prec_rec[0,i] = num_intersection_i/num_union_i
                 if num_pred_i > 0:
                     iou_prec_rec[1,i] = num_intersection_i / num_pred_i
                 if num_i > 0:
                     iou_prec_rec[2,i] = num_intersection_i / num_i
-
             epoch_miou_prec_rec.append(iou_prec_rec)
             epoch_loss.append(l.item())
         
         epoch_miou_prec_rec = np.nanmean(np.stack(epoch_miou_prec_rec, axis = 0), axis = 0)
+        print(epoch_miou_prec_rec)
         writer.add_scalar('train/loss', np.mean(epoch_loss), epoch)
         print('Epoch mean loss: '+str(np.mean(epoch_loss)))
         writer.add_scalar('train/miou', np.mean(epoch_miou_prec_rec[0,:]), epoch)
@@ -114,7 +137,8 @@ def loop(config, writer = None):
                 x, y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)
-                y_pred = model(x)['out']
+                #y_pred = model(x)['out']
+                y_pred = model(x)
                 y_pred = torch.argmax(y_pred, dim=1)
                 y_pred = y_pred.cpu().contiguous()
                 y = y.cpu().contiguous()
@@ -137,7 +161,7 @@ def loop(config, writer = None):
                     if num_i > 0:
                         iou_prec_rec[2,i] = num_intersection_i / num_i
                 val_miou_prec_rec.append(iou_prec_rec)
-                val_loss.append(l.item())
+                val_loss.append(l.item()) #is this really the correct loss, shouldn't we calc l_val
 
             val_miou_prec_rec = np.nanmean(np.stack(val_miou_prec_rec, axis = 0), axis = 0)
             l_val = np.mean(val_loss)

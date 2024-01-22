@@ -8,11 +8,17 @@ X_path: 'flair_aerial'
 #Y_path: 'flair_2_toy_labels'
 Y_path: 'flair_labels'
 val_set_size: 0.2
-crop: False
-crop_size: 200
-crop_step_size: 100
+det_crop: False #don't have both det_crop and random_crop on
+crop_step_size: 512 #will not be used if random cropping is on
+crop_size: 128
+random_crop: True
 using_priv: False
-scale: 
+scale: False
+
+mean: [113.7693, 118.0902, 109.2753, 102.3808, 16.7343] #B is the first channel, then G, then R (only on train, not val)
+std: [52.3925, 46.0153, 45.2657, 39.4576, 29.5914]
+
+
 
 #all things that are done on the entire data set, with no probability involved etc., should be done in the read file,
 #the rest in transform/aug

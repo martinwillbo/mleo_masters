@@ -7,6 +7,10 @@ import torch
 import os
 import cv2
 import math
+import sys
+import util
+import random
+
 class DatasetClass(Dataset):
     def __init__(self, config, part):
         self.config = config
@@ -14,6 +18,16 @@ class DatasetClass(Dataset):
         self.X = []
         self.Y = []
 
+        #Read in desiread transform
+        transform_module = util.load_module(self.config.transform.script_location)
+        self.transform = transform_module.get_transform(self.config)
+
+        self.layer_means = np.array(self.config.dataset.mean)
+        self.layer_stds = np.array(self.config.dataset.std)
+        if not self.config.dataset.using_priv:
+            self.layer_means = self.layer_means[0:3] #only bgr
+            self.layer_stds = self.layer_stds[0:3]
+        
         path_var = part
         if part == 'val':
             path_var = 'train'
@@ -22,6 +36,10 @@ class DatasetClass(Dataset):
         Y_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.Y_path + '_' + path_var)
         X_tif_paths = self._read_paths(X_BASE_PATH)
         Y_tif_paths = self._read_paths(Y_BASE_PATH)
+        combined = list(zip(X_tif_paths, Y_tif_paths))
+        random.shuffle(combined)
+        X_tif_paths, Y_tif_paths = zip(*combined)
+        X_tif_paths, Y_tif_paths = list(X_tif_paths), list(Y_tif_paths)
 
         assert len(X_tif_paths) == len(Y_tif_paths)
 
@@ -36,7 +54,7 @@ class DatasetClass(Dataset):
             Y_tif_paths = Y_tif_paths[split_point:]
 
         #print('Constructing ' + self.part + ' set...')
-        if config.dataset.crop:
+        if config.dataset.det_crop: #THIS IS BROKEN WITH THE SHUFFLING
             self.crop_coordinates = self._get_crop_coordinates(self._read_data(X_tif_paths[0], is_label=False)) #use one img for cropping coords
             num_crops = len(self.crop_coordinates)
             self.X_tif_paths = [path for path in X_tif_paths for _ in range(num_crops)]
@@ -45,9 +63,9 @@ class DatasetClass(Dataset):
             self.X_tif_paths = X_tif_paths
             self.Y_tif_paths = Y_tif_paths
         
-
-        #temp_X = self._read_data(X_tif_paths, is_label = False)
-        #temp_Y = self._read_data(Y_tif_paths, is_label = True)
+        print('Tif size: ' + str(sys.getsizeof(self.X_tif_paths)*8)) #takes like 3MB
+        #temp_X = self._read_data_old(X_tif_paths, is_label = False)
+        #temp_Y = self._read_data_old(Y_tif_paths, is_label = True)
         #print(len(temp_X))
         #print(len(temp_Y))
         #self.X.extend(temp_X)
@@ -57,23 +75,36 @@ class DatasetClass(Dataset):
     
     def __getitem__(self, index):
         x = self._read_data(self.X_tif_paths[index], is_label = False)
-        if not self.config.dataset.using_priv:
-            x = x[:3,:,:]
+        #x = self.X[index]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
+        #y = self.Y[index]
         if self.part == 'val':
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
        
-        if self.config.dataset.crop:
+        if self.config.dataset.det_crop:
             #get exactly one crop
             crop_coords = self.crop_coordinates[index % len(self.crop_coordinates)]
             x = x[:, crop_coords[0]:crop_coords[2], crop_coords[1]:crop_coords[3]]
             y = y[crop_coords[0]:crop_coords[2], crop_coords[1]:crop_coords[3]]
+
+        elif self.config.dataset.random_crop:
+            x,y = self._random_crop(x,y)
         
         if self.config.dataset.scale:
             x = self._rescale(x, is_label = False)
             y = self._rescale(y, is_label = True)
 
-         #if transforms, we need to add here
+        if self.config.use_transform:
+            x, y = self.transform.apply(x,y)
+
+        #NOTE: These operations expect shape (H,W,C)
+        #Normalize images, after transform
+        x = np.transpose(x, (1,2,0)).astype(float)
+        x -= self.layer_means
+        x /= self.layer_stds
+        #NOTE: Pytorch models typically expect shape (C, H, W)
+        x = np.transpose(x, (2,0,1))
+        
         return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
     
     def __len__(self):
@@ -90,10 +121,15 @@ class DatasetClass(Dataset):
 
     def _read_data(self, tif_path, is_label):
         data = np.array(tifffile.imread(tif_path))
+        data = data.astype(np.uint8) #all data is uint8
         if is_label: #classes are 1 to 19, have to be 0 to 18
+            if self.config.model.n_class < 19: #group last classes as in challenge
+                data[data > 12] = 13
             data = data - 1 
         if not is_label:
             data = np.transpose(data, (2,0,1))
+            if not self.config.dataset.using_priv:
+                data = data[:3,:,:]
         return data
 
     
@@ -101,12 +137,17 @@ class DatasetClass(Dataset):
         temp_data = []
         for i, path in tqdm(enumerate(tif_paths)):
             data = np.array(tifffile.imread(path))
+            data = data.astype(np.uint8) #all data is uint8
             if is_label: #classes are 1 to 19, have to be 0 to 18
+                if self.config.model.n_class < 19: #group last classes as in challenge
+                    data[data > 12] = 13
                 data = data - 1 
             if not is_label:
                 data = np.transpose(data, (2,0,1))
-            if self.config.dataset.crop:
-                data_list = self._crop(data, is_label)
+                if not self.config.dataset.using_priv:
+                    data = data[:3,:,:]
+            if self.config.dataset.det_crop:
+                data_list = self.det_crop_old(data, is_label)
                 temp_data.extend(data_list)
             elif self.config.dataset.scale:
                 data = self._rescale(data, is_label)
@@ -149,8 +190,16 @@ class DatasetClass(Dataset):
                 crop_coordinates.append(coordinates)
         return crop_coordinates
 
+    def _random_crop(self, x, y):
+        start_h = random.randint(0, x.shape[1] - self.config.dataset.crop_size)
+        end_h = start_h + self.config.dataset.crop_size
+        start_w = random.randint(0, x.shape[2] - self.config.dataset.crop_size)
+        end_w = start_w + self.config.dataset.crop_size
+        x = x[:, start_h:end_h, start_w:end_w]
+        y = y[start_h:end_h, start_w:end_w]
+        return x,y
 
-    def _crop_old(self, data, is_label):
+    def det_crop_old(self, data, is_label):
         if is_label:
             h, w = data.shape[0], data.shape[1]
         else:

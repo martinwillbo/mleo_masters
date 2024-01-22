@@ -8,9 +8,9 @@ class BasicTransform():
 
     def __init__(self, config):
         self.config = config
-        all_means = np.load(config.norm_path)
-        self.layer_means = np.mean(all_means, axis=1)
-        self.layer_stds = np.std(all_means, axis = 1)
+        #all_means = np.load(config.norm_path)
+        #self.layer_means = np.mean(all_means, axis=1)
+        #self.layer_stds = np.std(all_means, axis = 1)
         if 'color-jitter' in self.config.transform.order:
             self.c_jitter = ColorJitter(
                 brightness=config.transform.color_jitter_brightness,
@@ -20,8 +20,8 @@ class BasicTransform():
             )
 
     def apply(self, crop, gt_crop):
-        if self.config.save_first_batch:
-            org = crop.copy()
+        #if self.config.save_first_batch:
+            #org = crop.copy()
         for aug in self.config.transform.order:
             if aug == 'color-jitter':
                 if random.random() < self.config.transform.p_color_jitter:
@@ -41,10 +41,10 @@ class BasicTransform():
         crop = crop.copy()
         gt_crop = gt_crop.copy()
 
-        crop = np.transpose(crop, (1,2,0)).astype(float)
-        crop -= self.layer_means
-        crop /= self.layer_stds
-        crop = np.transpose(crop, (2,0,1))
+        #crop = np.transpose(crop, (1,2,0)).astype(float)
+        #crop -= self.layer_means
+        #crop /= self.layer_stds
+        #crop = np.transpose(crop, (2,0,1))
 
         return crop, gt_crop
     
