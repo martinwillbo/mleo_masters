@@ -2,7 +2,7 @@
 #I usually have this included so that my 'test/debugging' runs of the code don't clutter the repo or my proper experiment logging folder with outputs.
 hydra:
   run:
-    dir: /../${now:%Y-%m-%d_%H-%M-%S}
+    dir: /${now:%Y-%m-%d_%H-%M-%S}
 
 #Note that config hierarchy introduces the design problem of deciding where config options should reside :)
 #For example when working with EO data, is the crop size dataset dependent or not?
