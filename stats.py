@@ -30,6 +30,7 @@ def stats(config):
         X = X[:, :, :, :]
         print(X.mean())
         channel_reshaped = mean.view(1, 5, 1, 1)
+        print(channel_reshaped)
         X_diff = X - channel_reshaped
         print(X_diff.mean(dim=(0,2,3)))
         channel_squared_diff += (X_diff**2).sum(dim=(0, 2, 3))
