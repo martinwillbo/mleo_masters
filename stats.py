@@ -20,7 +20,7 @@ def stats(config):
         num_img += len(X)
         #print(X.mean(dim=(0,2,3)))
         # Calculate channel-wise sums and squared sums
-        channel_sums += X.sum(dim=(0, 2, 3))
+        #channel_sums += X.sum(dim=(0, 2, 3))
     # Calculate mean and standard deviation across all batches
     mean = channel_sums / (num_img * 512 * 512)
     print(mean)
