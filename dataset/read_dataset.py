@@ -26,7 +26,7 @@ class DatasetClass(Dataset):
         self.layer_stds = np.array(self.config.dataset.std)
         if not self.config.dataset.using_priv:
             self.layer_means = self.layer_means[0:3] #only bgr
-            self.layer_stds = self.layer_std[0:3]
+            self.layer_stds = self.layer_stds[0:3]
         
         path_var = part
         if part == 'val':
