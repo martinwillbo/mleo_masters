@@ -199,7 +199,7 @@ class DatasetClass(Dataset):
         y = y[start_h:end_h, start_w:end_w]
         return x,y
 
-    def _crop_old(self, data, is_label):
+    def det_crop_old(self, data, is_label):
         if is_label:
             h, w = data.shape[0], data.shape[1]
         else:
