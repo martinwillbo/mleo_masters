@@ -15,8 +15,8 @@ random_crop: False
 using_priv: True
 scale: False
 
-mean: [112.4055, 116.6569, 107.9584, 101.1318, 16.4963] #B is the first channel, then G, then R
-std: [1, 1, 1, 1, 1]
+mean: [111.9395, 116.1909, 107.5178, 100.7342, 16.4652] #B is the first channel, then G, then R
+std: [52.0012, 45.6826, 44.9341, 39.1731, 29.3537]
 
 
 

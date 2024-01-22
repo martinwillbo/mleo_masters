@@ -20,7 +20,6 @@ def stats(config):
         X = X[:, :, :, :]
         # Calculate channel-wise sums and squared sums
         channel_sums += X.sum(dim=(0, 2, 3))
-        print(channel_sums)
     # Calculate mean and standard deviation across all batches
     mean = channel_sums / (num_batches * config.batch_size * 512 * 512)
     print(mean)
