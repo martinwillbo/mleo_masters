@@ -137,7 +137,8 @@ def loop(config, writer = None):
                 x, y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)
-                y_pred = model(x)['out']
+                #y_pred = model(x)['out']
+                y_pred = model(x)
                 y_pred = torch.argmax(y_pred, dim=1)
                 y_pred = y_pred.cpu().contiguous()
                 y = y.cpu().contiguous()
