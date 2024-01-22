@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam, SGD
 import sys
 from torch.cuda.amp import autocast, GradScaler
-from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
+#from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 
 def loop(config, writer = None):
 
@@ -26,10 +26,11 @@ def loop(config, writer = None):
     #NOTE: There is a implementation difference here between dataset and model, we could have used the same scheme for the model.
     #Just showcasing two ways of doing things. This approach is 'simpler' but offers less modularity (which is always not bad).
     #If we intend to mainly work with one model and don't need to wrap it in custom code or whatever this is fine.
-    #model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
-    #                            dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
+                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     
-    model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
+    #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
+    
     model.to(config.device)
     num_params = sum(p.numel() for p in model.parameters())
     size_in_bits = num_params * 32/1000000/8

@@ -2,8 +2,7 @@
 #I usually have this included so that my 'test/debugging' runs of the code don't clutter the repo or my proper experiment logging folder with outputs.
 hydra:
   run:
-    #dir: /raid/dlgroupmsc/${now:%Y-%m-%d_%H-%M-%S}
-    dir: /
+    dir: /../${now:%Y-%m-%d_%H-%M-%S}
 
 #Note that config hierarchy introduces the design problem of deciding where config options should reside :)
 #For example when working with EO data, is the crop size dataset dependent or not?
@@ -13,14 +12,14 @@ defaults:
   - transform: basic
 
 seed: 42
-device: cuda:2 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
+device: cuda:0 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
 use_transform: True
 batch_size: 16
 eval_every: 10
 save_model_freq: 500 #Don't do this to often, max a couple of times over a couple of thousand epochs. If no intention of warm starting training it is not needed at all.
 val_batch_size: 8 #I typically set this as large as VRAM allows
 test_batch_size: 16 # how large should this be?
-num_workers: 4 #Set this based on machine, I think it's best to max it, usually faster training that way.
+num_workers: 10 #Set this based on machine, I think it's best to max it, usually faster training that way.
 lr: 0.0002
 max_epochs: 1000
 save_optimizer: False #Set this to true if you want to be able to keep training the model at a later stage, as of now the code has no support for this.

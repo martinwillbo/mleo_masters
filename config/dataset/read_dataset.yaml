@@ -1,7 +1,7 @@
 
 script_location: 'dataset/read_dataset.py'
 #path: '../datasets/flair_2_toy_dataset'
-path: '/Exjobb RISE/mleo_masters'
+path: '/../datasets/flair'
 norm_path: path_to_norm_stats
 #X_path: 'flair_2_toy_aerial'
 X_path: 'flair_aerial'
@@ -11,7 +11,7 @@ val_set_size: 0.2
 det_crop: False #don't have both det_crop and random_crop on
 crop_step_size: 512 #will not be used if random cropping is on
 crop_size: 128
-random_crop: True
+random_crop: False
 using_priv: False
 scale: False
 
