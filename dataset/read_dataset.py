@@ -9,6 +9,7 @@ import cv2
 import math
 import sys
 import util
+import random
 
 class DatasetClass(Dataset):
     def __init__(self, config, part):
@@ -35,6 +36,11 @@ class DatasetClass(Dataset):
         Y_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.Y_path + '_' + path_var)
         X_tif_paths = self._read_paths(X_BASE_PATH)
         Y_tif_paths = self._read_paths(Y_BASE_PATH)
+        combined = list(zip(X_tif_paths, Y_tif_paths))
+        random.shuffle(combined)
+        X_tif_paths, Y_tif_paths = zip(*combined)
+        X_tif_paths, Y_tif_paths = list(X_tif_paths), list(Y_tif_paths)
+        
 
         assert len(X_tif_paths) == len(Y_tif_paths)
 
