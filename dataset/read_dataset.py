@@ -69,7 +69,7 @@ class DatasetClass(Dataset):
         #print(len(temp_X))
         #print(len(temp_Y))
         self.X.extend(temp_X)
-        #self.Y.extend(temp_Y)
+        self.Y.extend(temp_Y)
         #print(min(item.min().item() for item in self.Y))
         #print(max(item.max().item() for item in self.Y))
     
