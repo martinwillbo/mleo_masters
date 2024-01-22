@@ -14,16 +14,17 @@ def stats(config):
     channel_squared_diff = torch.zeros(5)
     num_batches = 0
     train_iter = iter(train_loader)
+    num_img = 0
 
     for X, _ in tqdm(train_iter):
-        print(len(X))
+        num_img += len(X)
         num_batches += 1
         X = X[:, :, :, :]
         print(X.mean(dim=(0,2,3)))
         # Calculate channel-wise sums and squared sums
         channel_sums += X.sum(dim=(0, 2, 3))
     # Calculate mean and standard deviation across all batches
-    mean = channel_sums / (num_batches * config.batch_size * 512 * 512)
+    mean = channel_sums / (num_batches * num_img * 512 * 512)
     print(mean)
 
     train_iter = iter(train_loader)
