@@ -76,6 +76,7 @@ class DatasetClass(Dataset):
     
     def __getitem__(self, index):
         x = self._read_data(self.X_tif_paths[index], is_label = False)
+        print(self.X_tif_paths[index])
         if not self.config.dataset.using_priv:
             x = x[:3,:,:]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)

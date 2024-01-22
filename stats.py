@@ -24,9 +24,6 @@ def stats(config):
     mean = channel_sums / (num_batches * config.batch_size * 512 * 512)
     print(mean)
 
-    train_set = dataset_module.train_set(config)
-    train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = False, num_workers = config.num_workers,
-                            pin_memory = True)
     train_iter = iter(train_loader)
     for X, _ in tqdm(train_iter):
         #DOES NOT WORK
