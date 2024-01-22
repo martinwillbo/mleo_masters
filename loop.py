@@ -29,7 +29,7 @@ def loop(config, writer = None):
     #model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
     #                            dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     
-    model = FCN8s(n_class=config.model.n_channels, dim_input=config.model.n_channels, weight_init='normal')
+    model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
     model.to(config.device)
     num_params = sum(p.numel() for p in model.parameters())
     size_in_bits = num_params * 32/1000000/8
