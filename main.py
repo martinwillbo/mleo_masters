@@ -18,6 +18,7 @@ def main(config):
     #NOTE: Don't have to use tensorboard to log experiments, but should implement something else if so (Aleksis have code for this).
     hydra_log_dir = '/raid/dlgroupmsc/${now:%Y-%m-%d_%H-%M-%S}'
     log_dir = os.path.join(hydra_log_dir, 'tensorboard')
+    print(log_dir)
     writer = SummaryWriter(log_dir=log_dir)
     loop.loop(config, writer)
 
