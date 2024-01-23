@@ -56,7 +56,8 @@ def loop2(config, writer=None):
         y_pred_list = [] #list to save for an entire epoch
         y_list = []
 
-        for x,y in tqdm(train_iter):
+        for batch in tqdm(train_iter):
+            x,y = batch
             x = x.to(config.device)
             y = y.to(config.device)
             
@@ -92,7 +93,8 @@ def loop2(config, writer=None):
             val_y_list = []
 
             val_iter = iter(val_loader)
-            for x,y in tqdm(val_iter):
+            for batch in tqdm(val_iter):
+                x,y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)
                 #y_pred = model(x)['out']
