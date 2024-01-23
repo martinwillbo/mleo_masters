@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam, SGD
 import sys
 from torch.cuda.amp import autocast, GradScaler
+from torch.optim.lr_scheduler import ExponentialLR
 #from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 
 def loop(config, writer = None):
@@ -44,6 +45,8 @@ def loop(config, writer = None):
     if config.optimizer == 'adam':
         #TODO: Introduce config option for betas
         optimizer = Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay, betas=(config.beta1, 0.999))
+        scheduler1 = ExponentialLR(optimizer, gamma=0.95)
+
 
     if config.optimizer == 'SGD':
         optimizer = SGD(model.parameters(), lr=config.lr, momentum=config.momentum, weight_decay=config.weight_decay)
@@ -91,6 +94,12 @@ def loop(config, writer = None):
             #l.backward()
             scaler.step(optimizer)
             scaler.update()
+
+            scheduler1.step()
+
+            # Access the current learning rate if needed
+            current_lr = optimizer.param_groups[0]['lr']
+            print(f"Epoch {epoch + 1}, Learning Rate: {current_lr}")
 
             #optimizer.step()
             #NOTE: If you have a learning rate scheduler this is to place to step it. 
