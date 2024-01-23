@@ -117,7 +117,6 @@ def loop2(config, writer, hydra_log_dir):
     best_val_loss = np.inf
 
     while epoch < config.max_epochs:
-        torch.save(model.state_dict(), os.path.join(hydra_log_dir, 'model_'+str(epoch)+'.pth'))
         print(torch.cuda.current_device())
         print(torch.cuda.is_available())
         print(next(model.parameters()).device)
@@ -192,13 +191,15 @@ def loop2(config, writer, hydra_log_dir):
 
             if l_val < best_val_loss:
                 best_val_loss = l_val
-                torch.save(model.state_dict(), 'best_model.pth')
+                torch.save(model.state_dict(), os.path.join(hydra_log_dir, 'best_model.pth'))
                 if config.save_optimizer:
+                    #will not work
                     torch.save(optimizer.state_dict(), 'best_optimizer.pth')
         
         if epoch % config.save_model_freq == 0:
-            torch.save(model.state_dict(), 'model_'+str(epoch)+'.pth')
+            torch.save(model.state_dict(), os.path.join(hydra_log_dir, 'model_'+str(epoch)+'.pth'))
             if config.save_optimizer:
+                #will not work
                 torch.save(optimizer.state_dict(), 'optimizer_'+str(epoch)+'.pth')
 
         epoch +=1

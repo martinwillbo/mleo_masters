@@ -3,7 +3,6 @@ import numpy as np
 import torch
 import random
 import loop2
-import stats
 from torch.utils.tensorboard import SummaryWriter
 import os
 from datetime import datetime
