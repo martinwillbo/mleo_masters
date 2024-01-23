@@ -79,8 +79,8 @@ def loop(config, writer = None):
             y = y.to(config.device)
             #NOTE: dlv3_r50 returns a dictionary
             with autocast():
-                #y_pred = model(x)['out']
-                y_pred = model(x)
+                y_pred = model(x)['out']
+                #y_pred = model(x)
                 l = train_loss(y_pred, y)
             #y_pred = model(x)['out']
             #print("Calculating loss")
@@ -138,8 +138,8 @@ def loop(config, writer = None):
                 x, y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)
-                #y_pred = model(x)['out']
-                y_pred = model(x)
+                y_pred = model(x)['out']
+                #y_pred = model(x)
                 y_pred = torch.argmax(y_pred, dim=1)
                 y_pred = y_pred.cpu().contiguous()
                 y = y.cpu().contiguous()
