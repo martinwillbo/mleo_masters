@@ -3,7 +3,7 @@ import hydra
 import numpy as np
 import torch
 import random
-import loop
+import loop, loop2
 import os
 import test
 from torch.utils.tensorboard import SummaryWriter
@@ -25,7 +25,7 @@ def main(config):
     writer = SummaryWriter(log_dir=log_dir)
     # writer = SummaryWriter(log_dir='.')
 
-    loop.loop(config, writer)
+    loop2.loop2(config, writer, hydra_log_dir)
     # test.eval_on_test(config, writer = None)
 
 if __name__ == '__main__':
