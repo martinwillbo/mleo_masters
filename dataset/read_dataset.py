@@ -65,6 +65,7 @@ class DatasetClass(Dataset):
         #print(min(item.min().item() for item in self.Y))
         #print(max(item.max().item() for item in self.Y))
     def __getitem__(self, index):
+        print(index)
         x = self._read_data(self.X_tif_paths[index], is_label = False)
         #x = self.X[index]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
@@ -82,6 +83,7 @@ class DatasetClass(Dataset):
             x = self._rescale(x, is_label = False)
             y = self._rescale(y, is_label = True)
         if self.config.use_transform:
+            
             if index < 5:
                 print('Not transformed')
                 print(x)
