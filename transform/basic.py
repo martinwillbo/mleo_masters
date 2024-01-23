@@ -26,7 +26,7 @@ class BasicTransform():
             if aug == 'color-jitter':
                 if random.random() < self.config.transform.p_color_jitter:
                     #TODO: Isn't this fucked up? Shouldnt we normalize after?
-                    crop = self.c_jitter(torch.tensor(crop.copy())).numpy()
+                    crop[:3, :, :] = self.c_jitter(torch.tensor(crop[:3,:,:].copy())).numpy() #can't jitter more than 3 channels
             elif aug == 'up-down':
                 if random.random() < self.config.transform.p_up_down_flip:
                     crop = np.flip(crop, axis=1)
