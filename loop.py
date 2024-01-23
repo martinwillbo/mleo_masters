@@ -18,7 +18,7 @@ def loop(config, writer = None):
     #NOTE: Just outlining the 'interface' of this way of structuring the experiment code
     #test_set = dataset_module.test_set(config)
 
-    train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = True, num_workers = config.num_workers,
+    train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = False, num_workers = config.num_workers,
                               pin_memory = True)
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers, 
                             pin_memory = True)
