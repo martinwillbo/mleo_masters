@@ -67,7 +67,7 @@ def loop(config, writer = None):
         
         print('Epoch: '+str(epoch))
         epoch_loss = []
-        epoch_miou_prec_rec = []
+        epoch_iou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vec
         model.train()
         train_iter = iter(train_loader)
 
@@ -133,7 +133,7 @@ def loop(config, writer = None):
         #y_list = y_list.cpu().contiguous()  
         y_pred_flat_list = y_pred_list.reshape(-1)
         y_flat_list = y_list.reshape(-1)
-        epoch_iou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vec
+        
         for i in range(config.model.n_class): #for all classes
                 y_flat_i = y_flat_list == i #sets ones where y_flat is equal to i
                 num_i = np.count_nonzero(y_flat_i) #count nbr of occurances of class i in true y
