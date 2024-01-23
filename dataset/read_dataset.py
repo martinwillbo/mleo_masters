@@ -82,11 +82,11 @@ class DatasetClass(Dataset):
             x = self._rescale(x, is_label = False)
             y = self._rescale(y, is_label = True)
         if self.config.use_transform:
-            if index < 1:
+            if index < 5:
                 print('Not transformed')
                 print(x)
             x, y = self.transform.apply(x,y)
-            if index < 1:
+            if index < 5:
                 print('Transformed')
                 print(x)
         #NOTE: These operations expect shape (H,W,C)
@@ -96,7 +96,7 @@ class DatasetClass(Dataset):
         x /= self.layer_stds
         #NOTE: Pytorch models typically expect shape (C, H, W)
         x = np.transpose(x, (2,0,1))
-        if index < 1:
+        if index < 5:
             print('Normalized')
             print(x)
         return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
