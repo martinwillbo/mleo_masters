@@ -70,6 +70,9 @@ def loop(config, writer = None):
         epoch_miou_prec_rec = []
         model.train()
         train_iter = iter(train_loader)
+
+        y_pred_list = [] #list to save for an entire epoch
+        y_list = []
         
         for batch in tqdm(train_iter):
             #optimizer.zero_grad()
@@ -93,32 +96,62 @@ def loop(config, writer = None):
             #optimizer.step()
             #NOTE: If you have a learning rate scheduler this is to place to step it. 
             y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
-            #y_pred has shape: batch_size, crop_size, crop_size
-            print(y.shape) 
-            y_pred = y_pred.cpu().contiguous()
-            y = y.cpu().contiguous()
-            y_pred_flat = y_pred.view(-1).numpy() 
-            y_flat = y.view(-1).numpy()
-            iou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vec
-            for i in range(config.model.n_class): #for all classes
-                y_flat_i = y_flat == i #sets ones where y_flat is equal to i
+            #y_pred and y has shape: batch_size, crop_size, crop_size
+            #save all values as uint8 in lists  
+            y_pred = y_pred.astype(np.uint8)
+            y = y.astype(np.uint8)
+            y_pred_list.append(y_pred)
+            y_list.append(y)
+
+            #y_pred = y_pred.cpu().contiguous()
+            #y = y.cpu().contiguous()
+            #y_pred_flat = y_pred.view(-1).numpy() 
+            #y_flat = y.view(-1).numpy()
+            #iou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vec
+            #for i in range(config.model.n_class): #for all classes
+            #    y_flat_i = y_flat == i #sets ones where y_flat is equal to i
+            #    num_i = np.count_nonzero(y_flat_i) #count nbr of occurances of class i in true y
+            #    pred_flat_i = y_pred_flat == i 
+            #    num_pred_i = np.count_nonzero(pred_flat_i)
+            #    intersection_i = np.logical_and(y_flat_i, pred_flat_i) #where they match
+            #    union_i = np.logical_or(y_flat_i, pred_flat_i) #everything together
+            #    num_intersection_i = np.count_nonzero(intersection_i) #how big is the intersection
+            #    num_union_i = np.count_nonzero(union_i) #how big is the union
+            #    if num_union_i > 0: 
+            #        iou_prec_rec[0,i] = num_intersection_i/num_union_i
+            #    if num_pred_i > 0:
+            #        iou_prec_rec[1,i] = num_intersection_i / num_pred_i
+            #    if num_i > 0:
+            #        iou_prec_rec[2,i] = num_intersection_i / num_i
+            #epoch_miou_prec_rec.append(iou_prec_rec)
+            epoch_loss.append(l.item())
+        
+        #FIXED
+        y_pred_list = np.concatenate(y_pred_list, axis=0)
+        y_list = np.concatenate(y_list, axis=0)
+        y_pred_list = y_pred_list.cpu().contiguous()
+        y_list = y_list.cpu().contiguous()  
+        y_pred_flat_list = y_pred_list.view(-1).numpy() 
+        y_flat_list = y_list.view(-1).numpy() 
+        epoch_iou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vec
+        for i in range(config.model.n_class): #for all classes
+                y_flat_i = y_flat_list == i #sets ones where y_flat is equal to i
                 num_i = np.count_nonzero(y_flat_i) #count nbr of occurances of class i in true y
-                pred_flat_i = y_pred_flat == i 
+                pred_flat_i = y_pred_flat_list == i 
                 num_pred_i = np.count_nonzero(pred_flat_i)
                 intersection_i = np.logical_and(y_flat_i, pred_flat_i) #where they match
                 union_i = np.logical_or(y_flat_i, pred_flat_i) #everything together
                 num_intersection_i = np.count_nonzero(intersection_i) #how big is the intersection
                 num_union_i = np.count_nonzero(union_i) #how big is the union
                 if num_union_i > 0: 
-                    iou_prec_rec[0,i] = num_intersection_i/num_union_i
+                    epoch_iou_prec_rec[0,i] = num_intersection_i/num_union_i
                 if num_pred_i > 0:
-                    iou_prec_rec[1,i] = num_intersection_i / num_pred_i
+                    epoch_iou_prec_rec[1,i] = num_intersection_i / num_pred_i
                 if num_i > 0:
-                    iou_prec_rec[2,i] = num_intersection_i / num_i
-            epoch_miou_prec_rec.append(iou_prec_rec)
-            epoch_loss.append(l.item())
-        
-        epoch_miou_prec_rec = np.nanmean(np.stack(epoch_miou_prec_rec, axis = 0), axis = 0)
+                    epoch_iou_prec_rec[2,i] = num_intersection_i / num_i
+        #FIXED
+
+        #epoch_miou_prec_rec = np.nanmean(np.stack(epoch_miou_prec_rec, axis = 0), axis = 0)
         print(epoch_miou_prec_rec)
         writer.add_scalar('train/loss', np.mean(epoch_loss), epoch)
         print('Epoch mean loss: '+str(np.mean(epoch_loss)))
