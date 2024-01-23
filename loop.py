@@ -67,7 +67,7 @@ def loop(config, writer = None):
         
         print('Epoch: '+str(epoch))
         epoch_loss = []
-        epoch_miou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vec
+        epoch_miou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vecn 
         model.train()
         train_iter = iter(train_loader)
 
