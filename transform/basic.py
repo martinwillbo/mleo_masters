@@ -38,8 +38,8 @@ class BasicTransform():
             
         #NOTE: Negative stride is not supported by pytorch, so we need to copy the data.
         # I have no real idea what this means and why this fixes it, but if you stumble upon it this seems to fix it.
-        crop = crop.copy()
-        gt_crop = gt_crop.copy()
+        #crop = crop.copy()
+        #gt_crop = gt_crop.copy()
 
         #crop = np.transpose(crop, (1,2,0)).astype(float)
         #crop -= self.layer_means
