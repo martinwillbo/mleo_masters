@@ -1,9 +1,9 @@
 script_location: 'transform/basic.py'  
 
 order: [up-down, left-right]
-p_left_right_flip: 0.5
-p_up_down_flip: 0.5
-p_color_jitter: 0.1
+p_left_right_flip: 0 #0.5
+p_up_down_flip: 0 #0.5
+p_color_jitter: 1 #0.1
 
 #Color jitter parameters
 color_jitter_brightness: 0.2
