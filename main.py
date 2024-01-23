@@ -1,8 +1,10 @@
+from datetime import datetime
 import hydra
 import numpy as np
 import torch
 import random
 import loop
+import os
 import test
 from torch.utils.tensorboard import SummaryWriter
 
@@ -16,7 +18,13 @@ def main(config):
 
     #NOTE: Don't have to use tensorboard to log experiments, but should implement something else if so (Aleksis have code for this).
     #name more cleverly
-    writer = SummaryWriter(log_dir='.')
+    current_timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    hydra_log_dir = '/../log_res/'+current_timestamp
+    log_dir = os.path.join(hydra_log_dir, 'tensorboard')
+    print(log_dir)
+    writer = SummaryWriter(log_dir=log_dir)
+    # writer = SummaryWriter(log_dir='.')
+
     loop.loop(config, writer)
     # test.eval_on_test(config, writer = None)
 
