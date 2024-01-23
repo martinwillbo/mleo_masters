@@ -97,6 +97,7 @@ def loop2(config, writer=None):
     
     model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
     model.to(config.device)
+    torch.save(model.state_dict(), 'model_'+str(epoch)+'.pth')
 
     scaler = GradScaler()
 
