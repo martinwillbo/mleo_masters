@@ -93,7 +93,8 @@ def loop(config, writer = None):
             #optimizer.step()
             #NOTE: If you have a learning rate scheduler this is to place to step it. 
             y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
-            print(y_pred.shape)
+            #y_pred has shape: batch_size, crop_size, crop_size
+            print(y.shape) 
             y_pred = y_pred.cpu().contiguous()
             y = y.cpu().contiguous()
             y_pred_flat = y_pred.view(-1).numpy() 
