@@ -67,7 +67,7 @@ def loop(config, writer = None):
         
         print('Epoch: '+str(epoch))
         epoch_loss = []
-        epoch_iou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vec
+        epoch_miou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vec
         model.train()
         train_iter = iter(train_loader)
 
@@ -144,11 +144,11 @@ def loop(config, writer = None):
                 num_intersection_i = np.count_nonzero(intersection_i) #how big is the intersection
                 num_union_i = np.count_nonzero(union_i) #how big is the union
                 if num_union_i > 0: 
-                    epoch_iou_prec_rec[0,i] = num_intersection_i/num_union_i
+                    epoch_miou_prec_rec[0,i] = num_intersection_i/num_union_i
                 if num_pred_i > 0:
-                    epoch_iou_prec_rec[1,i] = num_intersection_i / num_pred_i
+                    epoch_miou_prec_rec[1,i] = num_intersection_i / num_pred_i
                 if num_i > 0:
-                    epoch_iou_prec_rec[2,i] = num_intersection_i / num_i
+                    epoch_miou_prec_rec[2,i] = num_intersection_i / num_i
         #FIXED
 
         #epoch_miou_prec_rec = np.nanmean(np.stack(epoch_miou_prec_rec, axis = 0), axis = 0)
