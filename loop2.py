@@ -97,7 +97,7 @@ def loop2(config, writer=None):
     
     model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
     model.to(config.device)
-    torch.save(model.state_dict(), 'model_'+str(epoch)+'.pth')
+    
 
     scaler = GradScaler()
 
@@ -116,6 +116,7 @@ def loop2(config, writer=None):
     best_val_loss = np.inf
 
     while epoch < config.max_epochs:
+        torch.save(model.state_dict(), 'model_'+str(epoch)+'.pth')
         print(torch.cuda.current_device())
         print(torch.cuda.is_available())
         print(next(model.parameters()).device)
