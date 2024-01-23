@@ -175,7 +175,7 @@ def loop(config, writer = None):
             #NOTE: I added some basic eval code here. Typically I hide it in a module, depends on how much it is.
             model.eval()
             val_loss = []
-            val_miou_prec_rec = []
+            val_miou_prec_rec = np.nan * np.empty((3, config.model.n_class))
 
             val_y_pred_list = []
             val_y_list = []
