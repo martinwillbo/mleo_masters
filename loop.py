@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+from fcnpytorch.fcn8s import FCN8s
 import util
 from tqdm import tqdm
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
@@ -26,10 +27,10 @@ def loop(config, writer = None):
     #NOTE: There is a implementation difference here between dataset and model, we could have used the same scheme for the model.
     #Just showcasing two ways of doing things. This approach is 'simpler' but offers less modularity (which is always not bad).
     #If we intend to mainly work with one model and don't need to wrap it in custom code or whatever this is fine.
-    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
-                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    #model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
+    #                            dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     
-    #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
+    model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
     
     model.to(config.device)
     num_params = sum(p.numel() for p in model.parameters())
@@ -79,8 +80,8 @@ def loop(config, writer = None):
             y = y.to(config.device)
             #NOTE: dlv3_r50 returns a dictionary
             with autocast():
-                y_pred = model(x)['out']
-                #y_pred = model(x)
+                #y_pred = model(x)['out']
+                y_pred = model(x)
                 l = train_loss(y_pred, y)
             #y_pred = model(x)['out']
             #print("Calculating loss")
@@ -138,8 +139,8 @@ def loop(config, writer = None):
                 x, y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)
-                y_pred = model(x)['out']
-                #y_pred = model(x)
+                #y_pred = model(x)['out']
+                y_pred = model(x)
                 y_pred = torch.argmax(y_pred, dim=1)
                 y_pred = y_pred.cpu().contiguous()
                 y = y.cpu().contiguous()
