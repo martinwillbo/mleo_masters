@@ -70,16 +70,16 @@ def miou_prec_rec_writing_13(y_pred_list, y_list, part, writer, epoch):
         num_intersection_13 = np.count_nonzero(intersection_13) #how big is the intersection
         num_union_13 = np.count_nonzero(union_13) #how big is the union
         if num_union_13 > 0: 
-            epoch_miou_prec_rec[0,1] = num_intersection_13/num_union_13
+            epoch_miou_prec_rec[0,0] = num_intersection_13/num_union_13
         if num_pred_13 > 0:
-            epoch_miou_prec_rec[1,1] = num_intersection_13 / num_pred_13
+            epoch_miou_prec_rec[1,0] = num_intersection_13 / num_pred_13
         if num_13 > 0:
-            epoch_miou_prec_rec[2,1] = num_intersection_13 / num_13
+            epoch_miou_prec_rec[2,0] = num_intersection_13 / num_13
 
         #Save into writer
-        writer.add_scalar(part+'/miou fixed 13th class', epoch_miou_prec_rec[0,1], epoch)
-        writer.add_scalar(part+'/precision fixed 13th class', epoch_miou_prec_rec[1,1], epoch)
-        writer.add_scalar(part+'/recall fixed 13th class', epoch_miou_prec_rec[2,1], epoch)
+        writer.add_scalar(part+'/miou fixed 13th class', epoch_miou_prec_rec[0,0], epoch)
+        writer.add_scalar(part+'/precision fixed 13th class', epoch_miou_prec_rec[1,0], epoch)
+        writer.add_scalar(part+'/recall fixed 13th class', epoch_miou_prec_rec[2,0], epoch)
 
 def loop2(config, writer=None):
     dataset_module = util.load_module(config.dataset.script_location)
