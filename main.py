@@ -5,6 +5,7 @@ import random
 import loop
 import stats
 from torch.utils.tensorboard import SummaryWriter
+import os
 
 @hydra.main(config_path='config', config_name='config', version_base = '1.3.2')
 def main(config):
@@ -15,8 +16,9 @@ def main(config):
     torch.cuda.manual_seed(config.seed)
 
     #NOTE: Don't have to use tensorboard to log experiments, but should implement something else if so (Aleksis have code for this).
-   
-    writer = SummaryWriter(log_dir='.')
+    hydra_log_dir = '/raid/dlgroupmsc/${now:%Y-%m-%d_%H-%M-%S}'
+    log_dir = os.path.join(hydra_log_dir, 'tensorboard')
+    writer = SummaryWriter(log_dir=log_dir)
     loop.loop(config, writer)
 
 if __name__ == '__main__':
