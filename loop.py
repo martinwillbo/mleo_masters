@@ -98,8 +98,8 @@ def loop(config, writer = None):
             y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
             #y_pred and y has shape: batch_size, crop_size, crop_size
             #save all values as uint8 in lists  
-            y_pred = y_pred.astype(np.uint8)
-            y = y.astype(np.uint8)
+            y_pred = y_pred.to(torch.uint8).cpu().contiguous().numpy()
+            y = y.to(torch.uint8).cpu().contiguous().numpy()
             y_pred_list.append(y_pred)
             y_list.append(y)
 
@@ -129,10 +129,10 @@ def loop(config, writer = None):
         #FIXED
         y_pred_list = np.concatenate(y_pred_list, axis=0)
         y_list = np.concatenate(y_list, axis=0)
-        y_pred_list = y_pred_list.cpu().contiguous()
-        y_list = y_list.cpu().contiguous()  
-        y_pred_flat_list = y_pred_list.view(-1).numpy() 
-        y_flat_list = y_list.view(-1).numpy() 
+        #y_pred_list = y_pred_list.cpu().contiguous()
+        #y_list = y_list.cpu().contiguous()  
+        y_pred_flat_list = y_pred_list.reshape(-1)
+        y_flat_list = y_list.reshape(-1)
         epoch_iou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vec
         for i in range(config.model.n_class): #for all classes
                 y_flat_i = y_flat_list == i #sets ones where y_flat is equal to i
