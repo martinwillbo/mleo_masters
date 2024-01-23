@@ -152,12 +152,17 @@ def loop(config, writer = None):
         #FIXED
 
         #epoch_miou_prec_rec = np.nanmean(np.stack(epoch_miou_prec_rec, axis = 0), axis = 0)
-        print(epoch_miou_prec_rec)
+        #print(epoch_miou_prec_rec)
+        epoch_miou_prec_rec = np.nan_to_num(epoch_miou_prec_rec,nan=0.0) #set nans to 0, bc we are not predicting even when we should
         writer.add_scalar('train/loss', np.mean(epoch_loss), epoch)
         print('Epoch mean loss: '+str(np.mean(epoch_loss)))
         writer.add_scalar('train/miou', np.mean(epoch_miou_prec_rec[0,:]), epoch)
         writer.add_scalar('train/precision', np.mean(epoch_miou_prec_rec[1,:]), epoch)
         writer.add_scalar('train/recall', np.mean(epoch_miou_prec_rec[2,:]), epoch)
+        #First 12 classes only for ref
+        writer.add_scalar('train/miou first 12', np.mean(epoch_miou_prec_rec[0,:12]), epoch)
+        writer.add_scalar('train/precision first 12', np.mean(epoch_miou_prec_rec[1,:12]), epoch)
+        writer.add_scalar('train/recall first 12', np.mean(epoch_miou_prec_rec[2,:12]), epoch)
         #Also add class specific values
         writer.add_text('train/miou per class', ', '.join(map(str, epoch_miou_prec_rec[0,:])), epoch)
         writer.add_text('train/precision per class', ', '.join(map(str, epoch_miou_prec_rec[1,:])), epoch)
@@ -171,6 +176,10 @@ def loop(config, writer = None):
             model.eval()
             val_loss = []
             val_miou_prec_rec = []
+
+            val_y_pred_list = []
+            val_y_list = []
+
             val_iter = iter(val_loader)
             for batch in tqdm(val_iter):
                 x, y = batch
@@ -179,35 +188,71 @@ def loop(config, writer = None):
                 #y_pred = model(x)['out']
                 y_pred = model(x)
                 y_pred = torch.argmax(y_pred, dim=1)
-                y_pred = y_pred.cpu().contiguous()
-                y = y.cpu().contiguous()
-                y_pred_flat = y_pred.view(-1).numpy()
-                y_flat = y.view(-1).numpy()
-                iou_prec_rec = np.nan * np.empty((3, config.model.n_class))
-                for i in range(config.model.n_class):
-                    y_flat_i = y_flat == i
-                    num_i = np.count_nonzero(y_flat_i)
-                    pred_flat_i = y_pred_flat == i
-                    num_pred_i = np.count_nonzero(pred_flat_i)
-                    intersection_i = np.logical_and(y_flat_i, pred_flat_i)
-                    union_i = np.logical_or(y_flat_i, pred_flat_i)
-                    num_intersection_i = np.count_nonzero(intersection_i)
-                    num_union_i = np.count_nonzero(union_i)
-                    if num_union_i > 0:
-                        iou_prec_rec[0,i] = num_intersection_i/num_union_i
-                    if num_pred_i > 0:
-                        iou_prec_rec[1,i] = num_intersection_i / num_pred_i
-                    if num_i > 0:
-                        iou_prec_rec[2,i] = num_intersection_i / num_i
-                val_miou_prec_rec.append(iou_prec_rec)
+
+                y_pred = y_pred.to(torch.uint8).cpu().contiguous().numpy()
+                y = y.to(torch.uint8).cpu().contiguous().numpy()
+                val_y_pred_list.append(y_pred)
+                val_y_list.append(y)
+
+
+                #y_pred = y_pred.cpu().contiguous()
+                #y = y.cpu().contiguous()
+                #y_pred_flat = y_pred.view(-1).numpy()
+                #y_flat = y.view(-1).numpy()
+                #iou_prec_rec = np.nan * np.empty((3, config.model.n_class))
+                #for i in range(config.model.n_class):
+                #    y_flat_i = y_flat == i
+                #    num_i = np.count_nonzero(y_flat_i)
+                #    pred_flat_i = y_pred_flat == i
+                #    num_pred_i = np.count_nonzero(pred_flat_i)
+                #    intersection_i = np.logical_and(y_flat_i, pred_flat_i)
+                #    union_i = np.logical_or(y_flat_i, pred_flat_i)
+                #    num_intersection_i = np.count_nonzero(intersection_i)
+                #    num_union_i = np.count_nonzero(union_i)
+                #    if num_union_i > 0:
+                #        iou_prec_rec[0,i] = num_intersection_i/num_union_i
+                #    if num_pred_i > 0:
+                #        iou_prec_rec[1,i] = num_intersection_i / num_pred_i
+                #    if num_i > 0:
+                #        iou_prec_rec[2,i] = num_intersection_i / num_i
+                #val_miou_prec_rec.append(iou_prec_rec)
                 val_loss.append(l.item()) #is this really the correct loss, shouldn't we calc l_val
 
-            val_miou_prec_rec = np.nanmean(np.stack(val_miou_prec_rec, axis = 0), axis = 0)
+            #FIXED
+            val_y_pred_list = np.concatenate(val_y_pred_list, axis=0)
+            val_y_list = np.concatenate(val_y_list, axis=0)  
+            val_y_pred_flat_list = val_y_pred_list.reshape(-1)
+            val_y_flat_list = val_y_list.reshape(-1)
+        
+            for i in range(config.model.n_class): #for all classes
+                y_flat_i = val_y_flat_list == i #sets ones where y_flat is equal to i
+                num_i = np.count_nonzero(y_flat_i) #count nbr of occurances of class i in true y
+                pred_flat_i = val_y_pred_flat_list == i 
+                num_pred_i = np.count_nonzero(pred_flat_i)
+                intersection_i = np.logical_and(y_flat_i, pred_flat_i) #where they match
+                union_i = np.logical_or(y_flat_i, pred_flat_i) #everything together
+                num_intersection_i = np.count_nonzero(intersection_i) #how big is the intersection
+                num_union_i = np.count_nonzero(union_i) #how big is the union
+                if num_union_i > 0: 
+                    val_miou_prec_rec[0,i] = num_intersection_i/num_union_i
+                if num_pred_i > 0:
+                    val_miou_prec_rec[1,i] = num_intersection_i / num_pred_i
+                if num_i > 0:
+                    val_miou_prec_rec[2,i] = num_intersection_i / num_i
+            #FIXED
+
+            #val_miou_prec_rec = np.nanmean(np.stack(val_miou_prec_rec, axis = 0), axis = 0)
             l_val = np.mean(val_loss)
             writer.add_scalar('val/loss', l_val, epoch)
+            val_miou_prec_rec = np.nan_to_num(val_miou_prec_rec,nan=0.0)
             writer.add_scalar('val/miou', np.mean(val_miou_prec_rec[0,:]), epoch)
             writer.add_scalar('val/precision', np.mean(val_miou_prec_rec[1,:]), epoch)
             writer.add_scalar('val/recall', np.mean(val_miou_prec_rec[2,:]), epoch)
+            #First 12 classes only for ref
+            writer.add_scalar('val/miou first 12', np.mean(val_miou_prec_rec[0,:12]), epoch)
+            writer.add_scalar('val/precision first 12', np.mean(val_miou_prec_rec[1,:12]), epoch)
+            writer.add_scalar('val/recall first 12', np.mean(val_miou_prec_rec[2,:12]), epoch)
+            #Save per class
             writer.add_text('val/miou per class', ', '.join(map(str, val_miou_prec_rec[0,:])), epoch)
             writer.add_text('val/precision per class', ', '.join(map(str, val_miou_prec_rec[1,:])), epoch)
             writer.add_text('val/recall per class', ', '.join(map(str, val_miou_prec_rec[2,:])), epoch)
