@@ -22,7 +22,7 @@ def main(config):
     log_dir = os.path.join(hydra_log_dir, 'tensorboard')
     print(log_dir)
     writer = SummaryWriter(log_dir=log_dir)
-    loop2.loop2(config, writer)
+    loop2.loop2(config, writer, hydra_log_dir)
 
 if __name__ == '__main__':
     main()

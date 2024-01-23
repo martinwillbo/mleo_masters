@@ -9,6 +9,7 @@ from torch.optim import Adam, SGD
 import sys
 from torch.cuda.amp import autocast, GradScaler
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
+import os
 
 
 def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
@@ -81,7 +82,7 @@ def miou_prec_rec_writing_13(y_pred_list, y_list, part, writer, epoch):
         writer.add_scalar(part+'/precision fixed 13th class', epoch_miou_prec_rec[1,0], epoch)
         writer.add_scalar(part+'/recall fixed 13th class', epoch_miou_prec_rec[2,0], epoch)
 
-def loop2(config, writer=None):
+def loop2(config, writer, hydra_log_dir):
     dataset_module = util.load_module(config.dataset.script_location)
     train_set = dataset_module.train_set(config)
     val_set = dataset_module.val_set(config)
@@ -116,7 +117,7 @@ def loop2(config, writer=None):
     best_val_loss = np.inf
 
     while epoch < config.max_epochs:
-        torch.save(model.state_dict(), 'model_'+str(epoch)+'.pth')
+        torch.save(model.state_dict(), os.path.join(hydra_log_dir, 'model_'+str(epoch)+'.pth'))
         print(torch.cuda.current_device())
         print(torch.cuda.is_available())
         print(next(model.parameters()).device)
