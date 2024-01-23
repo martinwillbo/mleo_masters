@@ -45,7 +45,7 @@ def loop(config, writer = None):
     if config.optimizer == 'adam':
         #TODO: Introduce config option for betas
         optimizer = Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay, betas=(config.beta1, 0.999))
-        scheduler1 = ExponentialLR(optimizer, gamma=0.95)
+        scheduler1 = ExponentialLR(optimizer, gamma=0.995)
 
 
     if config.optimizer == 'SGD':
