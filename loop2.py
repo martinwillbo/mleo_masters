@@ -10,14 +10,18 @@ import sys
 from torch.cuda.amp import autocast, GradScaler
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import os
+import deeplabv3_resnet50_priv
 
 def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
+
     epoch_miou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vecn
     y_pred_list = np.concatenate(y_pred_list, axis=0)
     y_list = np.concatenate(y_list, axis=0)
     y_pred_flat_list = y_pred_list.reshape(-1)
     y_flat_list = y_list.reshape(-1)
+
     for i in range(config.model.n_class): #for all classes
+
         y_flat_i = y_flat_list == i #sets ones where y_flat is equal to i
         num_i = np.count_nonzero(y_flat_i) #count nbr of occurances of class i in true y
         pred_flat_i = y_pred_flat_list == i
@@ -26,12 +30,14 @@ def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
         union_i = np.logical_or(y_flat_i, pred_flat_i) #everything together
         num_intersection_i = np.count_nonzero(intersection_i) #how big is the intersection
         num_union_i = np.count_nonzero(union_i) #how big is the union
+
         if num_union_i > 0:
             epoch_miou_prec_rec[0,i] = num_intersection_i/num_union_i
         if num_pred_i > 0:
             epoch_miou_prec_rec[1,i] = num_intersection_i / num_pred_i
         if num_i > 0:
             epoch_miou_prec_rec[2,i] = num_intersection_i / num_i
+
     epoch_miou_prec_rec = np.nan_to_num(epoch_miou_prec_rec,nan=0.0) #set nans to 0, bc we are not predicting even when we should
     #Results as mean over all
     writer.add_scalar(part+'/miou', np.mean(epoch_miou_prec_rec[0,:]), epoch)
@@ -45,11 +51,13 @@ def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
     writer.add_text(part+'/miou per class', ', '.join(map(str, epoch_miou_prec_rec[0,:])), epoch)
     writer.add_text(part+'/precision per class', ', '.join(map(str, epoch_miou_prec_rec[1,:])), epoch)
     writer.add_text(part+'/recall per class', ', '.join(map(str, epoch_miou_prec_rec[2,:])), epoch)
+
     print('Epoch mean miou: '+str(np.mean(epoch_miou_prec_rec[0,:])))
     print('Epoch mean precision: '+str(np.mean(epoch_miou_prec_rec[1,:])))
     print('Epoch mean recall: '+str(np.mean(epoch_miou_prec_rec[2,:])))
 
 def miou_prec_rec_writing_13(y_pred_list, y_list, part, writer, epoch):
+        
         epoch_miou_prec_rec = np.nan * np.empty((3, 1)) #creates empty vecn
         y_pred_list = np.concatenate(y_pred_list, axis=0)
         y_list = np.concatenate(y_list, axis=0)
@@ -65,18 +73,21 @@ def miou_prec_rec_writing_13(y_pred_list, y_list, part, writer, epoch):
         union_13 = np.logical_or(y_flat_13, pred_flat_13) #everything together
         num_intersection_13 = np.count_nonzero(intersection_13) #how big is the intersection
         num_union_13 = np.count_nonzero(union_13) #how big is the union
+
         if num_union_13 > 0:
             epoch_miou_prec_rec[0,0] = num_intersection_13/num_union_13
         if num_pred_13 > 0:
             epoch_miou_prec_rec[1,0] = num_intersection_13 / num_pred_13
         if num_13 > 0:
             epoch_miou_prec_rec[2,0] = num_intersection_13 / num_13
+
         #Save into writer
         writer.add_scalar(part+'/miou fixed 13th class', epoch_miou_prec_rec[0,0], epoch)
         writer.add_scalar(part+'/precision fixed 13th class', epoch_miou_prec_rec[1,0], epoch)
         writer.add_scalar(part+'/recall fixed 13th class', epoch_miou_prec_rec[2,0], epoch)
         
 def loop2(config, writer, hydra_log_dir):
+
     dataset_module = util.load_module(config.dataset.script_location)
     train_set = dataset_module.train_set(config)
     val_set = dataset_module.val_set(config)
@@ -86,8 +97,9 @@ def loop2(config, writer, hydra_log_dir):
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = True, num_workers = config.num_workers,
                             pin_memory = True)
     
-    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
-                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    model = deeplabv3_resnet50_priv(config)
+    #model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
+    #                            dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
     model.to(config.device)
     
@@ -146,7 +158,7 @@ def loop2(config, writer, hydra_log_dir):
         print('Epoch mean loss: '+str(np.mean(epoch_loss)))
         miou_prec_rec_writing(config, y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
         miou_prec_rec_writing_13(y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
-        
+
         if epoch % config.eval_every == 0:
             model.eval()
             val_loss = []
