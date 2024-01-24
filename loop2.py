@@ -10,7 +10,7 @@ import sys
 from torch.cuda.amp import autocast, GradScaler
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import os
-import deeplabv3_resnet50_priv
+from deeplabv3_resnet50_priv import DeepLabV3_ResNet50
 
 def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
 
@@ -97,7 +97,7 @@ def loop2(config, writer, hydra_log_dir):
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = True, num_workers = config.num_workers,
                             pin_memory = True)
     
-    model = deeplabv3_resnet50_priv(config)
+    model = DeepLabV3_ResNet50(config)
     #model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
     #                            dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
