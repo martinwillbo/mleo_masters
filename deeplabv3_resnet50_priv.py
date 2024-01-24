@@ -32,12 +32,12 @@ class DeepLabV3_ResNet50(nn.Module):
         self.aspp = ASPP(in_channels=2048, out_channels=256, rates=[6, 12, 18, 24])
 
         # Define the final segmentation head
-        self.segmentation_head = nn.Conv2d(256*6, num_classes, kernel_size=1) #should be 256 in_channels
+        self.segmentation_head = nn.Conv2d(256, num_classes, kernel_size=1) #should be 256 in_channels
 
     def forward(self, x):
         # Forward pass through the modified ResNet-50 backbone
         x = self.features(x)
-        #print("After backbone:", x.shape)
+        print("After backbone:", x.shape)
 
         # Forward pass through the ASPP module
         x = self.aspp(x)
