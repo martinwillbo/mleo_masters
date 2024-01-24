@@ -37,15 +37,15 @@ class DeepLabV3_ResNet50(nn.Module):
     def forward(self, x):
         # Forward pass through the modified ResNet-50 backbone
         x = self.features(x)
-        print("After backbone:", x.shape)
+        #print("After backbone:", x.shape)
 
         # Forward pass through the ASPP module
         x = self.aspp(x)
-        print("After ASPP:", x.shape)
+        #print("After ASPP:", x.shape)
 
         # Forward pass through the segmentation head
         x = self.segmentation_head(x)
-        print("Final output shape:", x.shape)
+        #print("Final output shape:", x.shape)
 
         return x
 
@@ -80,6 +80,14 @@ class ASPP(nn.Module):
         x6 = self.global_avg_pool(x)
         x6 = self.conv1x1_6(x6)
         x6 = nn.functional.interpolate(x6, size=x.size()[2:], mode='bilinear', align_corners=False)
+
+        # Print shapes before concatenation
+        print("x1 shape:", x1.shape)
+        print("x2 shape:", x2.shape)
+        print("x3 shape:", x3.shape)
+        print("x4 shape:", x4.shape)
+        print("x5 shape:", x5.shape)
+        print("x6 shape:", x6.shape)
 
         # Concatenate the results from all branches
         out = torch.cat((x1, x2, x3, x4, x5, x6), dim=1)
