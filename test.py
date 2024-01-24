@@ -5,6 +5,7 @@ import util
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from loop2 import miou_prec_rec_writing, miou_prec_rec_writing_13 
+from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import os
 
 def eval_on_test(config, writer, training_path):
@@ -21,7 +22,8 @@ def eval_on_test(config, writer, training_path):
     saved_model_path = os.path.join(training_path, 'best_model.pth')
 
     # Load the saved model parameters into the instantiated model
-    model = torch.load(saved_model_path)
+    model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
+    model.load_state_dict(torch.load(saved_model_path))
     model.to(config.device)
 
     # Set the model to evaluation mode
