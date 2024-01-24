@@ -10,7 +10,8 @@ import sys
 from torch.cuda.amp import autocast, GradScaler
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import os
-
+import math
+import random
 
 def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
     epoch_miou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vecn
@@ -82,21 +83,34 @@ def miou_prec_rec_writing_13(y_pred_list, y_list, part, writer, epoch):
         writer.add_scalar(part+'/precision fixed 13th class', epoch_miou_prec_rec[1,0], epoch)
         writer.add_scalar(part+'/recall fixed 13th class', epoch_miou_prec_rec[2,0], epoch)
 
+def save_image(index, x, y_pred, y, epoch, config):
+            x = torch.from_numpy(x)
+            y_pred = torch.from_numpy(y_pred)
+            y = torch.from_numpy(y)
+            if config.model.n_channels == 5:
+                x_priv = x[3:]
+                x = x[:3]
+                writer.add_image('Val/priv info, batch: ' + str(index), x_priv, epoch)
+            writer.add_image('Val/x, batch: ' + str(index), x, epoch)
+            writer.add_image('Val/y, batch: ' + str(index), y, epoch)
+            writer.add_image('Val/y_pred, batch: ' + str(index), y_pred, epoch)
+
 def loop2(config, writer, hydra_log_dir):
     dataset_module = util.load_module(config.dataset.script_location)
     train_set = dataset_module.train_set(config)
     val_set = dataset_module.val_set(config)
 
     
-    train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = False, num_workers = config.num_workers,
+    train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = True, num_workers = config.num_workers,
                               pin_memory = True)
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers, 
                             pin_memory = True)
     
-    #model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
-    #                            dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
+                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     
-    model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
+    model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
+    #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
     model.to(config.device)
     
 
@@ -135,8 +149,8 @@ def loop2(config, writer, hydra_log_dir):
             y = y.to(config.device)
             
             with autocast():
-                #y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
-                y_pred = model(x)
+                y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
+                #y_pred = model(x)
                 l = train_loss(y_pred, y)
             optimizer.zero_grad()
             scaler.scale(l).backward()
@@ -165,13 +179,20 @@ def loop2(config, writer, hydra_log_dir):
             val_y_pred_list = []
             val_y_list = []
 
+            num_batches = math.floor(len(val_set)/config.val_batch_size)
+            same_img_idx = 0
+            random_img_idx_1 = random.randint(0, math.floor(num_batches/2))
+            random_img_idx_2 = random.randint(math.floor(num_batches/2)+1, num_batches-1)
+            counter = 0
+            x_vec_for_saving_img = []
+
             val_iter = iter(val_loader)
             for batch in tqdm(val_iter):
                 x,y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)
-                #y_pred = model(x)['out']
-                y_pred = model(x)
+                y_pred = model(x)['out']
+                #y_pred = model(x)
                 l = eval_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
 
@@ -181,6 +202,25 @@ def loop2(config, writer, hydra_log_dir):
                 val_y_list.append(y)
 
                 val_loss.append(l.item())
+                if counter in [same_img_idx, random_img_idx_1, random_img_idx_2]:
+                    x_cpu = x[0].cpu().contiguous().detach().numpy()
+                    x_vec_for_saving_img.append(x_cpu)
+                counter += 1
+
+            element_1 = val_y_pred_list[same_img_idx][0, :, :]
+            element_2 = val_y_pred_list[random_img_idx_1][0, :, :]
+            element_3 = val_y_pred_list[random_img_idx_2][0, :, :]
+            y_pred_vec_for_saving_img = np.stack([element_1, element_2, element_3])
+            element_1 = val_y_list[same_img_idx][0, :, :]
+            element_2 = val_y_list[random_img_idx_1][0, :, :]
+            element_3 = val_y_list[random_img_idx_2][0, :, :]
+            y_vec_for_saving_img = np.stack([element_1, element_2, element_3])
+
+            #y_pred_vec_for_saving_img = val_y_pred_list[[same_img_idx, random_img_idx_1, random_img_idx_2], 0, :, :]
+            #y_vec_for_saving_img = val_y_list[[same_img_idx, random_img_idx_1, random_img_idx_2], 0, :, :]
+            
+            for i in range(len(y_pred_vec_for_saving_img)):
+                save_image(same_img_idx, x_vec_for_saving_img[i], y_pred_vec_for_saving_img[i], y_vec_for_saving_img[i], epoch, config)
 
             #Save loss
             l_val = np.mean(val_loss)
@@ -204,6 +244,9 @@ def loop2(config, writer, hydra_log_dir):
                 torch.save(optimizer.state_dict(), 'optimizer_'+str(epoch)+'.pth')
 
         epoch +=1
+
+        
+
 
    
 
