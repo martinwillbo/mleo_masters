@@ -32,7 +32,7 @@ class DeepLabV3_ResNet50(nn.Module):
         self.aspp = ASPP(in_channels=2048, out_channels=256, rates=[6, 12, 18, 24])
 
         # Define the final segmentation head
-        self.segmentation_head = nn.Conv2d(256, num_classes, kernel_size=1)
+        self.segmentation_head = nn.Conv2d(256*6, num_classes, kernel_size=1) #should be 256 in_channels
 
     def forward(self, x):
         # Forward pass through the modified ResNet-50 backbone
@@ -90,7 +90,7 @@ class ASPP(nn.Module):
         #print("x6 shape:", x6.shape)
 
         # Concatenate the results from all branches
-        out = torch.cat((x1, x2, x3, x4, x5, x6), dim=0) # was dim=1 originally
+        out = torch.cat((x1, x2, x3, x4, x5, x6), dim=1) # was dim=1 originally
         print("out shape", out.shape)
 
         return out
