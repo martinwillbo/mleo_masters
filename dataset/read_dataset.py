@@ -26,12 +26,14 @@ class DatasetClass(Dataset):
         if not self.config.dataset.using_priv:
             self.layer_means = self.layer_means[0:3] #only bgr
             self.layer_stds = self.layer_stds[0:3]
-        path_var = part
-
-        if part == 'val':
-            path_var = 'train'
-        X_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.X_path + '_' + path_var)
-        Y_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.Y_path + '_' + path_var)
+    
+        if part == 'val' or part == 'train':       
+            X_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.X_path + '_' + 'train')
+            Y_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.Y_path + '_' + 'train')
+        elif part == 'test':
+            X_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_aerial_test')
+            Y_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_labels_test')
+   
         print(X_BASE_PATH)
         
         X_tif_paths = self._read_paths(X_BASE_PATH)
