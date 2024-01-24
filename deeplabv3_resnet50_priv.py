@@ -37,12 +37,15 @@ class DeepLabV3_ResNet50(nn.Module):
     def forward(self, x):
         # Forward pass through the modified ResNet-50 backbone
         x = self.features(x)
+        print("After backbone:", x.shape)
 
         # Forward pass through the ASPP module
         x = self.aspp(x)
+        print("After ASPP:", x.shape)
 
         # Forward pass through the segmentation head
         x = self.segmentation_head(x)
+        print("Final output shape:", x.shape)
 
         return x
 
