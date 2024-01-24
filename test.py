@@ -21,7 +21,7 @@ def eval_on_test(config, writer, training_path):
     saved_model_path = os.path.join(training_path, 'best_model.pth')
 
     # Load the saved model parameters into the instantiated model
-    model = model.load_state_dict(torch.load(saved_model_path))
+    model = torch.load(saved_model_path)
     model.to(config.device)
 
     # Set the model to evaluation mode
