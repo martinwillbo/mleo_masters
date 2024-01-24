@@ -82,14 +82,15 @@ class ASPP(nn.Module):
         x6 = nn.functional.interpolate(x6, size=x.size()[2:], mode='bilinear', align_corners=False)
 
         # Print shapes before concatenation
-        print("x1 shape:", x1.shape)
-        print("x2 shape:", x2.shape)
-        print("x3 shape:", x3.shape)
-        print("x4 shape:", x4.shape)
-        print("x5 shape:", x5.shape)
-        print("x6 shape:", x6.shape)
+        #print("x1 shape:", x1.shape)
+        #print("x2 shape:", x2.shape)
+        #print("x3 shape:", x3.shape)
+        #print("x4 shape:", x4.shape)
+        #print("x5 shape:", x5.shape)
+        #print("x6 shape:", x6.shape)
 
         # Concatenate the results from all branches
         out = torch.cat((x1, x2, x3, x4, x5, x6), dim=0) # was dim=1 originally
+        print("out shape", out.shape)
 
         return out
