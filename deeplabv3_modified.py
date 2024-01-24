@@ -6,7 +6,7 @@ class DeepLabV3Modified(nn.Module):
     def __init__(self, config):
 
         num_classes = config.model.n_class
-        num_channels = config.model.num_channels
+        num_channels = config.model.n_channels
 
         super(DeepLabV3Modified, self).__init__()
 
