@@ -90,6 +90,6 @@ class ASPP(nn.Module):
         print("x6 shape:", x6.shape)
 
         # Concatenate the results from all branches
-        out = torch.cat((x1, x2, x3, x4, x5, x6), dim=1)
+        out = torch.cat((x1, x2, x3, x4, x5, x6), dim=0) # was dim=1 originally
 
         return out
