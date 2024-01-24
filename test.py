@@ -3,13 +3,11 @@ import torch.nn as nn
 import numpy as np
 import util
 from tqdm import tqdm
-from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
-#from torchvision.models.segmentation.deeplabv3 import DeepLabV3, DeepLabHead
 from torch.utils.data import DataLoader
 from loop2 import miou_prec_rec_writing, miou_prec_rec_writing_13 
+import os
 
-
-def eval_on_test(config, writer = None):
+def eval_on_test(config, writer, training_path):
 
     dataset_module = util.load_module(config.dataset.script_location)
     
@@ -19,12 +17,8 @@ def eval_on_test(config, writer = None):
     test_loader = DataLoader(test_set, batch_size = config.test_batch_size, shuffle = False, num_workers = config.num_workers, 
                             pin_memory = True)
     
-    model = deeplabv3_resnet50(weights = config.model.pretrained, progress=True, num_classes=config.model.n_class,
-                                  dim_input=config.model.n_channels, aux_loss=None, weights_backbone=config.model.pretrained_backbone)
-    
-
     # Specify the path to the saved model
-    saved_model_path = '../log_res/ INSERT DATE STAMP /best_model.pth'
+    saved_model_path = os.path.join(training_path, 'best_model.pth')
 
     # Load the saved model parameters into the instantiated model
     model = model.load_state_dict(torch.load(saved_model_path))
@@ -58,8 +52,6 @@ def eval_on_test(config, writer = None):
         y = y.to(torch.uint8).cpu().contiguous().numpy()
         y_pred_list.append(y_pred)
         y_list.append(y)
-
-
                  
     l_test = np.mean(test_loss)
 
