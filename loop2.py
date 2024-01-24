@@ -97,9 +97,9 @@ def loop2(config, writer, hydra_log_dir):
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = True, num_workers = config.num_workers,
                             pin_memory = True)
     
-    model = DeepLabV3Modified(config)
-    #model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
-    #                            dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    #model = DeepLabV3Modified(config)
+    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
+                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
     model.to(config.device)
     
@@ -136,8 +136,8 @@ def loop2(config, writer, hydra_log_dir):
             y = y.to(config.device)
 
             with autocast():
-                #y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
-                y_pred = model(x)
+                y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
+                #y_pred = model(x)
                 #print("Type of model output:", type(y_pred_dict))
                 l = train_loss(y_pred, y)
 
