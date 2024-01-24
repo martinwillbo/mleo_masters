@@ -16,15 +16,18 @@ class DatasetClass(Dataset):
         self.part = part
         self.X = []
         self.Y = []
+
         #Read in desiread transform
         transform_module = util.load_module(self.config.transform.script_location)
         self.transform = transform_module.get_transform(self.config)
         self.layer_means = np.array(self.config.dataset.mean)
         self.layer_stds = np.array(self.config.dataset.std)
+
         if not self.config.dataset.using_priv:
             self.layer_means = self.layer_means[0:3] #only bgr
             self.layer_stds = self.layer_stds[0:3]
         path_var = part
+
         if part == 'val':
             path_var = 'train'
         X_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.X_path + '_' + path_var)
@@ -39,15 +42,19 @@ class DatasetClass(Dataset):
         X_tif_paths, Y_tif_paths = list(X_tif_paths), list(Y_tif_paths)
         assert len(X_tif_paths) == len(Y_tif_paths)
         split_point = math.floor(len(X_tif_paths)*(1-self.config.dataset.val_set_size))
+
         if self.part == 'train':
             # no shuffle when splitting - change maybe
             X_tif_paths = X_tif_paths[0:split_point]
             Y_tif_paths = Y_tif_paths[0:split_point]
+
         if self.part == 'val':
             X_tif_paths = X_tif_paths[split_point:]
             Y_tif_paths = Y_tif_paths[split_point:]
+
         #print('Constructing ' + self.part + ' set...')
-        if config.dataset.det_crop: #THIS IS BROKEN WITH THE SHUFFLING
+        # This is for determenistic cropping - curr. not used
+        if config.dataset.det_crop and self.part == 'train': #THIS IS BROKEN WITH THE SHUFFLING
             self.crop_coordinates = self._get_crop_coordinates(self._read_data(X_tif_paths[0], is_label=False)) #use one img for cropping coords
             num_crops = len(self.crop_coordinates)
             self.X_tif_paths = [path for path in X_tif_paths for _ in range(num_crops)]
@@ -56,6 +63,7 @@ class DatasetClass(Dataset):
             self.X_tif_paths = X_tif_paths
             self.Y_tif_paths = Y_tif_paths
         print('Tif size: ' + str(sys.getsizeof(self.X_tif_paths)*8)) #takes like 3MB
+
         #temp_X = self._read_data_old(X_tif_paths, is_label = False)
         #temp_Y = self._read_data_old(Y_tif_paths, is_label = True)
         #print(len(temp_X))
@@ -64,13 +72,15 @@ class DatasetClass(Dataset):
         #self.Y.extend(temp_Y)
         #print(min(item.min().item() for item in self.Y))
         #print(max(item.max().item() for item in self.Y))
+
     def __getitem__(self, index):
         #print(index)
         x = self._read_data(self.X_tif_paths[index], is_label = False)
         #x = self.X[index]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
         #y = self.Y[index]
-        if self.part == 'val':
+        if self.part == 'val' or self.part == 'test':
+            x = self._normalize(x)
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
         if self.config.dataset.det_crop:
             #get exactly one crop
@@ -87,16 +97,20 @@ class DatasetClass(Dataset):
            
         #NOTE: These operations expect shape (H,W,C)
         #Normalize images, after transform
-        x = np.transpose(x, (1,2,0)).astype(float)
-        x -= self.layer_means
-        x /= self.layer_stds
+        x = self._normalize(x)    
+
+        #x = np.transpose(x, (1,2,0)).astype(float)
+        #x -= self.layer_means
+        #x /= self.layer_stds
         #NOTE: Pytorch models typically expect shape (C, H, W)
-        x = np.transpose(x, (2,0,1))
+        #x = np.transpose(x, (2,0,1))
         
         return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
+    
     def __len__(self):
         assert len(self.X_tif_paths) == len(self.Y_tif_paths)
         return len(self.X_tif_paths)
+    
     def _read_paths(self, BASE_PATH):
         tif_paths = []
         for root, dirs, files in os.walk(BASE_PATH):
@@ -104,6 +118,7 @@ class DatasetClass(Dataset):
                 if file.endswith(".tif"):
                     tif_paths.append(os.path.join(root, file))
         return tif_paths
+    
     def _read_data(self, tif_path, is_label):
         data = np.array(tifffile.imread(tif_path))
         data = data.astype(np.uint8) #all data is uint8
@@ -116,6 +131,7 @@ class DatasetClass(Dataset):
             if not self.config.dataset.using_priv:
                 data = data[:3,:,:]
         return data
+    
     def _read_data_old(self, tif_paths, is_label):
         temp_data = []
         for i, path in tqdm(enumerate(tif_paths)):
@@ -142,6 +158,7 @@ class DatasetClass(Dataset):
             #if i == 2 and self.part == 'val':
             #    return temp_data
         return temp_data
+    
     def _rescale(self, data, is_label):
         if not is_label:
             data = np.transpose(data, (1,2,0))
@@ -156,6 +173,15 @@ class DatasetClass(Dataset):
         if not is_label:
             data  = np.transpose(data, (2, 0, 1))
         return data
+    
+    def _normalize(self, data):
+        data = np.transpose(data, (1,2,0)).astype(float)
+        data -= self.layer_means
+        data /= self.layer_stds
+        #NOTE: Pytorch models typically expect shape (C, H, W)
+        data = np.transpose(data, (2,0,1))
+        return data
+    
     def _get_crop_coordinates(self, data):
         h, w = data.shape[1], data.shape[2] #x,y has the same shape
         crop_size = self.config.dataset.crop_size
@@ -169,6 +195,7 @@ class DatasetClass(Dataset):
                 coordinates = (start_h, start_w, end_h, end_w)
                 crop_coordinates.append(coordinates)
         return crop_coordinates
+    
     def _random_crop(self, x, y):
         start_h = random.randint(0, x.shape[1] - self.config.dataset.crop_size)
         end_h = start_h + self.config.dataset.crop_size
@@ -177,6 +204,7 @@ class DatasetClass(Dataset):
         x = x[:, start_h:end_h, start_w:end_w]
         y = y[start_h:end_h, start_w:end_w]
         return x,y
+    
     def det_crop_old(self, data, is_label):
         if is_label:
             h, w = data.shape[0], data.shape[1]
@@ -197,10 +225,11 @@ class DatasetClass(Dataset):
                     crop = self._rescale(crop, is_label)
                 all_crops.append(crop)
         return all_crops
+    
 #NOTE: Given the from of loop these functions should be in any dataset module that you design (given that you keep it unchanged)
 def train_set(config):
     return DatasetClass(config, part = 'train')
 def val_set(config):
     return DatasetClass(config, part = 'val')
 def test_set(config):
-    pass
+    return DatasetClass(config, part = 'test')
