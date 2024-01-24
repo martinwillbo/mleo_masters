@@ -45,7 +45,7 @@ class DeepLabV3_ResNet50(nn.Module):
 
         # Forward pass through the segmentation head
         x = self.segmentation_head(x)
-        print("Final output shape:", x.shape)
+        #print("Final output shape:", x.shape)
 
         return x
 
@@ -91,6 +91,6 @@ class ASPP(nn.Module):
 
         # Concatenate the results from all branches
         out = torch.cat((x1, x2, x3, x4, x5, x6), dim=1) # was dim=1 originally
-        print("out shape", out.shape)
+        #print("out shape", out.shape)
 
         return out
