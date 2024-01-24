@@ -136,7 +136,9 @@ def loop2(config, writer, hydra_log_dir):
             y = y.to(config.device)
 
             with autocast():
-                y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
+                y_pred_dict = model(x)
+                print("Type of model output:", type(y_pred_dict))
+                #y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
                 #y_pred = model(x)
                 l = train_loss(y_pred, y)
 
