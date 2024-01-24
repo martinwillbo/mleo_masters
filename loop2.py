@@ -10,6 +10,7 @@ import sys
 from torch.cuda.amp import autocast, GradScaler
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import os
+
 def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
     epoch_miou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vecn
     y_pred_list = np.concatenate(y_pred_list, axis=0)
@@ -47,6 +48,7 @@ def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
     print('Epoch mean miou: '+str(np.mean(epoch_miou_prec_rec[0,:])))
     print('Epoch mean precision: '+str(np.mean(epoch_miou_prec_rec[1,:])))
     print('Epoch mean recall: '+str(np.mean(epoch_miou_prec_rec[2,:])))
+
 def miou_prec_rec_writing_13(y_pred_list, y_list, part, writer, epoch):
         epoch_miou_prec_rec = np.nan * np.empty((3, 1)) #creates empty vecn
         y_pred_list = np.concatenate(y_pred_list, axis=0)
@@ -73,30 +75,38 @@ def miou_prec_rec_writing_13(y_pred_list, y_list, part, writer, epoch):
         writer.add_scalar(part+'/miou fixed 13th class', epoch_miou_prec_rec[0,0], epoch)
         writer.add_scalar(part+'/precision fixed 13th class', epoch_miou_prec_rec[1,0], epoch)
         writer.add_scalar(part+'/recall fixed 13th class', epoch_miou_prec_rec[2,0], epoch)
+        
 def loop2(config, writer, hydra_log_dir):
     dataset_module = util.load_module(config.dataset.script_location)
     train_set = dataset_module.train_set(config)
     val_set = dataset_module.val_set(config)
-    train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = False, num_workers = config.num_workers,
+
+    train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = True, num_workers = config.num_workers,
                               pin_memory = True)
-    val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers,
+    val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = True, num_workers = config.num_workers,
                             pin_memory = True)
-    #model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
-    #                            dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
-    model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
+    
+    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, num_classes = config.model.n_class,
+                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
     model.to(config.device)
+    
     scaler = GradScaler()
     if config.optimizer == 'adam':
         #TODO: Introduce config option for betas
         optimizer = Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay, betas=(config.beta1, 0.999))
     if config.optimizer == 'SGD':
         optimizer = SGD(model.parameters(), lr=config.lr, momentum=config.momentum, weight_decay=config.weight_decay)
+    
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
     train_loss = nn.CrossEntropyLoss()
     eval_loss = nn.CrossEntropyLoss()
+
     epoch = 0
     best_val_loss = np.inf
+
     while epoch < config.max_epochs:
+
         print(torch.cuda.current_device())
         print(torch.cuda.is_available())
         print(next(model.parameters()).device)
@@ -106,30 +116,37 @@ def loop2(config, writer, hydra_log_dir):
         train_iter = iter(train_loader)
         y_pred_list = [] #list to save for an entire epoch
         y_list = []
+
         for batch in tqdm(train_iter):
+
             x,y = batch
             x = x.to(config.device)
             y = y.to(config.device)
+
             with autocast():
-                #y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
-                y_pred = model(x)
+                y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
+                #y_pred = model(x)
                 l = train_loss(y_pred, y)
+
             optimizer.zero_grad()
             scaler.scale(l).backward()
             scaler.step(optimizer)
             scaler.update()
             y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
+
             #y_pred and y has shape: batch_size, crop_size, crop_size, save all values as uint8 in lists on RAM
             y_pred = y_pred.to(torch.uint8).cpu().contiguous().numpy()
             y = y.to(torch.uint8).cpu().contiguous().numpy()
             y_pred_list.append(y_pred)
             y_list.append(y)
             epoch_loss.append(l.item())
+
         #Save loss
         writer.add_scalar('train/loss', np.mean(epoch_loss), epoch)
         print('Epoch mean loss: '+str(np.mean(epoch_loss)))
         miou_prec_rec_writing(config, y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
         miou_prec_rec_writing_13(y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
+        
         if epoch % config.eval_every == 0:
             model.eval()
             val_loss = []
@@ -140,8 +157,8 @@ def loop2(config, writer, hydra_log_dir):
                 x,y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)
-                #y_pred = model(x)['out']
-                y_pred = model(x)
+                y_pred = model(x)['out']
+                #y_pred = model(x)
                 y_pred = torch.argmax(y_pred, dim=1)
                 y_pred = y_pred.to(torch.uint8).cpu().contiguous().numpy()
                 y = y.to(torch.uint8).cpu().contiguous().numpy()

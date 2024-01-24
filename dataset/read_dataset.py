@@ -66,21 +66,21 @@ class DatasetClass(Dataset):
             self.Y_tif_paths = Y_tif_paths
         print('Tif size: ' + str(sys.getsizeof(self.X_tif_paths)*8)) #takes like 3MB
 
-        temp_X = self._read_data_old(X_tif_paths, is_label = False)
-        temp_Y = self._read_data_old(Y_tif_paths, is_label = True)
+        #temp_X = self._read_data_old(X_tif_paths, is_label = False)
+        #temp_Y = self._read_data_old(Y_tif_paths, is_label = True)
         #print(len(temp_X))
         #print(len(temp_Y))
-        self.X.extend(temp_X)
-        self.Y.extend(temp_Y)
+        #self.X.extend(temp_X)
+        #self.Y.extend(temp_Y)
         #print(min(item.min().item() for item in self.Y))
         #print(max(item.max().item() for item in self.Y))
 
     def __getitem__(self, index):
         #print(index)
-        #x = self._read_data(self.X_tif_paths[index], is_label = False)
-        x = self.X[index]
-        #y = self._read_data(self.Y_tif_paths[index], is_label = True)
-        y = self.Y[index]
+        x = self._read_data(self.X_tif_paths[index], is_label = False)
+        #x = self.X[index]
+        y = self._read_data(self.Y_tif_paths[index], is_label = True)
+        #y = self.Y[index]
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
