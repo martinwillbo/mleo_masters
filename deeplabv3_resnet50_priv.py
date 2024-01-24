@@ -45,7 +45,7 @@ class DeepLabV3_ResNet50(nn.Module):
 
         # Forward pass through the segmentation head
         x = self.segmentation_head(x)
-        #print("Final output shape:", x.shape)
+        print("Final output shape:", x.shape)
 
         return x
 
