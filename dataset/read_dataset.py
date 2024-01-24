@@ -28,12 +28,15 @@ class DatasetClass(Dataset):
             self.layer_means = self.layer_means[0:3] #only bgr
             self.layer_stds = self.layer_stds[0:3]
         
-        path_var = part
-        if part == 'val':
-            path_var = 'train'
-
-        X_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.X_path + '_' + path_var)
-        Y_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.Y_path + '_' + path_var)
+        
+        if part == 'val' or part == 'train':
+            X_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.X_path + '_' + 'train')
+            Y_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.Y_path + '_' + 'train')
+        elif part == 'test':
+            X_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_aerial_test')
+            Y_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_labels_test')
+            
+        print(X_BASE_PATH)
         X_tif_paths = self._read_paths(X_BASE_PATH)
         Y_tif_paths = self._read_paths(Y_BASE_PATH)
         combined = list(zip(X_tif_paths, Y_tif_paths))
@@ -54,7 +57,7 @@ class DatasetClass(Dataset):
             Y_tif_paths = Y_tif_paths[split_point:]
 
         #print('Constructing ' + self.part + ' set...')
-        if config.dataset.det_crop: #THIS IS BROKEN WITH THE SHUFFLING
+        if config.dataset.det_crop and part == 'train': #THIS IS BROKEN WITH THE SHUFFLING
             self.crop_coordinates = self._get_crop_coordinates(self._read_data(X_tif_paths[0], is_label=False)) #use one img for cropping coords
             num_crops = len(self.crop_coordinates)
             self.X_tif_paths = [path for path in X_tif_paths for _ in range(num_crops)]
@@ -78,7 +81,8 @@ class DatasetClass(Dataset):
         #x = self.X[index]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
         #y = self.Y[index]
-        if self.part == 'val':
+        if self.part == 'val' or self.part == 'test':
+            x = self._normalize(x)
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
        
         if self.config.dataset.det_crop:
@@ -96,15 +100,9 @@ class DatasetClass(Dataset):
 
         if self.config.use_transform:
             x, y = self.transform.apply(x,y)
-
-        #NOTE: These operations expect shape (H,W,C)
-        #Normalize images, after transform
-        x = np.transpose(x, (1,2,0)).astype(float)
-        x -= self.layer_means
-        x /= self.layer_stds
-        #NOTE: Pytorch models typically expect shape (C, H, W)
-        x = np.transpose(x, (2,0,1))
         
+        x = self._normalize(x)
+
         return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
     
     def __len__(self):
@@ -160,6 +158,16 @@ class DatasetClass(Dataset):
             #    return temp_data
 
         return temp_data
+
+    def _normalize(self, data):
+        #NOTE: These operations expect shape (H,W,C)
+        data = np.transpose(data, (1,2,0)).astype(float)
+        data -= self.layer_means
+        data /= self.layer_stds
+        #NOTE: Pytorch models typically expect shape (C, H, W)
+        data = np.transpose(data, (2,0,1))
+        return data
+
 
     def _rescale(self, data, is_label):
         if not is_label:
@@ -228,4 +236,4 @@ def val_set(config):
     return DatasetClass(config, part = 'val')
 
 def test_set(config):
-    pass
+    return DatasetClass(config, part = 'test')
