@@ -12,32 +12,39 @@ from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import os
 import math
 import random
+import cv2
+import matplotlib.pyplot as plt
 
 def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
-    epoch_miou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vecn
-    y_pred_list = np.concatenate(y_pred_list, axis=0)
-    y_list = np.concatenate(y_list, axis=0)
-    y_pred_flat_list = y_pred_list.reshape(-1)
-    y_flat_list = y_list.reshape(-1)
+    y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0)).to(config.device)
+    y_list = torch.tensor(np.concatenate(y_list, axis=0)).to(config.device)
 
-    for i in range(config.model.n_class): #for all classes
-        y_flat_i = y_flat_list == i #sets ones where y_flat is equal to i
-        num_i = np.count_nonzero(y_flat_i) #count nbr of occurances of class i in true y
-        pred_flat_i = y_pred_flat_list == i 
-        num_pred_i = np.count_nonzero(pred_flat_i)
-        intersection_i = np.logical_and(y_flat_i, pred_flat_i) #where they match
-        union_i = np.logical_or(y_flat_i, pred_flat_i) #everything together
-        num_intersection_i = np.count_nonzero(intersection_i) #how big is the intersection
-        num_union_i = np.count_nonzero(union_i) #how big is the union
-        if num_union_i > 0: 
-            epoch_miou_prec_rec[0,i] = num_intersection_i/num_union_i
+    y_pred_list = y_pred_list.view(-1)
+    y_list = y_list.view(-1)
+
+    epoch_miou_prec_rec = torch.full((3, config.model.n_class), float('nan'), device='cuda')
+
+    for i in range(config.model.n_class):
+        y_flat_i = (y_list == i)
+        num_i = torch.count_nonzero(y_flat_i)
+        pred_flat_i = (y_pred_list == i)
+        num_pred_i = torch.count_nonzero(pred_flat_i)
+        intersection_i = torch.logical_and(y_flat_i, pred_flat_i)
+        union_i = torch.logical_or(y_flat_i, pred_flat_i)
+        num_intersection_i = torch.count_nonzero(intersection_i)
+        num_union_i = torch.count_nonzero(union_i)
+
+        if num_union_i > 0:
+            epoch_miou_prec_rec[0, i] = num_intersection_i.float() / num_union_i.float()
         if num_pred_i > 0:
-            epoch_miou_prec_rec[1,i] = num_intersection_i / num_pred_i
+            epoch_miou_prec_rec[1, i] = num_intersection_i.float() / num_pred_i.float()
         if num_i > 0:
-            epoch_miou_prec_rec[2,i] = num_intersection_i / num_i
+            epoch_miou_prec_rec[2, i] = num_intersection_i.float() / num_i.float()
 
-    epoch_miou_prec_rec = np.nan_to_num(epoch_miou_prec_rec,nan=0.0) #set nans to 0, bc we are not predicting even when we should
+    del y_pred_list, y_list
 
+    epoch_miou_prec_rec = torch.nan_to_num(epoch_miou_prec_rec, nan=0.0)
+    epoch_miou_prec_rec = epoch_miou_prec_rec.cpu().numpy()
     #Results as mean over all
     writer.add_scalar(part+'/miou', np.mean(epoch_miou_prec_rec[0,:]), epoch)
     writer.add_scalar(part+'/precision', np.mean(epoch_miou_prec_rec[1,:]), epoch)
@@ -54,52 +61,161 @@ def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
     print('Epoch mean precision: '+str(np.mean(epoch_miou_prec_rec[1,:])))
     print('Epoch mean recall: '+str(np.mean(epoch_miou_prec_rec[2,:])))
 
-def miou_prec_rec_writing_13(y_pred_list, y_list, part, writer, epoch):
-        epoch_miou_prec_rec = np.nan * np.empty((3, 1)) #creates empty vecn
-        y_pred_list = np.concatenate(y_pred_list, axis=0)
-        y_list = np.concatenate(y_list, axis=0)
-        y_pred_flat_list = y_pred_list.reshape(-1)
-        y_flat_list = y_list.reshape(-1)
-        y_pred_flat_list[y_pred_flat_list > 12] = 13
-        y_flat_list[y_flat_list > 12] = 13    
+def miou_prec_rec_writing_13(config, y_pred_list, y_list, part, writer, epoch):
+    y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0)).to(config.device)
+    y_list = torch.tensor(np.concatenate(y_list, axis=0)).to(config.device)
 
-        y_flat_13 = y_flat_list == 13 #sets ones where y_flat is equal to i
-        num_13 = np.count_nonzero(y_flat_13) #count nbr of occurances of class i in true y
-        pred_flat_13 = y_pred_flat_list == 13 
-        num_pred_13 = np.count_nonzero(pred_flat_13)
-        intersection_13 = np.logical_and(y_flat_13, pred_flat_13) #where they match
-        union_13 = np.logical_or(y_flat_13, pred_flat_13) #everything together
-        num_intersection_13 = np.count_nonzero(intersection_13) #how big is the intersection
-        num_union_13 = np.count_nonzero(union_13) #how big is the union
-        if num_union_13 > 0: 
-            epoch_miou_prec_rec[0,0] = num_intersection_13/num_union_13
-        if num_pred_13 > 0:
-            epoch_miou_prec_rec[1,0] = num_intersection_13 / num_pred_13
-        if num_13 > 0:
-            epoch_miou_prec_rec[2,0] = num_intersection_13 / num_13
+    # Flatten tensors
+    y_pred_list = y_pred_list.view(-1)
+    y_list = y_list.view(-1)
 
-        #Save into writer
-        writer.add_scalar(part+'/miou fixed 13th class', epoch_miou_prec_rec[0,0], epoch)
-        writer.add_scalar(part+'/precision fixed 13th class', epoch_miou_prec_rec[1,0], epoch)
-        writer.add_scalar(part+'/recall fixed 13th class', epoch_miou_prec_rec[2,0], epoch)
+    # Set values > 12 to 13
+    y_pred_list[y_pred_list > 12] = 13
+    y_list[y_list > 12] = 13
 
-def save_image(index, x, y_pred, y, epoch, config):
+    # Create an empty tensor for epoch_miou_prec_rec
+    epoch_miou_prec_rec = torch.full((3, 1), float('nan'), device=config.device)
+
+    # Calculate for class 13
+    y_flat_13 = y_list == 13
+    num_13 = torch.count_nonzero(y_flat_13)
+    pred_flat_13 = y_pred_list == 13
+    num_pred_13 = torch.count_nonzero(pred_flat_13)
+    intersection_13 = torch.logical_and(y_flat_13, pred_flat_13)
+    union_13 = torch.logical_or(y_flat_13, pred_flat_13)
+    num_intersection_13 = torch.count_nonzero(intersection_13)
+    num_union_13 = torch.count_nonzero(union_13)
+
+    del y_list, y_pred_list
+
+    if num_union_13 > 0:
+        epoch_miou_prec_rec[0, 0] = num_intersection_13.float() / num_union_13.float()
+    if num_pred_13 > 0:
+        epoch_miou_prec_rec[1, 0] = num_intersection_13.float() / num_pred_13.float()
+    if num_13 > 0:
+        epoch_miou_prec_rec[2, 0] = num_intersection_13.float() / num_13.float()
+
+    # Save into writer
+    writer.add_scalar(part+'/miou fixed 13th class', epoch_miou_prec_rec[0, 0].item(), epoch)
+    writer.add_scalar(part+'/precision fixed 13th class', epoch_miou_prec_rec[1, 0].item(), epoch)
+    writer.add_scalar(part+'/recall fixed 13th class', epoch_miou_prec_rec[2, 0].item(), epoch)
+
+colormap = [
+    [255, 0, 255],    # Magenta
+    [128, 128, 128],  # Grey
+    [255, 0, 0],      # Red
+    [139, 69, 19],    # Brown
+    [0, 0, 255],      # Blue
+    [0, 100, 0],      # Dark Green
+    [0, 255, 155],    # Greenblue
+    [255, 165, 0],    # Orange
+    [128, 0, 128],    # Purple
+    [0, 210, 0],      # Green
+    [255, 255, 0],    # Yellow
+    [220, 245, 220],  # Beige
+    [64, 224, 208],   # Turquoise
+    [255, 255, 255],  # White
+    [90, 180, 150],  # Grey Green
+    [107, 142, 35],   # Brown Green
+    [130, 130, 30],   # Yellow Green
+    [190, 170, 220],  # Light Purple
+    [0, 0, 0]         # Black
+]
+
+class_names = [
+    "building",
+    "pervious surface",
+    "impervious surface",
+    "bare soil",
+    "water",
+    "coniferous",
+    "deciduous",
+    "brushwood",
+    "vineyard",
+    "herbaceous vegetation",
+    "agricultural land",
+    "plowed land",
+    "swimming pool",
+    "snow",
+    "clear cut",
+    "mixed",
+    "ligneous",
+    "greenhouse",
+    "other"
+]
+
+def label_image(config, writer):
+    legend_image = np.zeros((config.model.n_class * 30, 100, 3), dtype=np.uint8)
+
+    # Populate the legend image with class labels and corresponding colors
+    for class_label in range(config.model.n_class):
+        legend_image[class_label * 30:(class_label + 1) * 30, :, :] = colormap[class_label]
+
+    # Create class labels as text and overlay them on the legend
+    class_labels = [f'Class {i}' for i in range(config.model.n_class)]
+    for i, label in enumerate(class_labels):
+        plt.text(120, i * 30 + 15, label, fontsize=12, color='white', va='center')
+
+    # Save the legend image
+    plt.imsave('legend.png', legend_image)
+
+    # Load the saved legend image and convert it to a tensor
+    legend_image = plt.imread('legend.png')
+    legend_tensor = torch.from_numpy(legend_image.transpose(2, 0, 1))
+
+    # Add the legend image to TensorBoard
+    writer.add_image('Legend Image', legend_tensor, 0)
+    writer.add_text("Class Names", "\n".join(class_names), 0)
+
+def save_image(index, x, y_pred, y, epoch, config, writer):
+            #print(x.shape) #np array, shape C,512, 512
+            #print(y_pred.shape) #512,512
+            #print(y.shape) #512, 512
+            #Unnormalize x and divide by 255 to get range [0,1]
+            x_temp = np.transpose(x[:3], (1,2,0)).astype(float)
+            x_temp *= np.array(config.dataset.std)[:3]
+            x_temp += np.array(config.dataset.mean)[:3]
+            x_temp = np.floor(x_temp)
+            x_temp = cv2.cvtColor(x_temp.astype(np.uint8), cv2.COLOR_BGR2RGB) #convert from BGR to RGB
+            x_temp = np.transpose(x_temp, (2,0,1))
+            x[:3] = x_temp/255
+            
             x = torch.from_numpy(x)
-            y_pred = torch.from_numpy(y_pred)
+            y_pred = torch.from_numpy(y_pred) 
             y = torch.from_numpy(y)
+
+            # Create colored images for both y and y_pred
+            colored_y = torch.zeros((3, y.shape[0], y.shape[1]), dtype=torch.uint8)
+            colored_y_pred = torch.zeros((3, y_pred.shape[0], y_pred.shape[1]), dtype=torch.uint8)
+
+            for class_label in range(config.model.n_class):
+                class_mask_y = (y == class_label).unsqueeze(0).repeat(3, 1, 1).byte()
+                class_mask_y_pred = (y_pred == class_label).unsqueeze(0).repeat(3, 1, 1).byte()
+                
+                colored_y += class_mask_y * torch.tensor(colormap[class_label]).unsqueeze(1).unsqueeze(1)
+                colored_y_pred += class_mask_y_pred * torch.tensor(colormap[class_label]).unsqueeze(1).unsqueeze(1)
+
             if config.model.n_channels == 5:
                 x_priv = x[3:]
+                #Not ideal normalization to be honest, as we don't know how strong the signal is
+                min_vals = x_priv.view(x_priv.size(0), -1).min(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
+                max_vals = x_priv.view(x_priv.size(0), -1).max(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
+                x_priv = (x_priv - min_vals) / (max_vals - min_vals)
                 x = x[:3]
-                writer.add_image('Val/priv info, batch: ' + str(index), x_priv, epoch)
-            writer.add_image('Val/x, batch: ' + str(index), x, epoch)
-            writer.add_image('Val/y, batch: ' + str(index), y, epoch)
-            writer.add_image('Val/y_pred, batch: ' + str(index), y_pred, epoch)
+                #Have to normalize x and x_priv to [0,1]
+                writer.add_image('Epoch: ' + str(epoch) + ', Val/IR priv info, batch: ' + str(index), x_priv[0,:,:].unsqueeze(0), epoch)
+                writer.add_image('Epoch: ' + str(epoch) + ', Val/height map priv info, batch: ' + str(index), x_priv[1,:,:].unsqueeze(0), epoch)
+            writer.add_image('Epoch: ' + str(epoch) + ', Val/x, batch: ' + str(index), x, epoch)
+            writer.add_image('Epoch: ' + str(epoch) + ', Val/y, batch: ' + str(index), colored_y, epoch) #unsqueeze adds dim
+            writer.add_image('Epoch: ' + str(epoch) + ', Val/y_pred, batch: ' + str(index), colored_y_pred, epoch)
 
 def loop2(config, writer, hydra_log_dir):
     dataset_module = util.load_module(config.dataset.script_location)
     train_set = dataset_module.train_set(config)
     val_set = dataset_module.val_set(config)
-
+    
+    #save label image for reference
+    label_image(config, writer)
     
     train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = True, num_workers = config.num_workers,
                               pin_memory = True)
@@ -110,6 +226,7 @@ def loop2(config, writer, hydra_log_dir):
                                 dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     
     model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
+    model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
     model.to(config.device)
     
@@ -171,7 +288,10 @@ def loop2(config, writer, hydra_log_dir):
         print('Epoch mean loss: '+str(np.mean(epoch_loss)))
 
         miou_prec_rec_writing(config, y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
-        miou_prec_rec_writing_13(y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
+        miou_prec_rec_writing_13(config, y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
+
+        #clean
+        del y_list, y_pred_list
 
         if epoch % config.eval_every == 0:
             model.eval()
@@ -180,9 +300,10 @@ def loop2(config, writer, hydra_log_dir):
             val_y_list = []
 
             num_batches = math.floor(len(val_set)/config.val_batch_size)
-            same_img_idx = 0
-            random_img_idx_1 = random.randint(0, math.floor(num_batches/2))
+            same_img_idx = 1
+            random_img_idx_1 = random.randint(2, math.floor(num_batches/2))
             random_img_idx_2 = random.randint(math.floor(num_batches/2)+1, num_batches-1)
+            idx_list = [same_img_idx, random_img_idx_1, random_img_idx_2]
             counter = 0
             x_vec_for_saving_img = []
 
@@ -210,17 +331,15 @@ def loop2(config, writer, hydra_log_dir):
             element_1 = val_y_pred_list[same_img_idx][0, :, :]
             element_2 = val_y_pred_list[random_img_idx_1][0, :, :]
             element_3 = val_y_pred_list[random_img_idx_2][0, :, :]
+            print((same_img_idx, random_img_idx_1, random_img_idx_2))
             y_pred_vec_for_saving_img = np.stack([element_1, element_2, element_3])
             element_1 = val_y_list[same_img_idx][0, :, :]
             element_2 = val_y_list[random_img_idx_1][0, :, :]
             element_3 = val_y_list[random_img_idx_2][0, :, :]
             y_vec_for_saving_img = np.stack([element_1, element_2, element_3])
-
-            #y_pred_vec_for_saving_img = val_y_pred_list[[same_img_idx, random_img_idx_1, random_img_idx_2], 0, :, :]
-            #y_vec_for_saving_img = val_y_list[[same_img_idx, random_img_idx_1, random_img_idx_2], 0, :, :]
-            
+            print(len(y_pred_vec_for_saving_img))
             for i in range(len(y_pred_vec_for_saving_img)):
-                save_image(same_img_idx, x_vec_for_saving_img[i], y_pred_vec_for_saving_img[i], y_vec_for_saving_img[i], epoch, config)
+                save_image(idx_list[i], x_vec_for_saving_img[i], y_pred_vec_for_saving_img[i], y_vec_for_saving_img[i], epoch, config, writer)
 
             #Save loss
             l_val = np.mean(val_loss)
@@ -228,7 +347,9 @@ def loop2(config, writer, hydra_log_dir):
             print('Val loss: '+str(l_val))
 
             miou_prec_rec_writing(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
-            miou_prec_rec_writing_13(val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
+            miou_prec_rec_writing_13(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
+
+            del val_y_list, val_y_pred_list
 
             if l_val < best_val_loss:
                 best_val_loss = l_val
@@ -237,7 +358,7 @@ def loop2(config, writer, hydra_log_dir):
                     #will not work
                     torch.save(optimizer.state_dict(), 'best_optimizer.pth')
         
-        if epoch % config.save_model_freq == 0:
+        if epoch % config.save_model_freq == 0 and epoch != 0:
             torch.save(model.state_dict(), os.path.join(hydra_log_dir, 'model_'+str(epoch)+'.pth'))
             if config.save_optimizer:
                 #will not work
