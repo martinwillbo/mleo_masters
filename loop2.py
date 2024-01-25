@@ -10,7 +10,6 @@ import sys
 from torch.cuda.amp import autocast, GradScaler
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import os
-from deeplabv3_modified import DeepLabV3Modified
 
 def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
 
@@ -105,7 +104,7 @@ def loop2(config, writer, hydra_log_dir):
     model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False) 
     #if using pretrained model change number of classes to 19
     model.classifier[4] = nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
-    
+
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
 
     model.to(config.device)
