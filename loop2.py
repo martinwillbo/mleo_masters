@@ -16,13 +16,18 @@ import cv2
 import matplotlib.pyplot as plt
 
 def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
-    y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0)).to(config.device)
-    y_list = torch.tensor(np.concatenate(y_list, axis=0)).to(config.device)
+    y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0))
+    y_list = torch.tensor(np.concatenate(y_list, axis=0))
 
     y_pred_list = y_pred_list.view(-1)
     y_list = y_list.view(-1)
 
-    epoch_miou_prec_rec = torch.full((3, config.model.n_class), float('nan'), device='cuda')
+    print(y_pred_list.element_size() * y_pred_list.numel()/1000000) 
+    print(y_list.element_size()*y_list.numel()/1000000)
+
+    #for val: should be 13000*512*512*2 for both, seems correct, and then doubling that -> req 12GB-> too much
+
+    epoch_miou_prec_rec = torch.full((3, config.model.n_class), float('nan'))
 
     for i in range(config.model.n_class):
         y_flat_i = (y_list == i)
@@ -62,19 +67,20 @@ def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
     print('Epoch mean recall: '+str(np.mean(epoch_miou_prec_rec[2,:])))
 
 def miou_prec_rec_writing_13(config, y_pred_list, y_list, part, writer, epoch):
-    y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0)).to(config.device)
-    y_list = torch.tensor(np.concatenate(y_list, axis=0)).to(config.device)
+    y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0), dtype=torch.uint8)
+    y_list = torch.tensor(np.concatenate(y_list, axis=0), dtype=torch.uint8)
 
     # Flatten tensors
     y_pred_list = y_pred_list.view(-1)
     y_list = y_list.view(-1)
+    print(y_pred_list.shape)
 
     # Set values > 12 to 13
     y_pred_list[y_pred_list > 12] = 13
     y_list[y_list > 12] = 13
 
     # Create an empty tensor for epoch_miou_prec_rec
-    epoch_miou_prec_rec = torch.full((3, 1), float('nan'), device=config.device)
+    epoch_miou_prec_rec = torch.full((3, 1), float('nan'))
 
     # Calculate for class 13
     y_flat_13 = y_list == 13
@@ -110,14 +116,14 @@ colormap = [
     [0, 255, 155],    # Greenblue
     [255, 165, 0],    # Orange
     [128, 0, 128],    # Purple
-    [0, 210, 0],      # Green
+    [0, 220, 0],      # Green
     [255, 255, 0],    # Yellow
     [220, 245, 220],  # Beige
-    [64, 224, 208],   # Turquoise
+    [64, 224, 228],   # Turquoise
     [255, 255, 255],  # White
-    [90, 180, 150],  # Grey Green
-    [107, 142, 35],   # Brown Green
-    [130, 130, 30],   # Yellow Green
+    [100, 190, 160],  # Grey Green
+    [52, 61, 15],   # Brown Green
+    [200, 200, 50],   # Yellow Green
     [190, 170, 220],  # Light Purple
     [0, 0, 0]         # Black
 ]
@@ -287,6 +293,7 @@ def loop2(config, writer, hydra_log_dir):
         writer.add_scalar('train/loss', np.mean(epoch_loss), epoch)
         print('Epoch mean loss: '+str(np.mean(epoch_loss)))
 
+        #Move model off from VRAM when performing heavy calculations
         miou_prec_rec_writing(config, y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
         miou_prec_rec_writing_13(config, y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
 
@@ -306,6 +313,8 @@ def loop2(config, writer, hydra_log_dir):
             idx_list = [same_img_idx, random_img_idx_1, random_img_idx_2]
             counter = 0
             x_vec_for_saving_img = []
+            y_pred_vec_for_saving_img = []
+            y_vec_for_saving_img = []
 
             val_iter = iter(val_loader)
             for batch in tqdm(val_iter):
@@ -316,28 +325,23 @@ def loop2(config, writer, hydra_log_dir):
                 #y_pred = model(x)
                 l = eval_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
+                val_loss.append(l.item())
+
+                if counter in [same_img_idx, random_img_idx_1, random_img_idx_2]:
+                    x_cpu = x[0, :, :, :].cpu().contiguous().detach().numpy()
+                    y_pred_cpu = y_pred[0, :, :].cpu().contiguous().detach().numpy()
+                    y_cpu = y[0, :, :].cpu().contiguous().detach().numpy()
+                    x_vec_for_saving_img.append(x_cpu)
+                    y_pred_vec_for_saving_img.append(y_pred_cpu)
+                    y_vec_for_saving_img.append(y_cpu)
 
                 y_pred = y_pred.to(torch.uint8).cpu().contiguous().numpy()
                 y = y.to(torch.uint8).cpu().contiguous().numpy()
                 val_y_pred_list.append(y_pred)
                 val_y_list.append(y)
 
-                val_loss.append(l.item())
-                if counter in [same_img_idx, random_img_idx_1, random_img_idx_2]:
-                    x_cpu = x[0].cpu().contiguous().detach().numpy()
-                    x_vec_for_saving_img.append(x_cpu)
                 counter += 1
 
-            element_1 = val_y_pred_list[same_img_idx][0, :, :]
-            element_2 = val_y_pred_list[random_img_idx_1][0, :, :]
-            element_3 = val_y_pred_list[random_img_idx_2][0, :, :]
-            print((same_img_idx, random_img_idx_1, random_img_idx_2))
-            y_pred_vec_for_saving_img = np.stack([element_1, element_2, element_3])
-            element_1 = val_y_list[same_img_idx][0, :, :]
-            element_2 = val_y_list[random_img_idx_1][0, :, :]
-            element_3 = val_y_list[random_img_idx_2][0, :, :]
-            y_vec_for_saving_img = np.stack([element_1, element_2, element_3])
-            print(len(y_pred_vec_for_saving_img))
             for i in range(len(y_pred_vec_for_saving_img)):
                 save_image(idx_list[i], x_vec_for_saving_img[i], y_pred_vec_for_saving_img[i], y_vec_for_saving_img[i], epoch, config, writer)
 
@@ -351,7 +355,7 @@ def loop2(config, writer, hydra_log_dir):
 
             del val_y_list, val_y_pred_list
 
-            if l_val < best_val_loss:
+            if l_val < best_val_loss and epoch != 0:
                 best_val_loss = l_val
                 torch.save(model.state_dict(), os.path.join(hydra_log_dir, 'best_model.pth'))
                 if config.save_optimizer:

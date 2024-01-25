@@ -36,7 +36,6 @@ class DatasetClass(Dataset):
             X_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_aerial_test')
             Y_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_labels_test')
             
-        print(X_BASE_PATH)
         X_tif_paths = self._read_paths(X_BASE_PATH)
         Y_tif_paths = self._read_paths(Y_BASE_PATH)
         combined = list(zip(X_tif_paths, Y_tif_paths))
