@@ -93,7 +93,7 @@ def loop2(config, writer, hydra_log_dir):
 
     train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = True, num_workers = config.num_workers,
                               pin_memory = True)
-    val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = True, num_workers = config.num_workers,
+    val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers,
                             pin_memory = True)
     
     model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True,
