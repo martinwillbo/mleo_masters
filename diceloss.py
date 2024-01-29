@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,22 +9,25 @@ class DiceLoss(nn.Module):
         self.num_classes = num_classes
         self.epsilon = epsilon
 
-    def forward(self, input, target):
-        # Convert target to one-hot encoding
-        target_one_hot = F.one_hot(target, num_classes=self.num_classes).permute(0, 3, 1, 2).float()
+    def forward(self, y_pred, y):
 
-        # Flatten the predictions and targets
-        input_flat = input.reshape(-1, self.num_classes)
-        target_flat = target_one_hot.reshape(-1, self.num_classes)
+        dice = np.nan * np.empty((3, self.num_classes)) #creates empty vecn
+        y_pred_flat = y_pred.reshape(-1)
+        y_flat = y.reshape(-1)
 
-        # Compute the intersection and union for each class
-        intersection = torch.sum(input_flat * target_flat, dim=0)
-        union = torch.sum(input_flat, dim=0) + torch.sum(target_flat, dim=0)
+        for i in range(self.num_classes): #for all classes
 
-        # Compute the Dice loss for each class
-        dice_loss_class = 1 - (2 * intersection) / (union + self.epsilon)
+            y_flat_i = y_flat == i #sets ones where y_flat is equal to i
+            num_i = np.count_nonzero(y_flat_i) #count nbr of occurances of class i in true y
+            pred_flat_i = y_pred_flat == i
+            num_pred_i = np.count_nonzero(pred_flat_i)
+            intersection_i = np.logical_and(y_flat_i, pred_flat_i) #where they match
+            union_i = np.logical_or(y_flat_i, pred_flat_i) #everything together
+            num_intersection_i = np.count_nonzero(intersection_i) #how big is the intersection
+            num_union_i = np.count_nonzero(union_i) #how big is the union
 
-        # Average the Dice loss across classes
-        dice_loss = torch.mean(dice_loss_class)
-
+            if num_union_i > 0:
+                dice[i] = 1 - (2 * num_intersection_i)/(num_union_i + self.epsilon)
+        
+        dice_loss = np.mean(dice)
         return dice_loss

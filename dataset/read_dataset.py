@@ -121,7 +121,7 @@ class DatasetClass(Dataset):
     def _read_paths(self, BASE_PATH):
         tif_paths = []
         for root, dirs, files in os.walk(BASE_PATH):
-            for file in files:
+            for file in sorted(files):
                 if file.endswith(".tif"):
                     tif_paths.append(os.path.join(root, file))
         return tif_paths
