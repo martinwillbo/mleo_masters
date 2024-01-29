@@ -212,8 +212,8 @@ def save_image(index, x, y_pred, y, epoch, config, writer):
                 writer.add_image('Epoch: ' + str(epoch) + ', Val/IR priv info, batch: ' + str(index), x_priv[0,:,:].unsqueeze(0), epoch)
                 writer.add_image('Epoch: ' + str(epoch) + ', Val/height map priv info, batch: ' + str(index), x_priv[1,:,:].unsqueeze(0), epoch)
             writer.add_image('Epoch: ' + str(epoch) + ', Val/x, batch: ' + str(index), x, epoch)
-            writer.add_image('Epoch: ' + str(epoch) + ', Val/y, batch: ' + str(index), colored_y, epoch) #unsqueeze adds dim
-            writer.add_image('Epoch: ' + str(epoch) + ', Val/y_pred, batch: ' + str(index), colored_y_pred, epoch)
+            writer.add_image('Epoch: ' + str(epoch) + ', Val/y, batch: ' + str(index), colored_y/255.0, epoch) #unsqueeze adds dim
+            writer.add_image('Epoch: ' + str(epoch) + ', Val/y_pred, batch: ' + str(index), colored_y_pred/255.0, epoch)
 
 def loop2(config, writer, hydra_log_dir):
     dataset_module = util.load_module(config.dataset.script_location)
@@ -333,18 +333,6 @@ def loop2(config, writer, hydra_log_dir):
                     x_cpu =  x[0, :, :, :].cpu().contiguous().detach().numpy()
                     y_pred_cpu = y_pred[0, :, :].cpu().contiguous().detach().numpy()
                     y_cpu = y[0, :, :].cpu().contiguous().detach().numpy()
-                    print('saving val img')
-                    fig = plt.figure(figsize=(16,16))
-                    fig.add_subplot(2,2,1)
-                    plt.imshow(np.transpose(x_cpu[:3,:,:],(1,2,0)))
-                    fig.add_subplot(2,2,2)
-                    plt.imshow(y_cpu)
-                    fig.add_subplot(2,2,3)
-                    plt.imshow(y_pred_cpu)
-                    plt.savefig(str(counter) + '_val.png')
-                    plt.cla()
-                    plt.clf()
-                    plt.close('all')
                     x_vec_for_saving_img.append(x_cpu)
                     y_pred_vec_for_saving_img.append(y_pred_cpu)
                     y_vec_for_saving_img.append(y_cpu)
