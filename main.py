@@ -3,11 +3,11 @@ import hydra
 import numpy as np
 import torch
 import random
-import loop
+#import loop
 import loop2
 import loop3
 import os
-import test
+#import test
 from torch.utils.tensorboard import SummaryWriter
 
 @hydra.main(config_path='config', config_name='config', version_base = '1.3.2')
@@ -27,8 +27,8 @@ def main(config):
     writer = SummaryWriter(log_dir=log_dir)
     # writer = SummaryWriter(log_dir='.')
 
-    loop3.loop3(config, writer, hydra_log_dir)
-    #loop2.loop2(config, writer, hydra_log_dir)
+    #loop3.loop3(config, writer, hydra_log_dir)
+    loop2.loop2(config, writer, hydra_log_dir)
     # test.eval_on_test(config, writer = None)
 
 if __name__ == '__main__':
