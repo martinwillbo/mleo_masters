@@ -73,7 +73,7 @@ def miou_prec_rec_writing_13(config, y_pred_list, y_list, part, writer, epoch):
     # Flatten tensors
     y_pred_list = y_pred_list.view(-1)
     y_list = y_list.view(-1)
-    print(y_pred_list.shape)
+    #print(y_pred_list.shape)
 
     # Set values > 12 to 13
     y_pred_list[y_pred_list > 12] = 13
@@ -178,42 +178,60 @@ def save_image(index, x, y_pred, y, epoch, config, writer):
             #print(y_pred.shape) #512,512
             #print(y.shape) #512, 512
             #Unnormalize x and divide by 255 to get range [0,1]
+
             x_temp = np.transpose(x[:3], (1,2,0)).astype(float)
             x_temp *= np.array(config.dataset.std)[:3]
             x_temp += np.array(config.dataset.mean)[:3]
             x_temp = np.floor(x_temp)
             x_temp = cv2.cvtColor(x_temp.astype(np.uint8), cv2.COLOR_BGR2RGB) #convert from BGR to RGB
             x_temp = np.transpose(x_temp, (2,0,1))
-            x[:3] = x_temp/255
-            
-            x = torch.from_numpy(x)
-            y_pred = torch.from_numpy(y_pred) 
-            y = torch.from_numpy(y)
+            x[:3] = x_temp/255.0
 
-            # Create colored images for both y and y_pred
-            colored_y = torch.zeros((3, y.shape[0], y.shape[1]), dtype=torch.uint8)
-            colored_y_pred = torch.zeros((3, y_pred.shape[0], y_pred.shape[1]), dtype=torch.uint8)
+            colored_y = np.zeros((3, y.shape[0], y.shape[1]), dtype=np.uint8)
+            colored_y_pred = np.zeros((3, y_pred.shape[0], y_pred.shape[1]), dtype=np.uint8)
 
+            # Iterate over each class and color the masks
             for class_label in range(config.model.n_class):
-                class_mask_y = (y == class_label).unsqueeze(0).repeat(3, 1, 1).byte()
-                class_mask_y_pred = (y_pred == class_label).unsqueeze(0).repeat(3, 1, 1).byte()
-                
-                colored_y += class_mask_y * torch.tensor(colormap[class_label]).unsqueeze(1).unsqueeze(1)
-                colored_y_pred += class_mask_y_pred * torch.tensor(colormap[class_label]).unsqueeze(1).unsqueeze(1)
+                # Create boolean masks for the current class
+                class_mask_y = (y == class_label)
+                class_mask_y_pred = (y_pred == class_label)
 
+                # Color the masks
+                for c in range(3):  # Iterate over color channels (R, G, B)
+                    colored_y[c][class_mask_y] = colormap[class_label][c]
+                    colored_y_pred[c][class_mask_y_pred] = colormap[class_label][c]
+
+            x_tensor = torch.from_numpy(x)
+            
             if config.model.n_channels == 5:
-                x_priv = x[3:]
+                x_priv = x_tensor[3:]
                 #Not ideal normalization to be honest, as we don't know how strong the signal is
                 min_vals = x_priv.view(x_priv.size(0), -1).min(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
                 max_vals = x_priv.view(x_priv.size(0), -1).max(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
                 x_priv = (x_priv - min_vals) / (max_vals - min_vals)
-                x = x[:3]
+                x_tensor = x_tensor[:3]
                 #Have to normalize x and x_priv to [0,1]
                 writer.add_image('Epoch: ' + str(epoch) + ', Val/IR priv info, batch: ' + str(index), x_priv[0,:,:].unsqueeze(0), epoch)
                 writer.add_image('Epoch: ' + str(epoch) + ', Val/height map priv info, batch: ' + str(index), x_priv[1,:,:].unsqueeze(0), epoch)
-            writer.add_image('Epoch: ' + str(epoch) + ', Val/x, batch: ' + str(index), x, epoch)
-            writer.add_image('Epoch: ' + str(epoch) + ', Val/y, batch: ' + str(index), colored_y/255.0, epoch) #unsqueeze adds dim
-            writer.add_image('Epoch: ' + str(epoch) + ', Val/y_pred, batch: ' + str(index), colored_y_pred/255.0, epoch)
+            
+            colored_y_tensor = torch.from_numpy(colored_y)
+            colored_y_pred_tensor = torch.from_numpy(colored_y_pred)
+            colored_y_tensor = colored_y_tensor/255.0 
+            colored_y_pred_tensor = colored_y_pred_tensor/255.0
+            #print('shapes')
+            #print(x_tensor.shape)
+            #print(colored_y_tensor.shape)
+            #print(colored_y_pred_tensor.shape)
+            #print(type(x_tensor), x_tensor.dtype)
+            #print(type(colored_y_tensor), colored_y_tensor.dtype)
+            #print(type(colored_y_pred_tensor), colored_y_tensor.dtype)
+            #print(f"colored_y_tensor: max={colored_y_tensor.max().item()}, min={colored_y_tensor.min().item()}")
+            #print(f"colored_y_pred_tensor: max={colored_y_pred_tensor.max().item()}, min={colored_y_pred_tensor.min().item()}")
+
+            
+            writer.add_image('Epoch: ' + str(epoch) + ', Val/x, batch: ' + str(index), x_tensor, epoch)
+            writer.add_image('Epoch: ' + str(epoch) + ', Val/y, batch: ' + str(index), colored_y_tensor, epoch) #unsqueeze adds dim
+            writer.add_image('Epoch: ' + str(epoch) + ', Val/y_pred, batch: ' + str(index), colored_y_pred_tensor, epoch)
 
 def loop2(config, writer, hydra_log_dir):
     dataset_module = util.load_module(config.dataset.script_location)
@@ -265,7 +283,7 @@ def loop2(config, writer, hydra_log_dir):
 
         y_pred_list = [] #list to save for an entire epoch
         y_list = []
-
+        
         for batch in tqdm(train_iter):
             x,y = batch
             x = x.to(config.device)
@@ -281,13 +299,15 @@ def loop2(config, writer, hydra_log_dir):
             scaler.update()
 
             y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
+
             #y_pred and y has shape: batch_size, crop_size, crop_size, save all values as uint8 in lists on RAM
-            y_pred = y_pred.to(torch.uint8).cpu().contiguous().numpy()
-            y = y.to(torch.uint8).cpu().contiguous().numpy()
+            y_pred = y_pred.to(torch.uint8).cpu().detach().contiguous().numpy()
+            y = y.to(torch.uint8).cpu().detach().contiguous().numpy()
             y_pred_list.append(y_pred)
             y_list.append(y)
 
             epoch_loss.append(l.item())
+            
 
         #Save loss
         writer.add_scalar('train/loss', np.mean(epoch_loss), epoch)
@@ -312,9 +332,6 @@ def loop2(config, writer, hydra_log_dir):
             random_img_idx_2 = random.randint(math.floor(num_batches/2)+1, num_batches-1)
             idx_list = [same_img_idx, random_img_idx_1, random_img_idx_2]
             counter = 0
-            x_vec_for_saving_img = []
-            y_pred_vec_for_saving_img = []
-            y_vec_for_saving_img = []
 
             val_iter = iter(val_loader)
             for batch in tqdm(val_iter):
@@ -326,26 +343,19 @@ def loop2(config, writer, hydra_log_dir):
                 l = eval_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())
-                print(x.shape)
-                print(y.shape)
-
+        
                 if counter in idx_list:
-                    x_cpu =  x[0, :, :, :].cpu().contiguous().detach().numpy()
-                    y_pred_cpu = y_pred[0, :, :].cpu().contiguous().detach().numpy()
-                    y_cpu = y[0, :, :].cpu().contiguous().detach().numpy()
-                    x_vec_for_saving_img.append(x_cpu)
-                    y_pred_vec_for_saving_img.append(y_pred_cpu)
-                    y_vec_for_saving_img.append(y_cpu)
+                    x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
+                    y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
+                    y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
+                    save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)
 
-                y_pred = y_pred.to(torch.uint8).cpu().contiguous().numpy()
-                y = y.to(torch.uint8).cpu().contiguous().numpy()
+                y_pred = y_pred.to(torch.uint8).cpu().contiguous().detach().numpy()
+                y = y.to(torch.uint8).cpu().contiguous().detach().numpy()
                 val_y_pred_list.append(y_pred)
                 val_y_list.append(y)
 
                 counter += 1
-
-            for i in range(len(y_pred_vec_for_saving_img)):
-                save_image(idx_list[i], x_vec_for_saving_img[i], y_pred_vec_for_saving_img[i], y_vec_for_saving_img[i], epoch, config, writer)
 
             #Save loss
             l_val = np.mean(val_loss)

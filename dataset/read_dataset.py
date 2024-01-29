@@ -18,7 +18,7 @@ class DatasetClass(Dataset):
         self.part = part
         self.X = []
         self.Y = []
-
+    
         #Read in desiread transform
         transform_module = util.load_module(self.config.transform.script_location)
         self.transform = transform_module.get_transform(self.config)
@@ -43,8 +43,13 @@ class DatasetClass(Dataset):
         random.shuffle(combined)
         X_tif_paths, Y_tif_paths = zip(*combined)
         X_tif_paths, Y_tif_paths = list(X_tif_paths), list(Y_tif_paths)
+        #print(X_tif_paths[:2], Y_tif_paths[:2])
 
         assert len(X_tif_paths) == len(Y_tif_paths)
+
+        data_stop_point = math.floor(len(X_tif_paths)*(self.config.dataset.dataset_size))
+        X_tif_paths = X_tif_paths[0:data_stop_point]
+        Y_tif_paths = Y_tif_paths[0:data_stop_point]
 
         split_point = math.floor(len(X_tif_paths)*(1-self.config.dataset.val_set_size))
 
@@ -77,6 +82,7 @@ class DatasetClass(Dataset):
         #print(max(item.max().item() for item in self.Y))
     
     def __getitem__(self, index):
+        #print(self.X_tif_paths[index], self.Y_tif_paths[index])
         x = self._read_data(self.X_tif_paths[index], is_label = False)
         #x = self.X[index]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
@@ -112,7 +118,7 @@ class DatasetClass(Dataset):
     def _read_paths(self, BASE_PATH):
         tif_paths = []
         for root, dirs, files in os.walk(BASE_PATH):
-            for file in files:
+            for file in sorted(files):
                 if file.endswith(".tif"):
                     tif_paths.append(os.path.join(root, file))
         return tif_paths
