@@ -13,8 +13,8 @@ class DiceLoss(nn.Module):
         target_one_hot = F.one_hot(target, num_classes=self.num_classes).permute(0, 3, 1, 2).float()
 
         # Flatten the predictions and targets
-        input_flat = input.view(-1, self.num_classes)
-        target_flat = target_one_hot.view(-1, self.num_classes)
+        input_flat = input.reshape(-1, self.num_classes)
+        target_flat = target_one_hot.reshape(-1, self.num_classes)
 
         # Compute the intersection and union for each class
         intersection = torch.sum(input_flat * target_flat, dim=0)
