@@ -10,6 +10,7 @@ import math
 import sys
 import util
 import random
+import matplotlib.pyplot as plt
 
 class DatasetClass(Dataset):
     def __init__(self, config, part):
@@ -80,6 +81,17 @@ class DatasetClass(Dataset):
         #x = self.X[index]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
         #y = self.Y[index]
+        if index < 5:
+            print('saving image')
+            fig = plt.figure(figsize=(16,16))
+            fig.add_subplot(2,2,1)
+            plt.imshow(np.transpose(x[:3,:,:],(1,2,0)))
+            fig.add_subplot(2,2,2)
+            plt.imshow(y)
+            plt.savefig(str(index) + '.png')
+            plt.cla()
+            plt.clf()
+            plt.close('all')
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
