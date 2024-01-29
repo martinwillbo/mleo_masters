@@ -43,11 +43,12 @@ class DatasetClass(Dataset):
         X_tif_paths, Y_tif_paths = zip(*combined)
         X_tif_paths, Y_tif_paths = list(X_tif_paths), list(Y_tif_paths)
         assert len(X_tif_paths) == len(Y_tif_paths)
-        split_point = math.floor(len(X_tif_paths)*(1-self.config.dataset.val_set_size))
 
         data_stop_point = math.floor(len(X_tif_paths)*(self.config.dataset.dataset_size))
         X_tif_paths = X_tif_paths[0:data_stop_point]
         Y_tif_paths = Y_tif_paths[0:data_stop_point]
+
+        split_point = math.floor(len(X_tif_paths)*(1-self.config.dataset.val_set_size))
 
         if self.part == 'train':
             # no shuffle when splitting - change maybe
