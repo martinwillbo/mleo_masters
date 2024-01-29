@@ -12,6 +12,7 @@ from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import os
 from diceloss import DiceLoss
 
+
 def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
 
     epoch_miou_prec_rec = np.nan * np.empty((3, config.model.n_class)) #creates empty vecn
