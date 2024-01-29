@@ -120,8 +120,7 @@ def loop2(config, writer, hydra_log_dir):
     
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
     train_loss = DiceLoss(num_classes = config.model.n_class) #nn.CrossEntropyLoss()
-    eval_loss = DiceLoss(num_classes = config.model.n_class) #nn.CrossEntropyLoss()
-        
+    eval_loss = DiceLoss(num_classes = config.model.n_class) #nn.CrossEntropyLoss()    
 
     epoch = 0
     best_val_loss = np.inf
@@ -180,6 +179,7 @@ def loop2(config, writer, hydra_log_dir):
                 x = x.to(config.device)
                 y = y.to(config.device)
                 y_pred = model(x)['out']
+                l = eval_loss(y_pred, y)
                 #y_pred = model(x)
                 y_pred = torch.argmax(y_pred, dim=1)
                 y_pred = y_pred.to(torch.uint8).cpu().contiguous().numpy()
