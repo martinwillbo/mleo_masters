@@ -233,7 +233,7 @@ def save_image(index, x, y_pred, y, epoch, config, writer):
             writer.add_image('Epoch: ' + str(epoch) + ', Val/y, batch: ' + str(index), colored_y_tensor, epoch) #unsqueeze adds dim
             writer.add_image('Epoch: ' + str(epoch) + ', Val/y_pred, batch: ' + str(index), colored_y_pred_tensor, epoch)
 
-def loop2(config, writer, hydra_log_dir):
+def loop3(config, writer, hydra_log_dir):
     dataset_module = util.load_module(config.dataset.script_location)
     train_set = dataset_module.train_set(config)
     val_set = dataset_module.val_set(config)
