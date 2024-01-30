@@ -10,8 +10,7 @@ import sys
 from torch.cuda.amp import autocast, GradScaler
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import os
-from diceloss import DiceLoss
-
+from dice_loss import DiceLoss
 
 def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
 
@@ -120,8 +119,13 @@ def loop2(config, writer, hydra_log_dir):
         optimizer = SGD(model.parameters(), lr=config.lr, momentum=config.momentum, weight_decay=config.weight_decay)
     
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
-    train_loss = nn.CrossEntropyLoss()
-    eval_loss = nn.CrossEntropyLoss()    
+    if config.loss_function =='CE':
+        train_loss = nn.CrossEntropyLoss()
+        eval_loss = nn.CrossEntropyLoss()   
+    elif config.loss_function == 'dice':
+        train_loss = DiceLoss(config.model.n_class) #dice loss is a modified version of jaccard
+        eval_loss =  DiceLoss(config.model.n_class)
+    
 
     epoch = 0
     best_val_loss = np.inf
