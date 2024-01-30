@@ -10,7 +10,7 @@ class DiceLoss(nn.Module):
         self.epsilon = epsilon
 
     def forward(self, y_pred, y):
-        
+
         y_pred = torch.argmax(y_pred, dim=1)
         print(y_pred.shape)
         print(y.shape)
@@ -31,6 +31,6 @@ class DiceLoss(nn.Module):
 
             dice_coeffs[i] = (2 * num_intersection_i + self.epsilon)/(num_union_i + self.epsilon)
 
-        dice_loss = 1 - torch.mean(dice_coeffs)
+        dice_loss = torch.tensor(1) - torch.mean(dice_coeffs)
         print(dice_coeffs)
         return dice_loss
