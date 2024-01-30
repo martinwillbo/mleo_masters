@@ -305,6 +305,7 @@ def loop3(config, writer, hydra_log_dir):
             y_pred = torch.argmax(y_pred, dim=1)
             print(l)
             l.backward()
+            print('efter back: ')
             print(l)
             optimizer.step()
             #scaler.scale(l).backward()
