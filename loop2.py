@@ -101,12 +101,11 @@ def loop2(config, writer, hydra_log_dir):
                                # num_classes = config.model.n_class,
                                # dim_input = config.model.n_channels,
                                 aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    
     #default is 3 channels so change to appropriate number here
     model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False) 
     #if using pretrained model change number of classes to 19
     model.classifier[4] = nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
-
-    #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
 
     model.to(config.device)
     
@@ -126,7 +125,6 @@ def loop2(config, writer, hydra_log_dir):
         train_loss = DiceLoss(config.model.n_class) #dice loss is a modified version of jaccard
         eval_loss =  DiceLoss(config.model.n_class)
     
-
     epoch = 0
     best_val_loss = np.inf
 

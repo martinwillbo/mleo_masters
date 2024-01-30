@@ -28,4 +28,5 @@ class DiceLoss(nn.Module):
             dice[i] = 1 - (2 * num_intersection_i)/(num_union_i + self.epsilon)
 
         dice_loss = torch.mean(dice)
+        print(dice)
         return dice_loss
