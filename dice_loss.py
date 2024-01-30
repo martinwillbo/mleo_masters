@@ -11,7 +11,7 @@ class DiceLoss(nn.Module):
 
     def forward(self, y_pred, y):
 
-        dice = torch.zeros((self.num_classes,), dtype=torch.float)  #creates empty vecn
+        dice_coeffs = torch.zeros((self.num_classes,), dtype=torch.float)  #creates empty vecn
         
         y_pred_flat = y_pred.view(-1)
         y_flat = y.view(-1)
@@ -25,8 +25,8 @@ class DiceLoss(nn.Module):
             num_intersection_i = torch.count_nonzero(intersection_i).item() #how big is the intersection
             num_union_i = torch.count_nonzero(union_i).item() #how big is the union
 
-            dice[i] = 1 - (2 * num_intersection_i)/(num_union_i + self.epsilon)
+            dice_coeffs[i] = (2 * num_intersection_i + self.epsilon)/(num_union_i + self.epsilon)
 
-        dice_loss = torch.mean(dice)
-        print(dice)
+        dice_loss = 1 - torch.mean(dice_coeffs)
+        print(dice_coeffs)
         return dice_loss

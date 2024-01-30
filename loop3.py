@@ -24,8 +24,8 @@ def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
     y_pred_list = y_pred_list.view(-1)
     y_list = y_list.view(-1)
 
-    print(y_pred_list.element_size() * y_pred_list.numel()/1000000) 
-    print(y_list.element_size()*y_list.numel()/1000000)
+    #print(y_pred_list.element_size() * y_pred_list.numel()/1000000) 
+    #print(y_list.element_size()*y_list.numel()/1000000)
 
     #for val: should be 13000*512*512*2 for both, seems correct, and then doubling that -> req 12GB-> too much
 
@@ -349,7 +349,7 @@ def loop3(config, writer, hydra_log_dir):
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())
         
-                if counter in idx_list:
+                if counter in idx_list and epoch % 30 == 0:
                     x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
                     y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
                     y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
