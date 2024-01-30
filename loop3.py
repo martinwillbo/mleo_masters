@@ -301,9 +301,11 @@ def loop3(config, writer, hydra_log_dir):
             y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
             #y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
                 #y_pred = model(x)
-            l = train_loss(y_pred, y).item()
+            l = train_loss(y_pred, y)
             y_pred = torch.argmax(y_pred, dim=1)
+            print(l)
             l.backward()
+            print(l)
             optimizer.step()
             #scaler.scale(l).backward()
             #scaler.step(optimizer)
@@ -351,7 +353,7 @@ def loop3(config, writer, hydra_log_dir):
                 y = y.to(config.device)
                 y_pred = model(x)['out']
                 #y_pred = model(x)
-                l = eval_loss(y_pred, y).item()
+                l = eval_loss(y_pred, y)
                 print(l.shape)
                 print(l)
                 y_pred = torch.argmax(y_pred, dim=1)
