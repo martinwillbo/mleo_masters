@@ -10,6 +10,8 @@ class DiceLoss(nn.Module):
         self.epsilon = epsilon
 
     def forward(self, y_pred, y):
+        print(y_pred.shape)
+        print(y.shape)
 
         dice_coeffs = torch.zeros((self.num_classes,), dtype=torch.float)  #creates empty vecn
         
