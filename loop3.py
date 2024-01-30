@@ -271,8 +271,8 @@ def loop3(config, writer, hydra_log_dir):
         eval_loss = nn.CrossEntropyLoss()   
 
     if config.loss_function == 'dice':
-        train_loss = DiceLoss(config.model.n_class) #dice loss is a modified version of jaccard
-        eval_loss =  DiceLoss(config.model.n_class)
+        train_loss = DiceLoss(config) #dice loss is a modified version of jaccard
+        eval_loss =  DiceLoss(config)
     
     epoch = 0
     best_val_loss = np.inf
