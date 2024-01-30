@@ -14,6 +14,54 @@ import math
 import random
 import cv2
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+from io import BytesIO
+from PIL import Image
+import torchvision.transforms as transforms
+
+class_names = [
+    "building",
+    "pervious surface",
+    "impervious surface",
+    "bare soil",
+    "water",
+    "coniferous",
+    "deciduous",
+    "brushwood",
+    "vineyard",
+    "herbaceous vegetation",
+    "agricultural land",
+    "plowed land",
+    "swimming pool",
+    "snow",
+    "clear cut",
+    "mixed",
+    "ligneous",
+    "greenhouse",
+    "other"
+]
+
+colormap = [
+    [255, 0, 255],    # Magenta
+    [128, 128, 128],  # Grey
+    [255, 0, 0],      # Red
+    [139, 69, 19],    # Brown
+    [0, 0, 255],      # Blue
+    [0, 100, 0],      # Dark Green
+    [0, 255, 155],    # Greenblue
+    [255, 165, 0],    # Orange
+    [128, 0, 128],    # Purple
+    [0, 220, 0],      # Green
+    [255, 255, 0],    # Yellow
+    [220, 245, 220],  # Beige
+    [64, 224, 228],   # Turquoise
+    [255, 255, 255],  # White
+    [100, 190, 160],  # Grey Green
+    [52, 61, 15],   # Brown Green
+    [200, 200, 50],   # Yellow Green
+    [190, 170, 220],  # Light Purple
+    [0, 0, 0]         # Black
+]
 
 def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
     y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0))
@@ -22,8 +70,8 @@ def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
     y_pred_list = y_pred_list.view(-1)
     y_list = y_list.view(-1)
 
-    print(y_pred_list.element_size() * y_pred_list.numel()/1000000) 
-    print(y_list.element_size()*y_list.numel()/1000000)
+    #print(y_pred_list.element_size() * y_pred_list.numel()/1000000) 
+    #print(y_list.element_size()*y_list.numel()/1000000)
 
     #for val: should be 13000*512*512*2 for both, seems correct, and then doubling that -> req 12GB-> too much
 
@@ -106,49 +154,53 @@ def miou_prec_rec_writing_13(config, y_pred_list, y_list, part, writer, epoch):
     writer.add_scalar(part+'/precision fixed 13th class', epoch_miou_prec_rec[1, 0].item(), epoch)
     writer.add_scalar(part+'/recall fixed 13th class', epoch_miou_prec_rec[2, 0].item(), epoch)
 
-colormap = [
-    [255, 0, 255],    # Magenta
-    [128, 128, 128],  # Grey
-    [255, 0, 0],      # Red
-    [139, 69, 19],    # Brown
-    [0, 0, 255],      # Blue
-    [0, 100, 0],      # Dark Green
-    [0, 255, 155],    # Greenblue
-    [255, 165, 0],    # Orange
-    [128, 0, 128],    # Purple
-    [0, 220, 0],      # Green
-    [255, 255, 0],    # Yellow
-    [220, 245, 220],  # Beige
-    [64, 224, 228],   # Turquoise
-    [255, 255, 255],  # White
-    [100, 190, 160],  # Grey Green
-    [52, 61, 15],   # Brown Green
-    [200, 200, 50],   # Yellow Green
-    [190, 170, 220],  # Light Purple
-    [0, 0, 0]         # Black
-]
+def conf_matrix(config, y_pred_list, y_list, writer, epoch):
+    y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0))
+    y_list = torch.tensor(np.concatenate(y_list, axis=0))
 
-class_names = [
-    "building",
-    "pervious surface",
-    "impervious surface",
-    "bare soil",
-    "water",
-    "coniferous",
-    "deciduous",
-    "brushwood",
-    "vineyard",
-    "herbaceous vegetation",
-    "agricultural land",
-    "plowed land",
-    "swimming pool",
-    "snow",
-    "clear cut",
-    "mixed",
-    "ligneous",
-    "greenhouse",
-    "other"
-]
+    y_pred_list = y_pred_list.view(-1)
+    y_list = y_list.view(-1)
+
+    cm = confusion_matrix(y_list.cpu().numpy(), y_pred_list.cpu().numpy())
+
+    # Create a confusion matrix plot
+    fig, ax = plt.subplots(figsize=(10, 10))
+    cax = ax.matshow(cm, cmap=plt.cm.Blues)
+    plt.colorbar(cax)
+
+    # Set axis labels to class names
+    ax.set_xticks(np.arange(len(class_names)))
+    ax.set_yticks(np.arange(len(class_names)))
+    ax.set_xticklabels(class_names, rotation=90)
+    ax.set_yticklabels(class_names)
+
+    # Display the numbers inside the matrix
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            ax.text(x=j, y=i, s=cm[i, j], va='center', ha='center', color='white' if cm[i, j] > cm.max()/2 else 'black')
+
+    plt.xlabel('Predicted Labels')
+    plt.ylabel('True Labels')
+    plt.title('Confusion Matrix')
+
+    # Save the plot to a buffer
+    buf = BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight')
+    buf.seek(0)
+
+     # Convert buffer to PIL Image
+    image = Image.open(buf)
+
+    # Convert PIL Image to tensor
+    transform = transforms.ToTensor()
+    cm_image = transform(image)
+
+    # Add confusion matrix image to TensorBoard
+    writer.add_image('Val/confusion_matrix', cm_image, epoch)
+
+    buf.close()
+    plt.close(fig)
+
 
 def label_image(config, writer):
     legend_image = np.zeros((config.model.n_class * 30, 100, 3), dtype=np.uint8)
@@ -364,6 +416,9 @@ def loop2(config, writer, hydra_log_dir):
 
             miou_prec_rec_writing(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
             miou_prec_rec_writing_13(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
+
+            if epoch % 30 == 0:
+                conf_matrix(config, val_y_pred_list, val_y_list, writer, epoch)
 
             del val_y_list, val_y_pred_list
 
