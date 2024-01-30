@@ -12,7 +12,7 @@ class DiceLoss(nn.Module):
 
     def forward(self, y_pred, y):
 
-        #y_pred = torch.argmax(y_pred, dim=1) # this is already done outside the loss 
+        y_pred = torch.argmax(y_pred, dim=1) # this is not done outside the loss 
 
         dice_coeffs = torch.zeros((self.num_classes,), dtype=torch.float).to(self.config.device)  #creates empty vecn
         
