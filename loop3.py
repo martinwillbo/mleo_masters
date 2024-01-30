@@ -7,7 +7,7 @@ from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 from torch.utils.data import DataLoader
 from torch.optim import Adam, SGD
 import sys
-from torch.cuda.amp import autocast, GradScaler
+#from torch.cuda.amp import autocast, GradScaler
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import os
 import math
@@ -256,7 +256,7 @@ def loop3(config, writer, hydra_log_dir):
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
 
     model.to(config.device)
-    scaler = GradScaler()
+    #scaler = GradScaler()
 
     if config.optimizer == 'adam':
         #TODO: Introduce config option for betas
@@ -295,15 +295,19 @@ def loop3(config, writer, hydra_log_dir):
             x = x.to(config.device)
             y = y.to(config.device)
             
-            with autocast():
-                y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
-                y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
-                #y_pred = model(x)
-                l = train_loss(y_pred, y)
+
             optimizer.zero_grad()
-            scaler.scale(l).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            #with autocast():
+            y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
+            y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
+                #y_pred = model(x)
+            l = train_loss(y_pred, y)
+            
+            l.backward()
+            optimizer.step()
+            #scaler.scale(l).backward()
+            #scaler.step(optimizer)
+            #scaler.update()
 
             
 
