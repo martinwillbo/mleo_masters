@@ -4,16 +4,17 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class DiceLoss(nn.Module):
-    def __init__(self, num_classes, epsilon=1e-5):
+    def __init__(self, config, epsilon=1e-5):
         super(DiceLoss, self).__init__()
-        self.num_classes = num_classes
+        self.num_classes = config.model.n_class
         self.epsilon = epsilon
+        self.config = config
 
     def forward(self, y_pred, y):
 
         #y_pred = torch.argmax(y_pred, dim=1) # this is already done outside the loss 
 
-        dice_coeffs = torch.zeros((self.num_classes,), dtype=torch.float)  #creates empty vecn
+        dice_coeffs = torch.zeros((self.num_classes,), dtype=torch.float).to(self.config.device)  #creates empty vecn
         
         y_pred_flat = y_pred.view(-1)
         y_flat = y.view(-1)
@@ -29,7 +30,7 @@ class DiceLoss(nn.Module):
 
             dice_coeffs[i] = (2 * num_intersection_i + self.epsilon)/(num_union_i + self.epsilon)
 
-        dice_loss = torch.tensor(1) - torch.mean(dice_coeffs)
+        dice_loss = torch.tensor(1).to(self.config.device) - torch.mean(dice_coeffs)
         print(dice_coeffs)
         print(dice_loss)
         return dice_loss
