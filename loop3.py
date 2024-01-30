@@ -268,7 +268,7 @@ def loop3(config, writer, hydra_log_dir):
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
     if config.loss_function =='CE':
         train_loss = nn.CrossEntropyLoss()
-        eval_loss = nn.CrossEntropyLoss()
+        eval_loss = nn.CrossEntropyLoss()   
 
     if config.loss_function == 'dice':
         train_loss = DiceLoss(config.model.n_class) #dice loss is a modified version of jaccard
@@ -297,6 +297,7 @@ def loop3(config, writer, hydra_log_dir):
             
             with autocast():
                 y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
+                y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
                 #y_pred = model(x)
                 l = train_loss(y_pred, y)
             optimizer.zero_grad()
@@ -304,7 +305,7 @@ def loop3(config, writer, hydra_log_dir):
             scaler.step(optimizer)
             scaler.update()
 
-            y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
+            
 
             #y_pred and y has shape: batch_size, crop_size, crop_size, save all values as uint8 in lists on RAM
             y_pred = y_pred.to(torch.uint8).cpu().detach().contiguous().numpy()
