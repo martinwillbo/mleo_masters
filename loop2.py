@@ -10,7 +10,7 @@ import sys
 from torch.cuda.amp import autocast, GradScaler
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import os
-from dice_loss import DiceLoss
+
 
 def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
 
@@ -85,6 +85,8 @@ def miou_prec_rec_writing_13(y_pred_list, y_list, part, writer, epoch):
         writer.add_scalar(part+'/miou fixed 13th class', epoch_miou_prec_rec[0,0], epoch)
         writer.add_scalar(part+'/precision fixed 13th class', epoch_miou_prec_rec[1,0], epoch)
         writer.add_scalar(part+'/recall fixed 13th class', epoch_miou_prec_rec[2,0], epoch)
+
+
         
 def loop2(config, writer, hydra_log_dir):
 
@@ -190,12 +192,14 @@ def loop2(config, writer, hydra_log_dir):
                 val_y_pred_list.append(y_pred)
                 val_y_list.append(y)
                 val_loss.append(l.item())
+
             #Save loss
             l_val = np.mean(val_loss)
             writer.add_scalar('val/loss', l_val, epoch)
             print('Val loss: '+str(l_val))
             miou_prec_rec_writing(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
             miou_prec_rec_writing_13(val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
+
             if l_val < best_val_loss:
                 best_val_loss = l_val
                 torch.save(model.state_dict(), os.path.join(hydra_log_dir, 'best_model.pth'))

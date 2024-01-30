@@ -14,6 +14,8 @@ import math
 import random
 import cv2
 import matplotlib.pyplot as plt
+from dice_loss import DiceLoss
+
 
 def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
     y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0))
@@ -252,9 +254,8 @@ def loop3(config, writer, hydra_log_dir):
     model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
     model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
-    model.to(config.device)
-    
 
+    model.to(config.device)
     scaler = GradScaler()
 
     if config.optimizer == 'adam':
@@ -265,8 +266,12 @@ def loop3(config, writer, hydra_log_dir):
         optimizer = SGD(model.parameters(), lr=config.lr, momentum=config.momentum, weight_decay=config.weight_decay)
 
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
-    train_loss = nn.CrossEntropyLoss()
-    eval_loss = nn.CrossEntropyLoss()
+    if config.loss_function =='CE':
+        train_loss = nn.CrossEntropyLoss()
+        eval_loss = nn.CrossEntropyLoss()   
+    elif config.loss_function == 'dice':
+        train_loss = DiceLoss(config.model.n_class) #dice loss is a modified version of jaccard
+        eval_loss =  DiceLoss(config.model.n_class)
     
     epoch = 0
     best_val_loss = np.inf
