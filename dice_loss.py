@@ -10,6 +10,8 @@ class DiceLoss(nn.Module):
         self.epsilon = epsilon
 
     def forward(self, y_pred, y):
+        
+        y_pred = torch.argmax(y_pred, dim=1)
         print(y_pred.shape)
         print(y.shape)
 

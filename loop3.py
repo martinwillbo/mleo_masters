@@ -268,8 +268,9 @@ def loop3(config, writer, hydra_log_dir):
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
     if config.loss_function =='CE':
         train_loss = nn.CrossEntropyLoss()
-        eval_loss = nn.CrossEntropyLoss()   
-    elif config.loss_function == 'dice':
+        eval_loss = nn.CrossEntropyLoss()
+
+    if config.loss_function == 'dice':
         train_loss = DiceLoss(config.model.n_class) #dice loss is a modified version of jaccard
         eval_loss =  DiceLoss(config.model.n_class)
     
