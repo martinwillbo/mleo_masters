@@ -69,7 +69,7 @@ class DatasetClass(Dataset):
         else:
             self.X_tif_paths = X_tif_paths
             self.Y_tif_paths = Y_tif_paths
-        print('Tif size: ' + str(sys.getsizeof(self.X_tif_paths)*8)) #takes like 3MB
+        #print('Tif size: ' + str(sys.getsizeof(self.X_tif_paths)*8)) #takes like 3MB
 
         #temp_X = self._read_data_old(X_tif_paths, is_label = False)
         #temp_Y = self._read_data_old(Y_tif_paths, is_label = True)
