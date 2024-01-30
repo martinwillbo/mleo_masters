@@ -31,4 +31,5 @@ class DiceLoss(nn.Module):
 
         dice_loss = torch.tensor(1) - torch.mean(dice_coeffs)
         print(dice_coeffs)
+        print(dice_loss)
         return dice_loss
