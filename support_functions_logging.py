@@ -224,10 +224,8 @@ def label_image(config, writer):
     writer.add_text("Class Names", "\n".join(class_names), 0)
 
 def save_image(index, x, y_pred, y, epoch, config, writer):
-            print(x.shape) #np array, shape C,512, 512
-            print(y_pred.shape) #512,512
-            print(y.shape) #512, 512
             
+
             #Unnormalize x and divide by 255 to get range [0,1]
 
             x_temp = np.transpose(x[:3], (1,2,0)).astype(float)
