@@ -12,11 +12,9 @@ class DiceLoss(nn.Module):
 
     def forward(self, y_pred, y):
 
-        
-
+        y = y.to(torch.float32)
+        y_pred = y_pred.to(torch.float32)
         y_pred = torch.argmax(y_pred, dim=1) # this is not done outside the loss 
-      
-
 
         dice_coeffs = torch.zeros((self.num_classes,), dtype=torch.float).to(self.config.device)  #creates empty vecn
         
@@ -36,8 +34,5 @@ class DiceLoss(nn.Module):
 
         dice_loss = torch.tensor(1.0).to(self.config.device) - torch.mean(dice_coeffs)
         dice_loss = torch.tensor(dice_loss, requires_grad=True)
-        
-
-        #print(dice_coeffs)
-        #print(dice_loss)
+    
         return dice_loss
