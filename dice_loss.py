@@ -24,13 +24,16 @@ class DiceLoss(nn.Module):
         for i in range(self.num_classes): #for all classes
 
             y_flat_i = y_flat == i #sets ones where y_flat is equal to i
-            pred_flat_i = y_pred_flat == i
-            intersection_i = torch.logical_and(y_flat_i, pred_flat_i) #where they match
-            union_i = torch.logical_or(y_flat_i, pred_flat_i) #everything together
+            y_pred_flat_i = y_pred_flat == i
+            intersection_i = torch.logical_and(y_flat_i, y_pred_flat_i) #where they match
+            #union_i = torch.logical_or(y_flat_i, pred_flat_i) #everything together
             num_intersection_i = torch.count_nonzero(intersection_i).item() #how big is the intersection
-            num_union_i = torch.count_nonzero(union_i).item() #how big is the union
+            num_y_i = torch.count_nonzero(y_flat_i).item() #how big is the union
+            num_y_pred_i = torch.count_nonzero(y_pred_flat_i).item()
 
-            dice_coeffs[i] = (2 * num_intersection_i + self.epsilon)/(num_union_i + self.epsilon)
+            # ändra till dela på antal
+
+            dice_coeffs[i] = (2 * num_intersection_i + self.epsilon)/(num_y_i + num_y_pred_i + self.epsilon)
 
         dice_loss = torch.tensor(1.0) - torch.mean(dice_coeffs)
         dice_loss = dice_loss.to(device = self.config.device, dtype= torch.float32)       
