@@ -150,10 +150,12 @@ def loop3(config, writer, hydra_log_dir):
                 y_pred = model(x)['out']
                 y_pred.to(config.device)
                 y_pred = y_pred.to(torch.float32)
+                
                 #y_pred = model(x)
                 
                 l = eval_loss(y_pred, y)
                 
+                y_pred = torch.argmax(y_pred, dim=1)
                 
                 val_loss.append(l.item())
         
