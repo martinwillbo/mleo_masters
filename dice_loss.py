@@ -35,6 +35,8 @@ class DiceLoss(nn.Module):
         dice_loss = torch.tensor(1.0) - torch.mean(dice_coeffs)
         #dice_loss = 1 -torch.mean(dice_coeffs)
         dice_loss = torch.tensor(dice_loss, requires_grad=True) 
+
         dice_loss = dice_loss.to(device = self.config.device, dtype= torch.float32)
+        dice_loss.retain_grad()
         #print(dice_loss.dtype)
         return dice_loss 

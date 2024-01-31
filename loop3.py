@@ -296,6 +296,7 @@ def loop3(config, writer, hydra_log_dir):
             x,y = batch
             x = x.to(config.device, dtype=torch.float32)
             y = y.to(config.device, dtype=torch.float32)
+           
             
             optimizer.zero_grad()
             #with autocast():
@@ -304,12 +305,14 @@ def loop3(config, writer, hydra_log_dir):
                 #y_pred = model(x)
             l = train_loss(y_pred, y)
             y_pred = torch.argmax(y_pred, dim=1)
+
             l.backward()
 
             if print_me:
                 print('efter back: ')
                 print(l)
                 print_me = False
+
             optimizer.step()
             #scaler.scale(l).backward()
             #scaler.step(optimizer)
