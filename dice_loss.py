@@ -14,6 +14,12 @@ class DiceLoss(nn.Module):
 
         y = y.to(torch.float32)
         y_pred = y_pred.to(torch.float32)
+
+        print('ypred: ')
+        print(y_pred.shape)
+
+
+
         y_pred = torch.argmax(y_pred, dim=1) # this is not done outside the loss 
 
         dice_coeffs = torch.zeros((self.num_classes,), dtype=torch.float).to(self.config.device)  #creates empty vecn
@@ -26,12 +32,9 @@ class DiceLoss(nn.Module):
             y_flat_i = y_flat == i #sets ones where y_flat is equal to i
             y_pred_flat_i = y_pred_flat == i
             intersection_i = torch.logical_and(y_flat_i, y_pred_flat_i) #where they match
-            #union_i = torch.logical_or(y_flat_i, pred_flat_i) #everything together
             num_intersection_i = torch.count_nonzero(intersection_i).item() #how big is the intersection
             num_y_i = torch.count_nonzero(y_flat_i).item() #how big is the union
             num_y_pred_i = torch.count_nonzero(y_pred_flat_i).item()
-
-            # ändra till dela på antal
 
             dice_coeffs[i] = (2 * num_intersection_i + self.epsilon)/(num_y_i + num_y_pred_i + self.epsilon)
 
