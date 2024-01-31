@@ -294,11 +294,7 @@ def loop3(config, writer, hydra_log_dir):
             x,y = batch
             x = x.to(config.device)
             y = y.to(config.device)
-            print(x.dtype)
-            print(y.dtype)
-            #x = torch.tensor(x, requires_grad=True)
-            #y = torch.tensor(y, requires_grad=True)
-
+            
             optimizer.zero_grad()
             #with autocast():
             y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
