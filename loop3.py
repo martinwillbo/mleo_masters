@@ -295,7 +295,7 @@ def loop3(config, writer, hydra_log_dir):
         for batch in tqdm(train_iter):
             x,y = batch
             x = x.to(config.device, dtype=torch.float32)
-            y = y.to(config.device, dtype=torch.float32)           
+            y = y.to(config.device)         
             
             optimizer.zero_grad()
             #with autocast():
