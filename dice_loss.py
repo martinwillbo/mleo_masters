@@ -11,12 +11,31 @@ class DiceLoss(nn.Module):
         self.config = config
 
     def forward(self, y_pred, y):
+      # Assuming logits is the output from your model and targets are the ground truth labels
+    
+        # Apply softmax along the channel dimension to get probabilities
+        probs = F.softmax(y_pred, dim=1)
+        
+        # One-hot encode the target masks
+        targets_onehot = F.one_hot(y, num_classes=probs.shape[1]).permute(0, 3, 1, 2).float()
+        
+        # Calculate intersection and union for each class
+        intersection = torch.sum(probs * targets_onehot, dim=(2, 3))
+        union = torch.sum(probs + targets_onehot, dim=(2, 3))
+        
+        # Calculate Dice coefficient for each class
+        dice_coeff = (2. * intersection + self.epsilon) / (union + self.epsilon)
+        
+        # Calculate 1 - Dice for the loss (to be minimized)
+        loss = 1 - torch.mean(dice_coeff)
+        
+        return loss
 
+    def dontuse(self, y_pred, y):
         y = y.to(torch.float32)
         y_pred = y_pred.to(torch.float32)
 
         y_pred = torch.softmax(y_pred, dim=1)
-
 
         dice_coeffs = torch.zeros((self.num_classes,), dtype=torch.float).to(self.config.device)  #creates empty vecn
         
