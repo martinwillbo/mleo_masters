@@ -18,6 +18,7 @@ class DiceLoss(nn.Module):
         y = y.to(torch.float32)
         y_pred = y_pred.to(torch.float32)
 
+
         dice_coeffs = torch.zeros((self.num_classes,), dtype=torch.float).to(self.config.device)  #creates empty vecn
         
         y_pred_flat = y_pred.view(-1)
