@@ -307,11 +307,16 @@ def loop3(config, writer, hydra_log_dir):
             #l.requires_grad(True)
             y_pred = torch.argmax(y_pred, dim=1)
 
+            if print_me:
+                print('efter back: ')
+                print(l)
+                
+
             l.backward()
 
             if print_me:
                 print('efter back: ')
-                print(l.grad)
+                print(l)
                 print_me = False
 
             optimizer.step()
