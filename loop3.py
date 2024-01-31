@@ -256,6 +256,7 @@ def loop3(config, writer, hydra_log_dir):
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
 
     model.to(config.device)
+    
     #scaler = GradScaler()
 
     if config.optimizer == 'adam':
@@ -364,7 +365,7 @@ def loop3(config, writer, hydra_log_dir):
                 x = x.to(config.device)
                 y = y.to(config.device)
                 x.to(torch.float32)
-                y.to(torch.float32)
+                y.to(torch.float32) # prob not necessary
                 y_pred = model(x)['out']
                 y_pred = torch.argmax(y_pred, dim=1)
                 y_pred.to(config.device)
