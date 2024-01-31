@@ -305,7 +305,7 @@ def loop3(config, writer, hydra_log_dir):
             y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
              #sets class to each data point
             y_pred = y_pred.to(torch.float32)
-            y_pred.requires_grad = True
+            
 
             #y_pred = model(x)
             l = train_loss(y_pred, y)
