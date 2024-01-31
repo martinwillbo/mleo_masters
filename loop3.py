@@ -294,8 +294,8 @@ def loop3(config, writer, hydra_log_dir):
             x,y = batch
             x = x.to(config.device)
             y = y.to(config.device)
-            x = torch.tensor(x, requires_grad=True)
-            y = torch.tensor(y, requires_grad=True)
+            #x = torch.tensor(x, requires_grad=True)
+            #y = torch.tensor(y, requires_grad=True)
 
             optimizer.zero_grad()
             #with autocast():
