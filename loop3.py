@@ -301,11 +301,11 @@ def loop3(config, writer, hydra_log_dir):
             #with autocast():
             y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
             #y_pred.requires_grad()
-            #y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
+            y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
                 #y_pred = model(x)
             l = train_loss(y_pred, y)
             #l.requires_grad(True)
-            y_pred = torch.argmax(y_pred, dim=1)
+            #y_pred = torch.argmax(y_pred, dim=1)
 
             if print_me:
                 print('efter back: ')
@@ -364,10 +364,11 @@ def loop3(config, writer, hydra_log_dir):
                 x = x.to(config.device)
                 y = y.to(config.device)
                 y_pred = model(x)['out']
+                y_pred = torch.argmax(y_pred, dim=1)
                 #y_pred = model(x)
                 l = eval_loss(y_pred, y)
                 
-                y_pred = torch.argmax(y_pred, dim=1)
+                
                 val_loss.append(l.item())
         
                 if counter in idx_list and epoch % 30 == 0:
