@@ -300,10 +300,11 @@ def loop3(config, writer, hydra_log_dir):
             optimizer.zero_grad()
             #with autocast():
             y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
-            y_pred.retain_grad(True)
+            y_pred.requires_grad(True)
             #y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
                 #y_pred = model(x)
             l = train_loss(y_pred, y)
+            l.requires_grad(True)
             y_pred = torch.argmax(y_pred, dim=1)
 
             l.backward()
