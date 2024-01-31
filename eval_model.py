@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
-from loop2 import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix
+from loop2 import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image
 from torch.utils.data import DataLoader
 import util
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 import os
-import tqdm
+from tqdm import tqdm
 import numpy as np
-
+from support_functions_noise import set_noise
 
 def eval_model(config, writer, training_path, eval_type):
     dataset_module = util.load_module(config.dataset.script_location)
@@ -46,105 +46,42 @@ def eval_model(config, writer, training_path, eval_type):
     y_pred_list = []
     y_list = []
 
+    idx_list = [1,10,40]
+    c = 0
+    noise_level = 0.5 #want it to be only noise
     for batch in tqdm(val_iter):
         x, y = batch
 
-        noise_level = 1.0 #want it to be only noise
-
-        if eval_type == "salt_n_pepper":
-            for i in range(len(x)):
-                x[i,3,:,:] = salt_n_pepper(config, x[i,3, :, :], noise_level, 3)
-                x[i,4,:,:] = salt_n_pepper(config, x[i,4, :, :], noise_level, 4)
-
-        if eval_type == "pixel_wise_fade":
-            for i in range(len(x)):
-                x[i,3,:,:] = pixel_wise_fade(config, x[i,3, :, :], noise_level, 3)
-                x[i,4,:,:] = pixel_wise_fade(config, x[i,4, :, :], noise_level, 4)
-
-        if eval_type == "image_wise_fade":
-            for i in range(len(x)):
-                x[i,3,:,:] = image_wise_fade(config, x[i,3, :, :], noise_level, 3)
-                x[i,4,:,:] = image_wise_fade(config, x[i,4, :, :], noise_level, 4)
+        x = set_noise(config, x, noise_level, eval_type)
 
         x = x.to(config.device)
         y = y.to(config.device)
 
         with torch.no_grad():
-            #y_pred = model(x)['out']
-            y_pred = model(x)
+            y_pred = model(x)['out']
+            #y_pred = model(x)
 
         l = eval_loss_f(y_pred, y)
         eval_loss.append(l.item())
 
         y_pred = torch.argmax(y_pred, dim=1)
+
+        if c in idx_list:
+            x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
+            y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
+            y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
+            save_image(c, x_cpu, y_pred_cpu, y_cpu, 0, config, writer)
+
         y_pred = y_pred.to(torch.uint8).cpu().contiguous().numpy()
         y = y.to(torch.uint8).cpu().contiguous().numpy()
         y_pred_list.append(y_pred)
         y_list.append(y)
+        c += 1
 
     l_test = np.mean(eval_loss)
-   
+    
+    writer.add_text("evaluation/noise level", str(noise_level), 0)
     writer.add_scalar('evaluation/loss', l_test)
     miou_prec_rec_writing(config, y_pred_list, y_list, 'evaluation', writer, 0)
-    miou_prec_rec_writing_13(y_pred_list, y_list, 'evaluation', writer, 0)
+    miou_prec_rec_writing_13(config, y_pred_list, y_list, 'evaluation', writer, 0)
     conf_matrix(config, y_pred_list, y_list, writer, 0)
-
-    def salt_n_pepper(config, x_priv_layer, noise_level, channel_num):
-        H, W = x_priv_layer.shape
-        num_pixels_to_modify = int(noise_level * H * W)
-
-        #create a mask for pixels to modify
-        mask = torch.zeros(H * W, dtype=torch.bool)
-        mask[:num_pixels_to_modify] = True
-        torch.randperm(H * W, out=mask.view(-1)) #Shuffle
-
-        #shape mask back to match image dimensions
-        mask = mask.view(H, W)
-
-        #set "black" and "white" values
-        black_value = np.array[config.dataset.mean][channel_num] + 5*np.array[config.dataset.std][channel_num]
-        white_value = np.array[config.dataset.mean][channel_num] - 5*np.array[config.dataset.std][channel_num]# Randomly choose between black_value and white_value for the selected pixels
-        
-        #Randomly choose between black_value and white_value for the selected pixels
-        black_or_white = torch.rand(H, W) < 0.5
-        black_or_white = black_or_white * (white_value - black_value) + black_value
-
-        # Apply the noise to the image
-        x_priv_noise = torch.where(mask, black_or_white, x_priv_layer)
-        return x_priv_noise
-    
-    def pixel_wise_fade(config, x_priv_layer, noise_level, channel_num):
-        H,W = x_priv_layer.shape
-        num_pixels_to_modify = int(noise_level * H * W)
-
-        mask = torch.zeros(H * W, dtype=torch.bool)
-        mask[:num_pixels_to_modify] = True
-        torch.randperm(H * W, out=mask.view(-1))  # Shuffle the mask
-        mask = mask.view(H, W)
-
-        # Generate random values for the selected pixels
-        mean = np.array[config.dataset.mean][channel_num]
-        std = np.array[config.dataset.std][channel_num]
-        random_values = torch.normal(mean, std, size=(num_pixels_to_modify,))
-
-        random_values_image = torch.zeros_like(x_priv_layer)
-        random_values_image[mask] = random_values
-
-        # Apply the random values to the image
-        x_priv_noise = torch.where(mask, random_values_image, x_priv_layer)
-
-        return x_priv_noise
-
-    def image_wise_fade(config, x_priv_layer, noise_level, channel_num):
-        H, W = x_priv_layer
-        mean = np.array[config.dataset.mean][channel_num]
-        std = np.array[config.dataset.std][channel_num]
-        random_image = torch.normal(mean, std, size=(H,W))
-
-        x_priv_noise = (1-noise_level)*x_priv_layer + noise_level*random_image
-
-        return x_priv_noise
-    
-    def batch_chaos(config, x_priv, noise_level):
-        #Use the method that seems to work the best, and do noise based on batch, not relevant here
-        return x_priv
