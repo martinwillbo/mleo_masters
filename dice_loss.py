@@ -15,6 +15,8 @@ class DiceLoss(nn.Module):
         y = y.to(torch.float32)
         y_pred = y_pred.to(torch.float32)
 
+        y_pred = torch.softmax(y_pred, dim=1)
+
 
         dice_coeffs = torch.zeros((self.num_classes,), dtype=torch.float).to(self.config.device)  #creates empty vecn
         
@@ -34,7 +36,6 @@ class DiceLoss(nn.Module):
 
         
         dice_loss = torch.tensor(1.0) - torch.mean(dice_coeffs)
-        dice_loss.requires_grad = True # har printat dtype och den är float32
-             
+        dice_loss.requires_grad = True # har printat dtype och den är float32     
         
         return dice_loss 
