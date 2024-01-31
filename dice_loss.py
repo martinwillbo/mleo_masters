@@ -11,9 +11,7 @@ class DiceLoss(nn.Module):
         self.config = config
 
     def forward(self, y_pred, y):
-
-    
-
+        
         y = y.to(torch.float32)
         y_pred = y_pred.to(torch.float32)
 
