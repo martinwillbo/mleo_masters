@@ -295,14 +295,12 @@ def loop3(config, writer, hydra_log_dir):
         for batch in tqdm(train_iter):
             x,y = batch
             x = x.to(config.device, dtype=torch.float32)
-            y = y.to(config.device, dtype=torch.float32)
-            #x.retain_grad()
-            y.retain_grad()
-           
+            y = y.to(config.device, dtype=torch.float32)           
             
             optimizer.zero_grad()
             #with autocast():
             y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
+            y_pred.retain_grad()
             #y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
                 #y_pred = model(x)
             l = train_loss(y_pred, y)
