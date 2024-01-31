@@ -289,6 +289,8 @@ def loop3(config, writer, hydra_log_dir):
 
         y_pred_list = [] #list to save for an entire epoch
         y_list = []
+
+        print_me = True
         
         for batch in tqdm(train_iter):
             x,y = batch
@@ -302,15 +304,16 @@ def loop3(config, writer, hydra_log_dir):
                 #y_pred = model(x)
             l = train_loss(y_pred, y)
             y_pred = torch.argmax(y_pred, dim=1)
-            #print(l)
             l.backward()
-            #print('efter back: ')
-            #print(l)
+
+            if print_me:
+                print('efter back: ')
+                print(l)
+                print_me = False
             optimizer.step()
             #scaler.scale(l).backward()
             #scaler.step(optimizer)
             #scaler.update()
-
             
 
             #y_pred and y has shape: batch_size, crop_size, crop_size, save all values as uint8 in lists on RAM
