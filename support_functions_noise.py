@@ -57,9 +57,22 @@ def image_wise_fade(config, x_priv_layer, noise_level, channel_num):
 
     return x_priv_noise
 
-def batch_chaos(config, x_priv, noise_level):
-    #Use the method that seems to work the best, and do noise based on batch, not relevant here
-    return x_priv
+def zero_out(noise_level, model):
+    with torch.no_grad():
+        conv1_weights = model.backbone.conv1.weight
+        mask_shape = conv1_weights[:, 3:5, :, :].shape
+
+        # Create a mask with noise_level amount of zeros
+        mask = torch.bernoulli(torch.full(mask_shape, 1 - noise_level)).to(conv1_weights.device)
+
+        # Apply the mask
+        conv1_weights[:, 3:5, :, :] *= mask
+
+    return model
+
+
+
+
 
 def set_noise(config, x, noise_level, noise_type):
     if noise_type == "salt_n_pepper":

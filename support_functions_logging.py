@@ -4,6 +4,8 @@ import numpy as np
 import util
 from tqdm import tqdm
 import cv2
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 from io import BytesIO
@@ -192,7 +194,7 @@ def conf_matrix(config, y_pred_list, y_list, writer, epoch):
     cm_image = transform(image)
 
     # Add confusion matrix image to TensorBoard
-    writer.add_image('Val/confusion_matrix', cm_image, epoch)
+    writer.add_image('epoch: ' +str(epoch) +' Val/confusion_matrix', cm_image, epoch)
 
     buf.close()
     plt.close(fig)
@@ -222,61 +224,61 @@ def label_image(config, writer):
     writer.add_text("Class Names", "\n".join(class_names), 0)
 
 def save_image(index, x, y_pred, y, epoch, config, writer):
-            #print(x.shape) #np array, shape C,512, 512
-            #print(y_pred.shape) #512,512
-            #print(y.shape) #512, 512
-            #Unnormalize x and divide by 255 to get range [0,1]
+    #print(x.shape) #np array, shape C,512, 512
+    #print(y_pred.shape) #512,512
+    #print(y.shape) #512, 512
+    #Unnormalize x and divide by 255 to get range [0,1]
 
-            x_temp = np.transpose(x[:3], (1,2,0)).astype(float)
-            x_temp *= np.array(config.dataset.std)[:3]
-            x_temp += np.array(config.dataset.mean)[:3]
-            x_temp = np.floor(x_temp)
-            x_temp = cv2.cvtColor(x_temp.astype(np.uint8), cv2.COLOR_BGR2RGB) #convert from BGR to RGB
-            x_temp = np.transpose(x_temp, (2,0,1))
-            x[:3] = x_temp/255.0
+    x_temp = np.transpose(x[:3], (1,2,0)).astype(float)
+    x_temp *= np.array(config.dataset.std)[:3]
+    x_temp += np.array(config.dataset.mean)[:3]
+    x_temp = np.floor(x_temp)
+    x_temp = cv2.cvtColor(x_temp.astype(np.uint8), cv2.COLOR_BGR2RGB) #convert from BGR to RGB
+    x_temp = np.transpose(x_temp, (2,0,1))
+    x[:3] = x_temp/255.0
 
-            colored_y = np.zeros((3, y.shape[0], y.shape[1]), dtype=np.uint8)
-            colored_y_pred = np.zeros((3, y_pred.shape[0], y_pred.shape[1]), dtype=np.uint8)
+    colored_y = np.zeros((3, y.shape[0], y.shape[1]), dtype=np.uint8)
+    colored_y_pred = np.zeros((3, y_pred.shape[0], y_pred.shape[1]), dtype=np.uint8)
 
-            # Iterate over each class and color the masks
-            for class_label in range(config.model.n_class):
-                # Create boolean masks for the current class
-                class_mask_y = (y == class_label)
-                class_mask_y_pred = (y_pred == class_label)
+    # Iterate over each class and color the masks
+    for class_label in range(config.model.n_class):
+        # Create boolean masks for the current class
+        class_mask_y = (y == class_label)
+        class_mask_y_pred = (y_pred == class_label)
 
-                # Color the masks
-                for c in range(3):  # Iterate over color channels (R, G, B)
-                    colored_y[c][class_mask_y] = colormap[class_label][c]
-                    colored_y_pred[c][class_mask_y_pred] = colormap[class_label][c]
+        # Color the masks
+        for c in range(3):  # Iterate over color channels (R, G, B)
+            colored_y[c][class_mask_y] = colormap[class_label][c]
+            colored_y_pred[c][class_mask_y_pred] = colormap[class_label][c]
 
-            x_tensor = torch.from_numpy(x)
-            
-            if config.model.n_channels == 5:
-                x_priv = x_tensor[3:]
-                #Not ideal normalization to be honest, as we don't know how strong the signal is
-                min_vals = x_priv.view(x_priv.size(0), -1).min(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
-                max_vals = x_priv.view(x_priv.size(0), -1).max(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
-                x_priv = (x_priv - min_vals) / (max_vals - min_vals)
-                x_tensor = x_tensor[:3]
-                #Have to normalize x and x_priv to [0,1]
-                writer.add_image('Epoch: ' + str(epoch) + ', Val/IR priv info, batch: ' + str(index), x_priv[0,:,:].unsqueeze(0), epoch)
-                writer.add_image('Epoch: ' + str(epoch) + ', Val/height map priv info, batch: ' + str(index), x_priv[1,:,:].unsqueeze(0), epoch)
-            
-            colored_y_tensor = torch.from_numpy(colored_y)
-            colored_y_pred_tensor = torch.from_numpy(colored_y_pred)
-            colored_y_tensor = colored_y_tensor/255.0 
-            colored_y_pred_tensor = colored_y_pred_tensor/255.0
-            #print('shapes')
-            #print(x_tensor.shape)
-            #print(colored_y_tensor.shape)
-            #print(colored_y_pred_tensor.shape)
-            #print(type(x_tensor), x_tensor.dtype)
-            #print(type(colored_y_tensor), colored_y_tensor.dtype)
-            #print(type(colored_y_pred_tensor), colored_y_tensor.dtype)
-            #print(f"colored_y_tensor: max={colored_y_tensor.max().item()}, min={colored_y_tensor.min().item()}")
-            #print(f"colored_y_pred_tensor: max={colored_y_pred_tensor.max().item()}, min={colored_y_pred_tensor.min().item()}")
+    x_tensor = torch.from_numpy(x)
+    
+    if config.model.n_channels == 5:
+        x_priv = x_tensor[3:]
+        #Not ideal normalization to be honest, as we don't know how strong the signal is
+        min_vals = x_priv.view(x_priv.size(0), -1).min(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
+        max_vals = x_priv.view(x_priv.size(0), -1).max(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
+        x_priv = (x_priv - min_vals) / (max_vals - min_vals)
+        x_tensor = x_tensor[:3]
+        #Have to normalize x and x_priv to [0,1]
+        writer.add_image('Epoch: ' + str(epoch) + ', Val/IR priv info, batch: ' + str(index), x_priv[0,:,:].unsqueeze(0), epoch)
+        writer.add_image('Epoch: ' + str(epoch) + ', Val/height map priv info, batch: ' + str(index), x_priv[1,:,:].unsqueeze(0), epoch)
+    
+    colored_y_tensor = torch.from_numpy(colored_y)
+    colored_y_pred_tensor = torch.from_numpy(colored_y_pred)
+    colored_y_tensor = colored_y_tensor/255.0 
+    colored_y_pred_tensor = colored_y_pred_tensor/255.0
+    #print('shapes')
+    #print(x_tensor.shape)
+    #print(colored_y_tensor.shape)
+    #print(colored_y_pred_tensor.shape)
+    #print(type(x_tensor), x_tensor.dtype)
+    #print(type(colored_y_tensor), colored_y_tensor.dtype)
+    #print(type(colored_y_pred_tensor), colored_y_tensor.dtype)
+    #print(f"colored_y_tensor: max={colored_y_tensor.max().item()}, min={colored_y_tensor.min().item()}")
+    #print(f"colored_y_pred_tensor: max={colored_y_pred_tensor.max().item()}, min={colored_y_pred_tensor.min().item()}")
 
-            
-            writer.add_image('Epoch: ' + str(epoch) + ', Val/x, batch: ' + str(index), x_tensor, epoch)
-            writer.add_image('Epoch: ' + str(epoch) + ', Val/y, batch: ' + str(index), colored_y_tensor, epoch) #unsqueeze adds dim
-            writer.add_image('Epoch: ' + str(epoch) + ', Val/y_pred, batch: ' + str(index), colored_y_pred_tensor, epoch)
+    
+    writer.add_image('Epoch: ' + str(epoch) + ', Val/x, batch: ' + str(index), x_tensor, epoch)
+    writer.add_image('Epoch: ' + str(epoch) + ', Val/y, batch: ' + str(index), colored_y_tensor, epoch) #unsqueeze adds dim
+    writer.add_image('Epoch: ' + str(epoch) + ', Val/y_pred, batch: ' + str(index), colored_y_pred_tensor, epoch)
