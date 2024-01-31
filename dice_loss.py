@@ -11,13 +11,10 @@ class DiceLoss(nn.Module):
         self.config = config
 
     def forward(self, y_pred, y):
-        # Assuming logits is the output from your model and targets are the ground truth labels
-    
-    
-        # Apply softmax along the channel dimension to get probabilities
-        probs = y_pred #F.softmax(y_pred, dim=1)
+
+        y_pred = F.softmax(y_pred, dim=1)
         
-        # One-hot encode the target masks
+        # One-hot encode the y
         y_onehot = F.one_hot(y, num_classes=y_pred.shape[1]).permute(0, 3, 1, 2).float()
         
         # Calculate intersection and union for each class

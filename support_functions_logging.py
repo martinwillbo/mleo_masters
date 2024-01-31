@@ -224,9 +224,10 @@ def label_image(config, writer):
     writer.add_text("Class Names", "\n".join(class_names), 0)
 
 def save_image(index, x, y_pred, y, epoch, config, writer):
-            #print(x.shape) #np array, shape C,512, 512
-            #print(y_pred.shape) #512,512
-            #print(y.shape) #512, 512
+            print(x.shape) #np array, shape C,512, 512
+            print(y_pred.shape) #512,512
+            print(y.shape) #512, 512
+            
             #Unnormalize x and divide by 255 to get range [0,1]
 
             x_temp = np.transpose(x[:3], (1,2,0)).astype(float)
@@ -259,3 +260,26 @@ def save_image(index, x, y_pred, y, epoch, config, writer):
                 min_vals = x_priv.view(x_priv.size(0), -1).min(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
                 max_vals = x_priv.view(x_priv.size(0), -1).max(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
                 x_priv = (x_priv - min_vals) / (max_vals - min_vals)
+                x_tensor = x_tensor[:3]
+                #Have to normalize x and x_priv to [0,1]
+                writer.add_image('Epoch: ' + str(epoch) + ', Val/IR priv info, batch: ' + str(index), x_priv[0,:,:].unsqueeze(0), epoch)
+                writer.add_image('Epoch: ' + str(epoch) + ', Val/height map priv info, batch: ' + str(index), x_priv[1,:,:].unsqueeze(0), epoch)
+            
+            colored_y_tensor = torch.from_numpy(colored_y)
+            colored_y_pred_tensor = torch.from_numpy(colored_y_pred)
+            colored_y_tensor = colored_y_tensor/255.0 
+            colored_y_pred_tensor = colored_y_pred_tensor/255.0
+            #print('shapes')
+            #print(x_tensor.shape)
+            #print(colored_y_tensor.shape)
+            #print(colored_y_pred_tensor.shape)
+            #print(type(x_tensor), x_tensor.dtype)
+            #print(type(colored_y_tensor), colored_y_tensor.dtype)
+            #print(type(colored_y_pred_tensor), colored_y_tensor.dtype)
+            #print(f"colored_y_tensor: max={colored_y_tensor.max().item()}, min={colored_y_tensor.min().item()}")
+            #print(f"colored_y_pred_tensor: max={colored_y_pred_tensor.max().item()}, min={colored_y_pred_tensor.min().item()}")
+
+            
+            writer.add_image('Epoch: ' + str(epoch) + ', Val/x, batch: ' + str(index), x_tensor, epoch)
+            writer.add_image('Epoch: ' + str(epoch) + ', Val/y, batch: ' + str(index), colored_y_tensor, epoch) #unsqueeze adds dim
+            writer.add_image('Epoch: ' + str(epoch) + ', Val/y_pred, batch: ' + str(index), colored_y_pred_tensor, epoch)
