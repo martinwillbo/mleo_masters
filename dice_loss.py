@@ -15,8 +15,7 @@ class DiceLoss(nn.Module):
         
 
         y_pred = torch.argmax(y_pred, dim=1) # this is not done outside the loss 
-        print(y_pred.dtype)
-        print(y.dtype)
+      
 
 
         dice_coeffs = torch.zeros((self.num_classes,), dtype=torch.float).to(self.config.device)  #creates empty vecn
