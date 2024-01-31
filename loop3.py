@@ -304,7 +304,7 @@ def loop3(config, writer, hydra_log_dir):
             #y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
                 #y_pred = model(x)
             l = train_loss(y_pred, y)
-            l.requires_grad(True)
+            #l.requires_grad(True)
             y_pred = torch.argmax(y_pred, dim=1)
 
             l.backward()
