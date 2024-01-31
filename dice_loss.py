@@ -12,8 +12,7 @@ class DiceLoss(nn.Module):
 
     def forward(self, y_pred, y):
       # Assuming logits is the output from your model and targets are the ground truth labels
-        y = y.to(torch.float32)
-        y_pred = y_pred.to(torch.float32)
+    
     
         # Apply softmax along the channel dimension to get probabilities
         probs = F.softmax(y_pred, dim=1)

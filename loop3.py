@@ -363,11 +363,10 @@ def loop3(config, writer, hydra_log_dir):
                 x,y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)
-                x.to(torch.float32)
-                y.to(torch.float32) # prob not necessary
+                
                 y_pred = model(x)['out']
-                y_pred = torch.argmax(y_pred, dim=1)
                 y_pred.to(config.device)
+                y_pred = y_pred.to(torch.float32)
                 #y_pred = model(x)
                 
                 l = eval_loss(y_pred, y)
