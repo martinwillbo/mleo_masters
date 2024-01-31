@@ -296,7 +296,7 @@ def loop3(config, writer, hydra_log_dir):
             x,y = batch
             x = x.to(config.device, dtype=torch.float32)
             y = y.to(config.device, dtype=torch.float32)
-            x.retain_grad()
+            #x.retain_grad()
             y.retain_grad()
            
             
