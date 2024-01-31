@@ -299,12 +299,13 @@ def loop3(config, writer, hydra_log_dir):
             y = y.to(config.device)         
             
             optimizer.zero_grad()
+
             #with autocast():
             y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
             y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
             y_pred = y_pred.to(torch.float32)
-            
             y_pred.requires_grad = True
+
                 #y_pred = model(x)
             l = train_loss(y_pred, y)
             #l.requires_grad(True)
@@ -319,7 +320,7 @@ def loop3(config, writer, hydra_log_dir):
 
             if print_me:
                 print('efter back: ')
-                print(l)
+                print(l.grad_fn)
                 print_me = False
 
             optimizer.step()
