@@ -34,6 +34,7 @@ class DiceLoss(nn.Module):
 
             dice_coeffs[i] = (2 * num_intersection_i + self.epsilon)/(num_y_i + num_y_pred_i + self.epsilon)
 
+        print(dice_coeffs)
         dice_loss = torch.tensor(1.0) - torch.mean(dice_coeffs)
         dice_loss = dice_loss.to(device = self.config.device, dtype= torch.float32)       
         
