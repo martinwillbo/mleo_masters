@@ -11,7 +11,7 @@ class DiceLoss(nn.Module):
         self.config = config
 
     def forward(self, y_pred, y):
-        
+
         y = y.to(torch.float32)
         y_pred = y_pred.to(torch.float32)
 
@@ -34,8 +34,7 @@ class DiceLoss(nn.Module):
 
         
         dice_loss = torch.tensor(1.0) - torch.mean(dice_coeffs)
-        dice_loss.requires_grad_ = True
-        print(dice_loss.dtype)
-        #dice_loss = dice_loss.to(device = self.config.device, dtype= torch.float32)       
+        dice_loss.requires_grad = True # har printat dtype och den är float32
+             
         
         return dice_loss 
