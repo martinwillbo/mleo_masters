@@ -367,6 +367,9 @@ def loop3(config, writer, hydra_log_dir):
                 y_pred = torch.argmax(y_pred, dim=1)
                 y_pred.to(config.device)
                 #y_pred = model(x)
+                print(y.requires_grad)
+                print(y_pred.requires_grad)
+                
                 l = eval_loss(y_pred, y)
                 
                 
