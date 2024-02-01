@@ -17,8 +17,10 @@ class DiceLoss(nn.Module):
         # One-hot encode the y
         y_onehot = F.one_hot(y, num_classes=self.config.model.n_class).permute(0, 3, 1, 2).float()
 
-        print(y_pred[0,5,:,:])
-        print(y_onehot[0,5,:,:])
+        #print('pred')
+        #print(y_pred[0,5,:,:])
+        #print('label')
+        #print(y_onehot[0,5,:,:])
         
         # Calculate intersection and union for each class
         intersection = torch.sum(y_pred * y_onehot, dim=(2, 3))
@@ -26,6 +28,7 @@ class DiceLoss(nn.Module):
         
         # Calculate Dice coefficient for each class
         dice_coeff = (2. * intersection) / (cardinality + self.epsilon)
+        print(dice_coeff.shape)
         
         # Calculate 1 - Dice for the loss (to be minimized)
         loss = 1 - torch.mean(dice_coeff)
