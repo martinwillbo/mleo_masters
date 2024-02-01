@@ -33,9 +33,10 @@ class DiceLoss(nn.Module):
         # Calculate 1 - Dice for the loss (to be minimized)
         loss = torch.mean((dice_coeff))
         #loss = 1 - torch.mean(dice_coeff)
-        #print(dice_coeff.shape)
+        print(dice_coeff)
         #print(loss.dtype)
-        return loss #, dice_coeff
+
+        return loss
 
     def dontuse(self, y_pred, y):
         y = y.to(torch.float32)
