@@ -19,10 +19,10 @@ class DiceLoss(nn.Module):
         
         # Calculate intersection and union for each class
         intersection = torch.sum(y_pred * y_onehot, dim=(2, 3))
-        union = torch.sum(y_pred + y_onehot, dim=(2, 3))
+        cardinality = torch.sum(y_pred + y_onehot, dim=(2, 3))
         
         # Calculate Dice coefficient for each class
-        dice_coeff = (2. * intersection + self.epsilon) / (union + self.epsilon)
+        dice_coeff = (2. * intersection) / (cardinality + self.epsilon)
         
         # Calculate 1 - Dice for the loss (to be minimized)
         loss = 1 - torch.mean(dice_coeff)

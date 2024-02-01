@@ -97,11 +97,6 @@ def loop3(config, writer, hydra_log_dir):
 
             l.backward()
 
-            if print_me:
-                print('efter back: ')
-                print(l.grad_fn)
-                print_me = False
-
             optimizer.step()
             #scaler.scale(l).backward()
             #scaler.step(optimizer)
