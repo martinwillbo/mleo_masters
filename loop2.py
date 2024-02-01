@@ -12,7 +12,7 @@ import os
 import math
 import random
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, label_image
-from support_functions_noise import set_noise, zero_out
+from support_functions_noise import set_noise, zero_out, stepwise_linear_function
 
 
 
@@ -66,7 +66,7 @@ def loop2(config, writer, hydra_log_dir):
 
         y_pred_list = [] #list to save for an entire epoch
         y_list = []
-        noise_level = epoch/config.max_epochs
+        noise_level = stepwise_linear_function(epoch, config.max_epochs)
         
         for batch in tqdm(train_iter):
             x,y = batch
