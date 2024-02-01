@@ -20,7 +20,7 @@ save_model_freq: 1000 #Don't do this to often, max a couple of times over a coup
 val_batch_size: 8 #I typically set this as large as VRAM allows
 test_batch_size: 16 # how large should this be?
 num_workers: 10 #Set this based on machine, I think it's best to max it, usually faster training that way.
-lr: 0.0002 #0.0002 but start higher if decay is on in loop
+lr: 0.002 #0.0002 for CE
 max_epochs: 1000
 save_optimizer: False #Set this to true if you want to be able to keep training the model at a later stage, as of now the code has no support for this.
 weight_decay: 0
