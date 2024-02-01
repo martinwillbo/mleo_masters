@@ -12,10 +12,10 @@ class DiceLoss(nn.Module):
 
     def forward(self, y_pred, y):
 
-        y_pred = F.softmax(y_pred, dim=1)
+        #y_pred = F.softmax(y_pred, dim=1)
         
         # One-hot encode the y
-        y_onehot = F.one_hot(y, num_classes=y_pred.shape[1]).permute(0, 3, 1, 2).float()
+        y_onehot = F.one_hot(y, num_classes=self.config.model.n_class).permute(0, 3, 1, 2).float()
         
         # Calculate intersection and union for each class
         intersection = torch.sum(y_pred * y_onehot, dim=(2, 3))
