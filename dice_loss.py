@@ -28,10 +28,11 @@ class DiceLoss(nn.Module):
         
         # Calculate Dice coefficient for each class
         dice_coeff = (2. * intersection) / (cardinality + self.epsilon)
-        print(dice_coeff[0,9])
+        #print(dice_coeff[0,9])
         
         # Calculate 1 - Dice for the loss (to be minimized)
         loss = 1 - torch.mean(dice_coeff)
+        print(dice_coeff.shape)
         #print(loss.dtype)
         return loss, dice_coeff
 
