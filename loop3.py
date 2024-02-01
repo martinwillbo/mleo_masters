@@ -91,7 +91,7 @@ def loop3(config, writer, hydra_log_dir):
             
 
             #y_pred = model(x)
-            l = train_loss(y_pred, y)
+            l, co = train_loss(y_pred, y)
             #l.requires_grad(True)
             y_pred = torch.argmax(y_pred, dim=1)
 
@@ -110,7 +110,8 @@ def loop3(config, writer, hydra_log_dir):
             y_list.append(y)
 
             epoch_loss.append(l.item())
-            
+
+        print(co)            
 
         #Save loss
         writer.add_scalar('train/loss', np.mean(epoch_loss), epoch)
@@ -148,10 +149,10 @@ def loop3(config, writer, hydra_log_dir):
                 
                 #y_pred = model(x)
                 
-                l = eval_loss(y_pred, y)
+                l, _ = eval_loss(y_pred, y)
 
-                if counter % 100 == 0:
-                    print(coeff)
+                #if counter % 100 == 0:
+                    #print(coeff)
 
                 y_pred = torch.argmax(y_pred, dim=1)
                 
