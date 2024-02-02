@@ -109,9 +109,7 @@ def loop3(config, writer, hydra_log_dir):
             y_pred_list.append(y_pred)
             y_list.append(y)
 
-            epoch_loss.append(l.item())
-
-        #print(hejg)            
+            epoch_loss.append(l.item())         
 
         #Save loss
         writer.add_scalar('train/loss', np.mean(epoch_loss), epoch)
@@ -139,12 +137,14 @@ def loop3(config, writer, hydra_log_dir):
 
             val_iter = iter(val_loader)
             for batch in tqdm(val_iter):
+                print(model.device())
+                      
                 x,y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)
                 
                 y_pred = model(x)['out']
-                y_pred.to(config.device)
+                
                 y_pred = y_pred.to(torch.float32)
                 
                 #y_pred = model(x)
