@@ -163,12 +163,15 @@ def loop3(config, writer, hydra_log_dir):
                     y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
                     y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
                     save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)
-                    #här ska du spara confmatrix
+                    
 
                 y_pred = y_pred.to(torch.uint8).cpu().contiguous().detach().numpy()
                 y = y.to(torch.uint8).cpu().contiguous().detach().numpy()
                 val_y_pred_list.append(y_pred)
                 val_y_list.append(y)
+
+                if epoch % 30 == 0:
+                    conf_matrix(config, val_y_pred_list, val_y_list, writer, epoch)
 
                 counter += 1
 

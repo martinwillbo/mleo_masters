@@ -11,17 +11,11 @@ class DiceLoss(nn.Module):
         self.config = config
 
     def forward(self, y_pred, y):
-
+        #softmax
         y_pred = F.softmax(y_pred, dim=1)
         
         # One-hot encode the y
         y_onehot = F.one_hot(y, num_classes=self.config.model.n_class).permute(0, 3, 1, 2).float()
-
-
-        #print('pred')
-        #print(y_pred[0,9,:,:])
-        #print('label')
-        #print(y_onehot[0,9,:,:])
         
         # Calculate intersection and union for each class
         intersection = torch.sum(y_pred * y_onehot, dim=(2, 3))
@@ -29,13 +23,14 @@ class DiceLoss(nn.Module):
         
         # Calculate Dice coefficient for each class
         dice_coeff = (2 * intersection) / (cardinality + self.epsilon)
-        #print(dice_coeff[0,9])
-        
-        # Calculate 1 - Dice for the loss (to be minimized)
-        #loss = torch.mean((dice_coeff))
-        loss = 1 - torch.mean(dice_coeff)
-        #print(torch.mean(dice_coeff, dim=0))
-        #print(loss.dtype)
+
+        # 1-12 get twice the weight as 13-19
+        weights_12 = 2/31*torch.ones(12)
+        weights_13_plus = 1/32*torch.ones(7)
+        weights = torch.cat((weights_12, weights_13_plus))
+
+        # weigted average over classes
+        loss = 1 - torch.mean(dice_coeff * weights)
 
         return loss
 
