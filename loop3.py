@@ -73,8 +73,6 @@ def loop3(config, writer, hydra_log_dir):
 
         y_pred_list = [] #list to save for an entire epoch
         y_list = []
-
-        print_me = True
         
         for batch in tqdm(train_iter):
             x,y = batch
@@ -87,7 +85,7 @@ def loop3(config, writer, hydra_log_dir):
 
             y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
              #sets class to each data point
-            y_pred = y_pred.to(torch.float32)
+            #y_pred = y_pred.to(torch.float32)
             
 
             #y_pred = model(x)
@@ -168,8 +166,7 @@ def loop3(config, writer, hydra_log_dir):
                     x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
                     y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
                     y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
-                    save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)
-                    
+                    save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)                    
 
                 y_pred = y_pred.to(torch.uint8).cpu().contiguous().detach().numpy()
                 y = y.to(torch.uint8).cpu().contiguous().detach().numpy()
