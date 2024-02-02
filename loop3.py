@@ -144,7 +144,10 @@ def loop3(config, writer, hydra_log_dir):
                 x,y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)
-                
+
+                print(x.is_cuda)
+                print(y.is_cuda)
+
                 y_pred = model(x)['out']
                 
                 y_pred = y_pred.to(torch.float32)
