@@ -142,7 +142,7 @@ def loop3(config, writer, hydra_log_dir):
 
                 y_pred = model(x)['out']
                 
-                y_pred = y_pred.to(torch.float32)
+                #y_pred = y_pred.to(torch.float32)
                 
                 l = eval_loss(y_pred, y)
                 
