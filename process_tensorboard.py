@@ -22,7 +22,7 @@ def scalars_to_dataframe(log_dir):
     return all_scalars_df
 # Directory where your TensorBoard logs are stored
 model_folder = '2024-01-29_18-14-04/'
-log_dir = '../'+model_folder+'/tensorboard'
+log_dir = '../log_res/'+model_folder+'/tensorboard'
 # Convert all scalar data to a pandas DataFrame
 scalar_data_df = scalars_to_dataframe(log_dir)
 # Display the first few rows of the DataFrame
