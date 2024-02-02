@@ -11,7 +11,7 @@ defaults:
   - transform: basic
 
 seed: 42
-device: cuda:3 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
+device: cuda:2 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
 use_transform: True
 batch_size: 32
 eval_every: 10
@@ -19,18 +19,19 @@ save_model_freq: 500 #Don't do this to often, max a couple of times over a coupl
 val_batch_size: 8 #I typically set this as large as VRAM allows
 num_workers: 6 #Set this based on machine, I think it's best to max it, usually faster training that way.
 lr: 0.0002
-max_epochs: 600
+max_epochs: 1000
 save_optimizer: False #Set this to true if you want to be able to keep training the model at a later stage, as of now the code has no support for this.
 weight_decay: 0
 optimizer: adam
 beta1: 0.9
 momentum: 0.9
 loss_function: CE
-eval_type: salt_n_pepper #for evaluation
+eval_type: zero_out  #for evaluation
 
 noise: True
-noise_type: salt_n_pepper #for training
-noise_distribution_type: batch #for training
+noise_type: zero_out #for training
+noise_distribution_type: None #for training
+stepwise_linear_function: function_2
 
 
 model:

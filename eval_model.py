@@ -48,7 +48,7 @@ def eval_model(config, writer, training_path, eval_type):
 
     idx_list = [1,10,40]
     c = 0
-    noise_level = 0.5 #want it to be only noise
+    noise_level = 1.0 #want it to be only noise
     for batch in tqdm(val_iter):
         x, y = batch
 

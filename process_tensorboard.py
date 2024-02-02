@@ -30,7 +30,6 @@ def scalars_to_dataframe(log_dir):
 model_folder = '2024-01-29_18-13-26/'
 
 log_dir = '../../'+model_folder+'/tensorboard'
-plots_dir = '../../'+model_folder+'/plots'
 
 # Convert all scalar data to a pandas DataFrame
 scalar_data_df = scalars_to_dataframe(log_dir)
@@ -38,16 +37,29 @@ scalar_data_df = scalars_to_dataframe(log_dir)
 # Display the first few rows of the DataFrame
 print(scalar_data_df.shape)
 
-columns_to_plot = scalar_data_df.columns[1:]
 
 
-for column in columns_to_plot:
-    print(f'{plots_dir}{column}.png')
-    # plt.figure()
-    # plt.plot(scalar_data_df['step'], scalar_data_df[column], label=column)
-    # plt.xlabel('Step')
-    # plt.ylabel(column)
-    # plt.title(f'{column} over Steps')
-    # plt.legend()
-    # plt.savefig(f'{plots_dir}{column}.png')  # Save the figure with the column name
-    # plt.close()  # Close the figure to free up memory
+#search for min loss to find the epoch to use on test etc
+min_val_loss_idx = scalar_data_df['val/loss'].idxmin()
+val_columns = [col for col in scalar_data_df.columns if col.startswith('val/')]
+filtered_df = scalar_data_df[val_columns]
+min_val_loss_row = filtered_df.loc[min_val_loss_idx]
+
+# Step 5: Print the values
+print(min_val_loss_row)
+print(f"Row with minimum 'val/loss': {min_val_loss_idx}")
+
+
+def plot_function(scalar_data_df):
+    plots_dir = '../../'+model_folder+'/plots'
+    columns_to_plot = scalar_data_df.columns[1:]
+    for column in columns_to_plot:
+        print(f'{plots_dir}{column}.png')
+        plt.figure()
+        plt.plot(scalar_data_df['step'], scalar_data_df[column], label=column)
+        plt.xlabel('Step')
+        plt.ylabel(column)
+        plt.title(f'{column} over Steps')
+        plt.legend()
+        plt.savefig(f'{plots_dir}{column}.png')  # Save the figure with the column name
+        plt.close()  # Close the figure to free up memory

@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import torch.nn as nn
 
 
 def salt_n_pepper(x_priv, noise_level):
@@ -71,12 +72,28 @@ def zero_out(noise_level, model):
 
     return model
 
-def stepwise_linear_function(x, max_epochs):
-    if x < 100:
+def stepwise_linear_function_1(x, max_epochs):
+
+    if x/max_epochs < 100:
         return 0.3 * x / 100
-    elif 100 <= x < max_epochs - 100:
-        return 0.3 + (0.7 / 450) * (x - 100)
+    elif 100 <= x < 900:
+        return 0.3 + (0.7 / 800) * (x - 100)
     else:
+        return 1.0
+    
+
+def stepwise_linear_function_2(epoch, max_epochs):
+    if epoch <= 0.1 * max_epochs:
+        # Linear interpolation from 0 to 0.1 over 0 to 0.1*max_epochs
+        return 0.1 / (0.1 * max_epochs) * epoch
+    elif epoch <= 0.2 * max_epochs:
+        # Linear interpolation from 0.1 to 0.5 over 0.1*max_epochs to 0.2*max_epochs
+        return 0.1 + (0.4 / (0.1 * max_epochs)) * (epoch - 0.1 * max_epochs)
+    elif epoch <= 0.9 * max_epochs:
+        # Linear interpolation from 0.5 to 1.0 over 0.2*max_epochs to 0.9*max_epochs
+        return 0.5 + (0.5 / (0.7 * max_epochs)) * (epoch - 0.2 * max_epochs)
+    else:
+        # Constant value of 1.0 beyond 0.9*max_epochs
         return 1.0
 
 
@@ -88,6 +105,9 @@ def set_noise(config, x, noise_level, noise_type):
         x[:, 3:5, :, :] = pixel_wise_fade(x[:, 3:5, :, :], noise_level)
     
     elif noise_type == "image_wise_fade":
-        x[:, 3:5, :, :] = image_wise_fade(x[:, 3:5, :, :], noise_type)
+        x[:, 3:5, :, :] = image_wise_fade(x[:, 3:5, :, :], noise_level)
+    
+    else:
+        print("Invalid noise_type")
 
     return x
