@@ -25,39 +25,11 @@ class DiceLoss(nn.Module):
         dice_coeff = (2 * intersection) / (cardinality + self.epsilon)
 
         # 1-12 get twice tthe
-        #weights_12 = 2/31*torch.ones(12)
-        #weights_13_plus = 1/32*torch.ones(7)
-        #weights = torch.cat((weights_12, weights_13_plus))
+        weights_12 = 2/31*torch.ones(12)
+        weights_13_plus = 1/32*torch.ones(7)
+        weights = torch.cat((weights_12, weights_13_plus)).cuda()
 
-        # weigted average over classes
-        loss = 1 - torch.mean(dice_coeff) # * weights)
+        #weigted average over classes
+        loss = 1 - torch.mean(dice_coeff * weights) # * weights)
 
         return loss
-
-    def dontuse(self, y_pred, y):
-        y = y.to(torch.float32)
-        y_pred = y_pred.to(torch.float32)
-
-        y_pred = torch.softmax(y_pred, dim=1)
-
-        dice_coeffs = torch.zeros((self.num_classes,), dtype=torch.float).to(self.config.device)  #creates empty vecn
-        
-        y_pred_flat = y_pred.view(-1)
-        y_flat = y.view(-1)
-
-        for i in range(self.num_classes): #for all classes
-
-            y_flat_i = y_flat == i #sets ones where y_flat is equal to i
-            y_pred_flat_i = y_pred_flat == i
-            intersection_i = torch.logical_and(y_flat_i, y_pred_flat_i) #where they match
-            num_intersection_i = torch.count_nonzero(intersection_i).item() #how big is the intersection
-            num_y_i = torch.count_nonzero(y_flat_i).item() #how big is the union
-            num_y_pred_i = torch.count_nonzero(y_pred_flat_i).item()
-
-            dice_coeffs[i] = (2 * num_intersection_i + self.epsilon)/(num_y_i + num_y_pred_i + self.epsilon)
-
-        
-        dice_loss = torch.tensor(1.0) - torch.mean(dice_coeffs)
-        dice_loss.requires_grad = True # har printat dtype och den är float32     
-        
-        return dice_loss 
