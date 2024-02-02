@@ -151,6 +151,7 @@ def loop3(config, writer, hydra_log_dir):
                 y_pred = model(x)['out']
                 
                 y_pred = y_pred.to(torch.float32)
+                print(y_pred.is_cuda)
                 
                 #y_pred = model(x)
                 
