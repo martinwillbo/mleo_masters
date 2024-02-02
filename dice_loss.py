@@ -27,10 +27,12 @@ class DiceLoss(nn.Module):
         # 1-12 get twice the weight as 13-19
         weights_12 = 2/31*torch.ones(12)
         weights_13_plus = 1/32*torch.ones(7)
-        weights = torch.cat((weights_12, weights_13_plus))        
+        weights = torch.cat((weights_12, weights_13_plus))
+
+        dice_weighted = dice_coeff * weights        
 
         # weigted average over classes
-        loss = 1 - torch.mean(dice_coeff * weights)
+        loss = 1 - torch.mean(dice_weighted)
 
         return loss
 
