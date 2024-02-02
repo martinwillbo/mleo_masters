@@ -58,6 +58,9 @@ def loop3(config, writer, hydra_log_dir):
         train_loss = DiceLoss(config) #dice loss is a modified version of jaccard
         eval_loss =  DiceLoss(config)
     
+    print(train_loss)
+    print(val_loss)
+
     epoch = 0
     best_val_loss = np.inf
 
@@ -137,11 +140,11 @@ def loop3(config, writer, hydra_log_dir):
 
             val_iter = iter(val_loader)
             for batch in tqdm(val_iter):
-                                    
+                #print(1)                    
                 x,y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)
-
+                #print(2)
                 y_pred = model(x)['out']                
                 y_pred = y_pred.to(torch.float32)
                 
@@ -151,7 +154,7 @@ def loop3(config, writer, hydra_log_dir):
                 
                 val_loss.append(l.item())
 
-                print('loss done')
+                #print('loss done')
         
                 if counter in idx_list and epoch % 30 == 0:
                     x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
@@ -164,7 +167,7 @@ def loop3(config, writer, hydra_log_dir):
                 val_y_pred_list.append(y_pred)
                 val_y_list.append(y)
 
-                print('y to cpu done')
+                #print('y to cpu done')
         
 
                 if epoch % 30 == 0:
