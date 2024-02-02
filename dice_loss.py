@@ -25,9 +25,9 @@ class DiceLoss(nn.Module):
         dice_coeff = (2 * intersection) / (cardinality + self.epsilon)
 
         # 1-12 get twice the weight as 13-19
-        weights_12 = 2/31*torch.ones(12)
-        weights_13_plus = 1/32*torch.ones(7)
-        weights = torch.cat((weights_12, weights_13_plus)).cuda()
+        #weights_12 = 2/31*torch.ones(12)
+        #weights_13_plus = 1/32*torch.ones(7)
+        #weights = torch.cat((weights_12, weights_13_plus)).cuda()
 
         dice_weighted = dice_coeff * weights        
 
