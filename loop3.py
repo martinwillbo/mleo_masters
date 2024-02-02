@@ -120,6 +120,8 @@ def loop3(config, writer, hydra_log_dir):
         #clean
         del y_list, y_pred_list
 
+        torch.cuda.empty_cache()
+
         if epoch % config.eval_every == 0:
             model.eval()
             val_loss = []
@@ -169,6 +171,7 @@ def loop3(config, writer, hydra_log_dir):
                     conf_matrix(config, val_y_pred_list, val_y_list, writer, epoch)
 
                 counter += 1
+                torch.cuda.empty_cache()
 
             #Save loss
             l_val = np.mean(val_loss)
