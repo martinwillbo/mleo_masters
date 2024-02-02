@@ -59,7 +59,7 @@ def loop3(config, writer, hydra_log_dir):
         eval_loss =  DiceLoss(config)
     
     print(train_loss)
-    print(val_loss)
+    print(eval_loss)
 
     epoch = 0
     best_val_loss = np.inf
