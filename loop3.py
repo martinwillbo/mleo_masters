@@ -176,6 +176,8 @@ def loop3(config, writer, hydra_log_dir):
 
             del val_y_list, val_y_pred_list, y_pred, y
 
+            torch.cuda.empty_cache()
+
             if l_val < best_val_loss and epoch != 0:
                 best_val_loss = l_val
                 torch.save(model.state_dict(), os.path.join(hydra_log_dir, 'best_model.pth'))
