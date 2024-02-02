@@ -123,7 +123,6 @@ def loop3(config, writer, hydra_log_dir):
         #clean
         del y_list, y_pred_list
 
-        torch.cuda.empty_cache()
 
         if epoch % config.eval_every == 0:
             model.eval()
@@ -138,43 +137,45 @@ def loop3(config, writer, hydra_log_dir):
             idx_list = [same_img_idx, random_img_idx_1, random_img_idx_2]
             counter = 0
 
-            val_iter = iter(val_loader)
-            for batch in tqdm(val_iter):
-                #print(1)                    
-                x,y = batch
-                x = x.to(config.device)
-                y = y.to(config.device)
-                #print(2)
-                y_pred = model(x)['out']                
-                y_pred = y_pred.to(torch.float32)
-                
-                l = eval_loss(y_pred, y)
-        
-                y_pred = torch.argmax(y_pred, dim=1)
-                
-                val_loss.append(l.item())
+            with torch.no_grad:
 
-                #print('loss done')
-        
-                if counter in idx_list and epoch % 30 == 0:
-                    x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
-                    y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
-                    y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
-                    save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)                    
+                val_iter = iter(val_loader)
+                for batch in tqdm(val_iter):
+                    #print(1)                    
+                    x,y = batch
+                    x = x.to(config.device)
+                    y = y.to(config.device)
+                    #print(2)
+                    y_pred = model(x)['out']                
+                    y_pred = y_pred.to(torch.float32)
+                    
+                    l = eval_loss(y_pred, y)
+            
+                    y_pred = torch.argmax(y_pred, dim=1)
+                    
+                    val_loss.append(l.item())
 
-                y_pred = y_pred.to(torch.uint8).cpu().contiguous().detach().numpy()
-                y = y.to(torch.uint8).cpu().contiguous().detach().numpy()
-                val_y_pred_list.append(y_pred)
-                val_y_list.append(y)
+                    #print('loss done')
+            
+                    if counter in idx_list and epoch % 30 == 0:
+                        x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
+                        y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
+                        y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
+                        save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)                    
 
-                #print('y to cpu done')
-        
+                    y_pred = y_pred.to(torch.uint8).cpu().contiguous().detach().numpy()
+                    y = y.to(torch.uint8).cpu().contiguous().detach().numpy()
+                    val_y_pred_list.append(y_pred)
+                    val_y_list.append(y)
 
-                if epoch % 30 == 0:
-                    conf_matrix(config, val_y_pred_list, val_y_list, writer, epoch)
+                    #print('y to cpu done')
+            
 
-                counter += 1
-                torch.cuda.empty_cache()
+                    if epoch % 30 == 0:
+                        conf_matrix(config, val_y_pred_list, val_y_list, writer, epoch)
+
+                    counter += 1
+                    torch.cuda.empty_cache()
 
             #Save loss
             l_val = np.mean(val_loss)
