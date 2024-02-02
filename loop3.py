@@ -125,9 +125,6 @@ def loop3(config, writer, hydra_log_dir):
         del y_list, y_pred_list
 
         if epoch % config.eval_every == 0:
-            print(torch.cuda.current_device())
-            print(torch.cuda.is_available())
-            print(next(model.parameters()).device)
             model.eval()
             val_loss = []
             val_y_pred_list = []
