@@ -144,11 +144,12 @@ def loop3(config, writer, hydra_log_dir):
                 y_pred = y_pred.to(torch.float32)
                 
                 l = eval_loss(y_pred, y)
-                print(l.dtype)
-                print(l.is_cuda)
+        
                 y_pred = torch.argmax(y_pred, dim=1)
                 
                 val_loss.append(l.item())
+
+                print('loss done')
         
                 if counter in idx_list and epoch % 30 == 0:
                     x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
@@ -160,6 +161,9 @@ def loop3(config, writer, hydra_log_dir):
                 y = y.to(torch.uint8).cpu().contiguous().detach().numpy()
                 val_y_pred_list.append(y_pred)
                 val_y_list.append(y)
+
+                print('y to cpu done')
+        
 
                 if epoch % 30 == 0:
                     conf_matrix(config, val_y_pred_list, val_y_list, writer, epoch)
