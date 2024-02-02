@@ -137,8 +137,10 @@ def loop3(config, writer, hydra_log_dir):
 
             val_iter = iter(val_loader)
             for batch in tqdm(val_iter):
-                print(model.device())
-                      
+                print(torch.cuda.current_device())
+                print(torch.cuda.is_available())
+                print(next(model.parameters()).device)
+                        
                 x,y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)
