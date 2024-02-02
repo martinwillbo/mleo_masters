@@ -135,29 +135,17 @@ def loop3(config, writer, hydra_log_dir):
 
             val_iter = iter(val_loader)
             for batch in tqdm(val_iter):
-                print(torch.cuda.current_device())
-                print(torch.cuda.is_available())
-                print(next(model.parameters()).device)
-                        
+                                    
                 x,y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)
 
-                print(x.is_cuda)
-                print(y.is_cuda)
-
                 y_pred = model(x)['out']
                 
                 y_pred = y_pred.to(torch.float32)
-                print(y_pred.is_cuda)
-                
-                #y_pred = model(x)
                 
                 l = eval_loss(y_pred, y)
-                print(l.is_cuda)
-                #if counter % 100 == 0:
-                    #print(coeff)
-
+                
                 y_pred = torch.argmax(y_pred, dim=1)
                 
                 val_loss.append(l.item())
@@ -186,7 +174,7 @@ def loop3(config, writer, hydra_log_dir):
             miou_prec_rec_writing(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
             miou_prec_rec_writing_13(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
 
-            del val_y_list, val_y_pred_list
+            del val_y_list, val_y_pred_list, y_pred, y
 
             if l_val < best_val_loss and epoch != 0:
                 best_val_loss = l_val
