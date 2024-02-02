@@ -33,6 +33,6 @@ class DiceLoss(nn.Module):
 
         # weigted average over classes
         loss = 1 - torch.mean(dice_coeff)
-        loss.to('cuda:0')
+        #loss.to('cuda:0')
 
         return loss
