@@ -156,7 +156,7 @@ def loop3(config, writer, hydra_log_dir):
                 #y_pred = model(x)
                 
                 l = eval_loss(y_pred, y)
-
+                print(l.is_cuda)
                 #if counter % 100 == 0:
                     #print(coeff)
 
