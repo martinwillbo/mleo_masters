@@ -95,6 +95,15 @@ def stepwise_linear_function_2(epoch, max_epochs):
     else:
         # Constant value of 1.0 beyond 0.9*max_epochs
         return 1.0
+    
+def custom_sine(x):
+    amplitude = 0.5
+    period = 100
+    phase_shift = np.pi / 2  # Shifts the start to 0.5 and makes it go upwards
+    vertical_shift = 0.5
+    
+    # Sine function formula adjusted for specified conditions
+    return amplitude * np.sin(2 * np.pi * (x/period) + phase_shift) + vertical_shift
 
 
 def set_noise(config, x, noise_level, noise_type):

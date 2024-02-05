@@ -4,8 +4,9 @@ import numpy as np
 import util
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from loop2 import miou_prec_rec_writing, miou_prec_rec_writing_13
+from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix
 import os
+from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 
 
 def eval_on_test(config, writer, training_path):
@@ -18,8 +19,15 @@ def eval_on_test(config, writer, training_path):
     
     # Specify the path to the saved model
     saved_model_path = os.path.join(training_path, 'best_model.pth')
-    # Load the saved model parameters into the instantiated model
-    model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
+    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
+                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    
+    model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
+    model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+
+
+    #Load and overwrite model
+    saved_model_path = os.path.join(training_path, 'best_model.pth')
     model.load_state_dict(torch.load(saved_model_path))
     model.to(config.device)
 
@@ -37,8 +45,8 @@ def eval_on_test(config, writer, training_path):
         x = x.to(config.device)
         y = y.to(config.device)
         with torch.no_grad():
-            #y_pred = model(x)['out']
-            y_pred = model(x)
+            y_pred = model(x)['out']
+            #y_pred = model(x)
 
         l = test_loss_f(y_pred, y)
         test_loss.append(l.item())
@@ -53,8 +61,8 @@ def eval_on_test(config, writer, training_path):
     # Assuming 'writer' is defined somewhere in your code for logging
     writer.add_scalar('test/loss', l_test)
     miou_prec_rec_writing(config, y_pred_list, y_list, 'test', writer, 0)
-    miou_prec_rec_writing_13(y_pred_list, y_list, 'test', writer, 0)
-
+    miou_prec_rec_writing_13(config, y_pred_list, y_list, 'test', writer, 0)
+    conf_matrix(config, y_pred_list, y_list, writer, 0)
 
 
 

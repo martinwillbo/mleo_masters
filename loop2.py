@@ -12,7 +12,7 @@ import os
 import math
 import random
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, label_image
-from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2
+from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2, custom_sine
 
 
 
@@ -70,6 +70,11 @@ def loop2(config, writer, hydra_log_dir):
             noise_level = stepwise_linear_function_1(epoch, config.max_epochs)
         elif config.stepwise_linear_function == 'function_2':
             noise_level = stepwise_linear_function_2(epoch, config.max_epochs)
+        elif config.stepwise_linear_function == 'sine':
+            noise_level = custom_sine(epoch)
+            print(noise_level)
+
+        
         
         for batch in tqdm(train_iter):
             x,y = batch

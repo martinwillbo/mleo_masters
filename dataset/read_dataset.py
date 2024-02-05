@@ -34,8 +34,8 @@ class DatasetClass(Dataset):
             X_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.X_path + '_' + 'train')
             Y_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.Y_path + '_' + 'train')
         elif part == 'test':
-            X_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_aerial_test')
-            Y_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_labels_test')
+            X_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_aerial_test')
+            Y_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_labels_test')
             
         X_tif_paths = self._read_paths(X_BASE_PATH)
         Y_tif_paths = self._read_paths(Y_BASE_PATH)

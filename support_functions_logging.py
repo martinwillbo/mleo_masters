@@ -158,7 +158,6 @@ def conf_matrix(config, y_pred_list, y_list, writer, epoch):
     cm = confusion_matrix(y_list.cpu().numpy(), y_pred_list.cpu().numpy())
     cm = cm.astype('float') / cm.sum(axis=1)[:,np.newaxis]
 
-
     # Create a confusion matrix plot
     fig, ax = plt.subplots(figsize=(10, 10))
     cax = ax.matshow(cm, cmap=plt.cm.Blues)

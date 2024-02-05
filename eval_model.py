@@ -34,6 +34,12 @@ def eval_model(config, writer, training_path, eval_type):
         with torch.no_grad():
             model.backbone.conv1.weight[:, 3:5, :, :] = 0
 
+    if eval_type == "zero_out_5/3":
+        with torch.no_grad():
+            model.backbone.conv1.weight[:, 3:5, :, :] = 0
+            model.backbone.conv1.weight[:, 0:3, :, :] *= 5/3 #size up weights 
+
+
     model.to(config.device)
 
     model.eval()
