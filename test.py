@@ -4,8 +4,9 @@ import numpy as np
 import util
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from loop2 import miou_prec_rec_writing, miou_prec_rec_writing_13 
+from loop2 import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix 
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
+from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 import os
 
 def eval_on_test(config, writer, training_path):
@@ -22,7 +23,8 @@ def eval_on_test(config, writer, training_path):
     saved_model_path = os.path.join(training_path, 'best_model.pth')
 
     # Load the saved model parameters into the instantiated model
-    model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
+    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
+                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     model.load_state_dict(torch.load(saved_model_path))
     model.to(config.device)
 
@@ -61,3 +63,4 @@ def eval_on_test(config, writer, training_path):
     writer.add_scalar('test/loss', l_test)
     miou_prec_rec_writing(config, y_pred_list, y_list, 'test', writer, 0)
     miou_prec_rec_writing_13(y_pred_list, y_list, 'test', writer, 0) 
+    conf_matrix(config, y_pred_list, y_list, writer, epoch = 0)
