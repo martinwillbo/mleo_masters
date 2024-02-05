@@ -11,7 +11,7 @@ defaults:
   - dataset: read_dataset
   - transform: basic
 
-seed: 42
+seed: 27 #42
 device: cuda:0 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
 use_transform: True
 batch_size: 32
@@ -20,12 +20,12 @@ save_model_freq: 1000 #Don't do this to often, max a couple of times over a coup
 val_batch_size: 8 #I typically set this as large as VRAM allows
 test_batch_size: 16 # how large should this be?
 num_workers: 10 #Set this based on machine, I think it's best to max it, usually faster training that way.
-lr: 0.0004 #0.0002 for CE
+lr: 0.0002 #0.0002 for CE
 max_epochs: 1000
 save_optimizer: False #Set this to true if you want to be able to keep training the model at a later stage, as of now the code has no support for this.
 weight_decay: 0
 optimizer: adam
-loss_function: dice
+loss_function: CE
 beta1: 0.9
 momentum: 0.9
 
