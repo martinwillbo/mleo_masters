@@ -143,6 +143,8 @@ class DatasetClass(Dataset):
             data = np.transpose(data, (2,0,1))
             if not self.config.dataset.using_priv:
                 data = data[:3,:,:]
+            if self.config.model.n_channels == 4:
+                    data = data[:4,:,:] 
         return data
     
     def _read_data_old(self, tif_paths, is_label):
