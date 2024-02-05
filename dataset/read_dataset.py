@@ -24,7 +24,12 @@ class DatasetClass(Dataset):
         self.layer_stds = np.array(self.config.dataset.std)
 
         if not self.config.dataset.using_priv:
-            self.layer_means = self.layer_means[0:4] #only bgr
+            self.layer_means = self.layer_means[0:3] #only bgr
+            self.layer_stds = self.layer_stds[0:3]
+
+        #only for trying with 4 channel
+        if self.config.model.n_channels == 4:
+            self.layer_means = self.layer_means[0:4] #only bgr  
             self.layer_stds = self.layer_stds[0:4]
     
         if part == 'val' or part == 'train':       
@@ -138,8 +143,6 @@ class DatasetClass(Dataset):
             data = np.transpose(data, (2,0,1))
             if not self.config.dataset.using_priv:
                 data = data[:3,:,:]
-            if self.config.model.n_channels == 4:
-                data = data[:4,:,:]
         return data
     
     def _read_data_old(self, tif_paths, is_label):
@@ -155,6 +158,8 @@ class DatasetClass(Dataset):
                 data = np.transpose(data, (2,0,1))
                 if not self.config.dataset.using_priv:
                     data = data[:3,:,:]
+                if self.config.model.n_channels == 4:
+                    data = data[:4,:,:]                
             if self.config.dataset.det_crop:
                 data_list = self.det_crop_old(data, is_label)
                 temp_data.extend(data_list)
