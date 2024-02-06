@@ -19,7 +19,5 @@ scale: False
 mean: [113.7693, 118.0902, 109.2753, 102.3808, 16.7343] #B is the first channel, then G, then R (only on train, not val)
 std: [52.3925, 46.0153, 45.2657, 39.4576, 29.5914]
 
-
-
 #all things that are done on the entire data set, with no probability involved etc., should be done in the read file,
 #the rest in transform/aug

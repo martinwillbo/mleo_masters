@@ -28,9 +28,9 @@ class DatasetClass(Dataset):
             self.layer_stds = self.layer_stds[0:3]
 
         #only for trying with 4 channel
-        if self.config.model.n_channels == 4:
-            self.layer_means = self.layer_means[0:4] #only bgr  
-            self.layer_stds = self.layer_stds[0:4]
+        #if self.config.model.n_channels == 4:
+        #    self.layer_means = self.layer_means[0:4] #only bgr  
+        #    self.layer_stds = self.layer_stds[0:4]    
     
         if part == 'val' or part == 'train':       
             X_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.X_path + '_' + 'train')
@@ -39,30 +39,29 @@ class DatasetClass(Dataset):
             X_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_aerial_test')
             Y_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_labels_test')
    
-        print(X_BASE_PATH)
+        #print(X_BASE_PATH)
         
         X_tif_paths = self._read_paths(X_BASE_PATH)
         Y_tif_paths = self._read_paths(Y_BASE_PATH)
+
         combined = list(zip(X_tif_paths, Y_tif_paths))
         random.shuffle(combined)
         X_tif_paths, Y_tif_paths = zip(*combined)
         X_tif_paths, Y_tif_paths = list(X_tif_paths), list(Y_tif_paths)
         assert len(X_tif_paths) == len(Y_tif_paths)
 
+        val_set_paths = ["D004", "D014", "D029", "D031", "D058", "D066", "D067", "D077"] # defined in flair paper
+
+        if part == 'val':
+            X_tif_paths = [path for path in X_tif_paths if any(s in path for s in val_set_paths)]
+            Y_tif_paths = [path for path in Y_tif_paths if any(s in path for s in val_set_paths)]
+        elif part == 'train':
+            X_tif_paths = [path for path in X_tif_paths if not any(s in path for s in val_set_paths)]
+            Y_tif_paths = [path for path in Y_tif_paths if not any(s in path for s in val_set_paths)]
+
         data_stop_point = math.floor(len(X_tif_paths)*(self.config.dataset.dataset_size))
         X_tif_paths = X_tif_paths[0:data_stop_point]
         Y_tif_paths = Y_tif_paths[0:data_stop_point]
-
-        split_point = math.floor(len(X_tif_paths)*(1-self.config.dataset.val_set_size))
-
-        if self.part == 'train':
-            # no shuffle when splitting - change maybe
-            X_tif_paths = X_tif_paths[0:split_point]
-            Y_tif_paths = Y_tif_paths[0:split_point]
-
-        if self.part == 'val':
-            X_tif_paths = X_tif_paths[split_point:]
-            Y_tif_paths = Y_tif_paths[split_point:]
 
         #print('Constructing ' + self.part + ' set...')
         # This is for determenistic cropping - curr. not used
@@ -143,8 +142,8 @@ class DatasetClass(Dataset):
             data = np.transpose(data, (2,0,1))
             if not self.config.dataset.using_priv:
                 data = data[:3,:,:]
-            if self.config.model.n_channels == 4:
-                    data = data[:4,:,:] 
+            #if self.config.model.n_channels == 4:
+            #        data = data[:4,:,:] 
         return data
     
     def _read_data_old(self, tif_paths, is_label):
@@ -160,8 +159,8 @@ class DatasetClass(Dataset):
                 data = np.transpose(data, (2,0,1))
                 if not self.config.dataset.using_priv:
                     data = data[:3,:,:]
-                if self.config.model.n_channels == 4:
-                    data = data[:4,:,:]                
+                #if self.config.model.n_channels == 4: #only when using 4 channels
+                #    data = data[:4,:,:]                
             if self.config.dataset.det_crop:
                 data_list = self.det_crop_old(data, is_label)
                 temp_data.extend(data_list)
