@@ -160,7 +160,7 @@ def loop2(config, writer, hydra_log_dir):
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())
         
-                if counter in idx_list and epoch % 30 == 0:
+                if counter in idx_list and epoch % 15 == 0:
                     x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
                     y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
                     y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
@@ -181,7 +181,7 @@ def loop2(config, writer, hydra_log_dir):
             miou_prec_rec_writing(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
             miou_prec_rec_writing_13(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
 
-            if epoch % 30 == 0:
+            if epoch % 15 == 0:
                 conf_matrix(config, val_y_pred_list, val_y_list, writer, epoch)
 
             del val_y_list, val_y_pred_list

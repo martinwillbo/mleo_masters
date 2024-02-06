@@ -17,7 +17,7 @@ def main(config):
 
     #NOTE: Don't have to use tensorboard to log experiments, but should implement something else if so (Aleksis have code for this).
     current_timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    hydra_log_dir = '/raid/dlgroupmsc/'+current_timestamp
+    hydra_log_dir = '/raid/dlgroupmsc/logs/'+current_timestamp
     log_dir = os.path.join(hydra_log_dir, 'tensorboard')
     print(log_dir)
     writer = SummaryWriter(log_dir=log_dir)

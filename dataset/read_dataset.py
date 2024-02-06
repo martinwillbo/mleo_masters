@@ -39,27 +39,36 @@ class DatasetClass(Dataset):
             
         X_tif_paths = self._read_paths(X_BASE_PATH)
         Y_tif_paths = self._read_paths(Y_BASE_PATH)
+        
         combined = list(zip(X_tif_paths, Y_tif_paths))
         random.shuffle(combined)
         X_tif_paths, Y_tif_paths = zip(*combined)
         X_tif_paths, Y_tif_paths = list(X_tif_paths), list(Y_tif_paths)
-        #print(X_tif_paths[:2], Y_tif_paths[:2])
 
         assert len(X_tif_paths) == len(Y_tif_paths)
+
+        val_set_paths = ["D004", "D014", "D029", "D031", "D058", "D066", "D067", "D077"]
+        if part == 'val':    
+            X_tif_paths = [path for path in X_tif_paths if any(s in path for s in val_set_paths)]
+            Y_tif_paths = [path for path in Y_tif_paths if any(s in path for s in val_set_paths)]
+        elif part == 'train':
+            X_tif_paths = [path for path in X_tif_paths if not any(s in path for s in val_set_paths)]
+            Y_tif_paths = [path for path in Y_tif_paths if not any(s in path for s in val_set_paths)]
+
 
         data_stop_point = math.floor(len(X_tif_paths)*(self.config.dataset.dataset_size))
         X_tif_paths = X_tif_paths[0:data_stop_point]
         Y_tif_paths = Y_tif_paths[0:data_stop_point]
 
-        split_point = math.floor(len(X_tif_paths)*(1-self.config.dataset.val_set_size))
+        #split_point = math.floor(len(X_tif_paths)*(1-self.config.dataset.val_set_size))
 
-        if self.part == 'train':
-            # no shuffle when splitting - change maybe
-            X_tif_paths = X_tif_paths[0:split_point]
-            Y_tif_paths = Y_tif_paths[0:split_point]
-        if self.part == 'val':
-            X_tif_paths = X_tif_paths[split_point:]
-            Y_tif_paths = Y_tif_paths[split_point:]
+        #if self.part == 'train':
+        #    # no shuffle when splitting - change maybe
+        #    X_tif_paths = X_tif_paths[0:split_point]
+        #    Y_tif_paths = Y_tif_paths[0:split_point]
+        #if self.part == 'val':
+        #    X_tif_paths = X_tif_paths[split_point:]
+        #    Y_tif_paths = Y_tif_paths[split_point:]
 
         #print('Constructing ' + self.part + ' set...')
         if config.dataset.det_crop and part == 'train': #THIS IS BROKEN WITH THE SHUFFLING

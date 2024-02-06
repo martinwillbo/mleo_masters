@@ -95,7 +95,7 @@ def handle_df(log_dir):
 # Directory where your TensorBoard logs are stored
 model_folder = '2024-01-29_18-13-26'
 
-log_dir = '../../'+model_folder+'/tensorboard'
+log_dir = '../../logs/'+model_folder+'/tensorboard'
 
 #extracted manually
 base_values_wo = [0.85633034, 0.7118823, 0.79254436, 0.79795754, 0.8797694, 0.6296923, 0.7697543, 0.57710105, 0.8872009, 0.6940321, 0.82619613, 0.8196255, 0.5436313, 0.88608176, 0.46711946, 0.7061641, 0.58820695, 0.8491268, 0.12912768]
