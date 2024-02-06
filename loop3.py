@@ -172,8 +172,8 @@ def loop3(config, writer, hydra_log_dir):
             miou_prec_rec_writing(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
             miou_prec_rec_writing_13(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
 
-            if epoch % 15 == 0:
-                conf_matrix(config, val_y_pred_list, val_y_list, writer, epoch)
+            #if epoch % 15 == 0:
+            #    conf_matrix(config, val_y_pred_list, val_y_list, writer, epoch)
 
             del val_y_list, val_y_pred_list, y_pred, y
 
