@@ -73,7 +73,7 @@ def zero_out(noise_level, model):
     return model
 
 def stepwise_linear_function_1(x, max_epochs):
-
+    print("ABORT")
     if x/max_epochs < 100:
         return 0.3 * x / 100
     elif 100 <= x < 900:

@@ -77,10 +77,21 @@ class DatasetClass(Dataset):
             self.X_tif_paths = [path for path in X_tif_paths for _ in range(num_crops)]
             self.Y_tif_paths = [path for path in Y_tif_paths for _ in range(num_crops)]
         else:
-            self.X_tif_paths = X_tif_paths
-            self.Y_tif_paths = Y_tif_paths
+            if len(X_tif_paths) % config.batch_size == 1 and part == 'train':
+                self.X_tif_paths = X_tif_paths[:-1]
+                self.Y_tif_paths = Y_tif_paths[:-1]
+            elif len(X_tif_paths) % config.val_batch_size == 1 and part == 'val':
+                self.X_tif_paths = X_tif_paths[:-1]
+                self.Y_tif_paths = Y_tif_paths[:-1]
+            elif len(X_tif_paths) % config.test_batch_size == 1 and part == 'test':
+                self.X_tif_paths = X_tif_paths[:-1]
+                self.Y_tif_paths = Y_tif_paths[:-1]
+            else:
+                self.X_tif_paths = X_tif_paths
+                self.Y_tif_paths = Y_tif_paths
         
         print('Tif size: ' + str(sys.getsizeof(self.X_tif_paths)*8)) #takes like 3MB
+        print("Num samples: " + str(len(self.X_tif_paths)))
         #temp_X = self._read_data_old(X_tif_paths, is_label = False)
         #temp_Y = self._read_data_old(Y_tif_paths, is_label = True)
         #print(len(temp_X))

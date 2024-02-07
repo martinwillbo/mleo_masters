@@ -33,6 +33,12 @@ def loop2(config, writer, hydra_log_dir):
                                 dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     
     model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
+    if config.dropout:
+        dropout_rate = 0.5  # Example dropout rate, adjust as needed
+        classifier = list(model.classifier.children())
+        classifier.insert(-1, nn.Dropout(dropout_rate))  # Insert dropout before the last layer in the classifier
+        model.classifier = nn.Sequential(*classifier)
+    
     model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
     model.to(config.device)
