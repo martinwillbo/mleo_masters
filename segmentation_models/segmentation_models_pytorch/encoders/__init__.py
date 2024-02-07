@@ -2,7 +2,7 @@ import timm
 import functools
 import torch.utils.model_zoo as model_zoo
 
-from .resnet import resnet_encoders
+#from .resnet import resnet_encoders
 from .dpn import dpn_encoders
 from .vgg import vgg_encoders
 from .senet import senet_encoders
@@ -27,7 +27,7 @@ from .timm_universal import TimmUniversalEncoder
 from ._preprocessing import preprocess_input
 
 encoders = {}
-encoders.update(resnet_encoders)
+#encoders.update(resnet_encoders)
 encoders.update(dpn_encoders)
 encoders.update(vgg_encoders)
 encoders.update(senet_encoders)
