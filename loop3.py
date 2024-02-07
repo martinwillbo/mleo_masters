@@ -9,7 +9,7 @@ from torch.optim import Adam, SGD
 import sys
 #from torch.cuda.amp import autocast, GradScaler
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
-from segmentation_models import segmentation_models_pytorch as smp
+import segmentation_models_pytorch as smp
 import os
 import math
 import random
