@@ -25,11 +25,11 @@ class DiceLoss(nn.Module):
         dice_coeff = (2 * intersection) / (cardinality + self.epsilon)
 
         # 1-12 get twice tthe
-        weights_12 = 2/31*torch.ones(12)
-        weights_13_plus = 1/31*torch.ones(7)
-        weights = torch.cat((weights_12, weights_13_plus)).cuda()
+        #weights_12 = 2/31*torch.ones(12)
+        #weights_13_plus = 1/31*torch.ones(7)
+        #weights = torch.cat((weights_12, weights_13_plus)).cuda()
 
         #weigted average over classes
-        loss = 1 - torch.mean(dice_coeff * weights) # * weights)
+        loss = 1 - torch.mean(dice_coeff) # * weights) # * weights)
 
         return loss
