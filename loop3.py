@@ -40,11 +40,11 @@ def loop3(config, writer, hydra_log_dir):
             classes= config.model.n_class            
         )
 
-    #model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
-                               # dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
+                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
     
-    #model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
-    #model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+    model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
+    model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
 
     model.to(config.device)
@@ -95,12 +95,12 @@ def loop3(config, writer, hydra_log_dir):
 
             #with autocast():
 
-            #y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
+            y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
              #sets class to each data point
             #y_pred = y_pred.to(torch.float32)
             
-
-            y_pred = model(x)
+            #if config.model.name == 'res'
+            #y_pred = model(x)
             l = train_loss(y_pred, y)
             #print(l)
             #l.requires_grad(True)
@@ -153,8 +153,8 @@ def loop3(config, writer, hydra_log_dir):
                 x,y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)               
-                #y_pred = model(x)['out']   
-                y_pred = model(x)             
+                y_pred = model(x)['out']   
+                #y_pred = model(x)             
                 y_pred = y_pred.to(torch.float32)
                 l = eval_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
