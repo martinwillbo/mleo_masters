@@ -7,7 +7,7 @@ from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 from torch.utils.data import DataLoader
 from torch.optim import Adam, SGD
 import sys
-#from torch.cuda.amp import autocast, GradScaler
+from torch.cuda.amp import autocast, GradScaler
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import segmentation_models_pytorch as smp
 import os
@@ -32,7 +32,7 @@ def loop3(config, writer, hydra_log_dir):
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers, 
                             pin_memory = True)
     
-    if config.model.name == 'Unet':
+    if config.model.name == 'unet':
         model = smp.Unet(
             encoder_weights="imagenet", 
             encoder_name="efficientnet-b4",
@@ -40,16 +40,17 @@ def loop3(config, writer, hydra_log_dir):
             classes= config.model.n_class            
         )
 
-    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
-                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
-    
-    model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
-    model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+    if config.model.name == 'resnet50':
+        model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
+                                    dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+        
+        model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
+        model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
 
     model.to(config.device)
     
-    #scaler = GradScaler()
+    scaler = GradScaler()
 
     if config.optimizer == 'adam':
         #TODO: Introduce config option for betas
@@ -93,25 +94,19 @@ def loop3(config, writer, hydra_log_dir):
             
             optimizer.zero_grad()
 
-            #with autocast():
-
-            y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
-             #sets class to each data point
-            #y_pred = y_pred.to(torch.float32)
+            with autocast():
+                if config.model.name == 'resnet50':
+                    y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
+                elif config.model.name == 'unet':
+                    y_pred = model(x)
             
-            #if config.model.name == 'res'
-            #y_pred = model(x)
             l = train_loss(y_pred, y)
-            #print(l)
-            #l.requires_grad(True)
             y_pred = torch.argmax(y_pred, dim=1)
-
-            l.backward()
-
-            optimizer.step()
-            #scaler.scale(l).backward()
-            #scaler.step(optimizer)
-            #scaler.update()
+            #l.backward()
+            #optimizer.step()
+            scaler.scale(l).backward()
+            scaler.step(optimizer)
+            scaler.update()
             
 
             #y_pred and y has shape: batch_size, crop_size, crop_size, save all values as uint8 in lists on RAM
@@ -133,7 +128,6 @@ def loop3(config, writer, hydra_log_dir):
         #clean
         del y_list, y_pred_list
 
-
         if epoch % config.eval_every == 0:
             model.eval()
             val_loss = []
@@ -152,9 +146,13 @@ def loop3(config, writer, hydra_log_dir):
 
                 x,y = batch
                 x = x.to(config.device)
-                y = y.to(config.device)               
-                y_pred = model(x)['out']   
-                #y_pred = model(x)             
+                y = y.to(config.device)       
+
+                if config.model.name == 'resnet50':
+                   y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
+                elif config.model.name == 'unet':
+                   y_pred = model(x)     
+                     
                 y_pred = y_pred.to(torch.float32)
                 l = eval_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
@@ -173,7 +171,6 @@ def loop3(config, writer, hydra_log_dir):
 
                 counter += 1
                
-
             #Save loss
             l_val = np.mean(val_loss)
             writer.add_scalar('val/loss', l_val, epoch)
