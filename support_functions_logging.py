@@ -117,9 +117,9 @@ def miou_prec_rec_writing_13(config, y_pred_list, y_list, part, writer, epoch):
     y_list = y_list.view(-1)
     #print(y_pred_list.shape)
 
-    # Set values > 12 to 13
-    y_pred_list[y_pred_list > 12] = 13
-    y_list[y_list > 12] = 13
+    # Set values > 11 to 13
+    y_pred_list[y_pred_list > 11] = 13
+    y_list[y_list > 11] = 13
 
     # Create an empty tensor for epoch_miou_prec_rec
     epoch_miou_prec_rec = torch.full((3, 1), float('nan'))
