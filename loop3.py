@@ -91,24 +91,20 @@ def loop3(config, writer, hydra_log_dir):
             x,y = batch
             x = x.to(config.device) # dtype=torch.float32)
             y = y.to(config.device)         
-            
-            optimizer.zero_grad()
 
             with autocast():
                 if config.model.name == 'resnet50':
                     y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
                 elif config.model.name == 'unet':
                     y_pred = model(x)
+                l = train_loss(y_pred, y)
             
-            l = train_loss(y_pred, y)
             y_pred = torch.argmax(y_pred, dim=1)
-            #l.backward()
-            #optimizer.step()
+            optimizer.zero_grad()
             scaler.scale(l).backward()
             scaler.step(optimizer)
             scaler.update()
             
-
             #y_pred and y has shape: batch_size, crop_size, crop_size, save all values as uint8 in lists on RAM
             y_pred = y_pred.to(torch.uint8).cpu().detach().contiguous().numpy()
             y = y.to(torch.uint8).cpu().detach().contiguous().numpy()
