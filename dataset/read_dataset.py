@@ -29,16 +29,22 @@ class DatasetClass(Dataset):
             self.layer_means = self.layer_means[0:3] #only bgr
             self.layer_stds = self.layer_stds[0:3]
         
-        
         if part == 'val' or part == 'train':
             X_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.X_path + '_' + 'train')
             Y_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.Y_path + '_' + 'train')
         elif part == 'test':
             X_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_aerial_test')
             Y_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_labels_test')
-            
-        X_tif_paths = self._read_paths(X_BASE_PATH)
-        Y_tif_paths = self._read_paths(Y_BASE_PATH)
+        
+        if part == 'train' and config.dataset.dataset_size == 0.05:
+            X_tif_paths = self._read_paths_from_file('dataset/paths/X_paths_train_5.txt')
+            Y_tif_paths = self._read_paths_from_file('dataset/paths/Y_paths_train_5.txt')
+        elif part == 'val' and config.dataset.dataset_size == 0.05:
+            X_tif_paths = self._read_paths_from_file('dataset/paths/X_paths_val_5.txt')
+            Y_tif_paths = self._read_paths_from_file('dataset/paths/Y_paths_val_5.txt')
+        elif part == 'test' or config.dataset.dataset_size == 1.0:
+            X_tif_paths = self._read_paths(X_BASE_PATH)
+            Y_tif_paths = self._read_paths(Y_BASE_PATH)
         
         combined = list(zip(X_tif_paths, Y_tif_paths))
         random.shuffle(combined)
@@ -55,10 +61,10 @@ class DatasetClass(Dataset):
             X_tif_paths = [path for path in X_tif_paths if not any(s in path for s in val_set_paths)]
             Y_tif_paths = [path for path in Y_tif_paths if not any(s in path for s in val_set_paths)]
 
-        if part == 'train' or part == 'val':
-            data_stop_point = math.floor(len(X_tif_paths)*(self.config.dataset.dataset_size))
-            X_tif_paths = X_tif_paths[0:data_stop_point]
-            Y_tif_paths = Y_tif_paths[0:data_stop_point]
+        #if part == 'train' or part == 'val':
+        #    data_stop_point = math.floor(len(X_tif_paths)*(self.config.dataset.dataset_size))
+        #    X_tif_paths = X_tif_paths[0:data_stop_point]
+        #    Y_tif_paths = Y_tif_paths[0:data_stop_point]
 
         #split_point = math.floor(len(X_tif_paths)*(1-self.config.dataset.val_set_size))
 
@@ -76,19 +82,19 @@ class DatasetClass(Dataset):
             num_crops = len(self.crop_coordinates)
             self.X_tif_paths = [path for path in X_tif_paths for _ in range(num_crops)]
             self.Y_tif_paths = [path for path in Y_tif_paths for _ in range(num_crops)]
+        
+        if len(X_tif_paths) % config.batch_size == 1 and part == 'train':
+            self.X_tif_paths = X_tif_paths[:-1]
+            self.Y_tif_paths = Y_tif_paths[:-1]
+        elif len(X_tif_paths) % config.val_batch_size == 1 and part == 'val':
+            self.X_tif_paths = X_tif_paths[:-1]
+            self.Y_tif_paths = Y_tif_paths[:-1]
+        elif len(X_tif_paths) % config.test_batch_size == 1 and part == 'test':
+            self.X_tif_paths = X_tif_paths[:-1]
+            self.Y_tif_paths = Y_tif_paths[:-1]
         else:
-            if len(X_tif_paths) % config.batch_size == 1 and part == 'train':
-                self.X_tif_paths = X_tif_paths[:-1]
-                self.Y_tif_paths = Y_tif_paths[:-1]
-            elif len(X_tif_paths) % config.val_batch_size == 1 and part == 'val':
-                self.X_tif_paths = X_tif_paths[:-1]
-                self.Y_tif_paths = Y_tif_paths[:-1]
-            elif len(X_tif_paths) % config.test_batch_size == 1 and part == 'test':
-                self.X_tif_paths = X_tif_paths[:-1]
-                self.Y_tif_paths = Y_tif_paths[:-1]
-            else:
-                self.X_tif_paths = X_tif_paths
-                self.Y_tif_paths = Y_tif_paths
+            self.X_tif_paths = X_tif_paths
+            self.Y_tif_paths = Y_tif_paths
         
         print('Tif size: ' + str(sys.getsizeof(self.X_tif_paths)*8)) #takes like 3MB
         print("Num samples: " + str(len(self.X_tif_paths)))
@@ -142,6 +148,11 @@ class DatasetClass(Dataset):
                 if file.endswith(".tif"):
                     tif_paths.append(os.path.join(root, file))
         return tif_paths
+    
+    def _read_paths_from_file(self, file_path):
+        with open(file_path, 'r') as file:
+            paths = [line.strip() for line in file.readlines()]
+        return paths
 
     def _read_data(self, tif_path, is_label):
         data = np.array(tifffile.imread(tif_path))
