@@ -11,27 +11,27 @@ defaults:
   - transform: basic
 
 seed: 42
-device: cuda:3 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
+device: cuda:2 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
 use_transform: True
 batch_size: 8
-eval_every: 3
+eval_every: 1
 save_model_freq: 500 #Don't do this to often, max a couple of times over a couple of thousand epochs. If no intention of warm starting training it is not needed at all.
 val_batch_size: 8 #I typically set this as large as VRAM allows
 test_batch_size: 8
 num_workers: 6 #Set this based on machine, I think it's best to max it, usually faster training that way.
 lr: 0.0002
-max_epochs: 300
+max_epochs: 200
 save_optimizer: False #Set this to true if you want to be able to keep training the model at a later stage, as of now the code has no support for this.
 weight_decay: 0
 optimizer: adam
 beta1: 0.9
 momentum: 0.9
-loss_function: CE
+loss_function: tversky
 dropout: False
-eval_type: None #for evaluation
+eval_type: normal #for evaluation
 
 noise: False
-noise_type: None #for training
+noise_type: pixel_wise_fade #for training
 noise_distribution_type: image #for training
 stepwise_linear_function: function_2
 
@@ -41,5 +41,8 @@ model:
   pretrained_backbone: ResNet50_Weights.IMAGENET1K_V2 #default, can also use enum, read docs
   n_class: 19 #13 for grouped, 19 for all
   n_channels: 5
+  name: unet
+  tversky_a: 0.5
+  tversky_b: 0.5
   
 

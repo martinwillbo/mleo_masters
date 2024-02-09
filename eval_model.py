@@ -8,6 +8,7 @@ import os
 from tqdm import tqdm
 import numpy as np
 from support_functions_noise import set_noise
+import segmentation_models_pytorch as smp
 
 def eval_model(config, writer, training_path, eval_type):
     dataset_module = util.load_module(config.dataset.script_location)
@@ -24,6 +25,12 @@ def eval_model(config, writer, training_path, eval_type):
     model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
     model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
 
+    #model = smp.Unet(
+    #        encoder_weights="imagenet",
+    #        encoder_name="efficientnet-b4",
+    #        in_channels = config.model.n_channels,
+    #        classes= config.model.n_class
+    #    )
 
     #Load and overwrite model
     saved_model_path = os.path.join(training_path, 'best_model.pth')
@@ -46,6 +53,9 @@ def eval_model(config, writer, training_path, eval_type):
 
     if config.loss_function == "CE":
         eval_loss_f = nn.CrossEntropyLoss()
+    
+    if config.loss_function == 'tversky':
+        eval_loss_f = smp.losses.TverskyLoss(mode='multiclass', alpha=config.model.tversky_a, beta=config.model.tversky_b)
 
     eval_loss = []
     val_iter = iter(val_loader)
@@ -58,7 +68,8 @@ def eval_model(config, writer, training_path, eval_type):
     for batch in tqdm(val_iter):
         x, y = batch
 
-        x = set_noise(config, x, noise_level, eval_type)
+        if eval_type != 'normal':
+            x = set_noise(config, x, noise_level, eval_type)
 
         x = x.to(config.device)
         y = y.to(config.device)
@@ -85,9 +96,9 @@ def eval_model(config, writer, training_path, eval_type):
         c += 1
 
     l_test = np.mean(eval_loss)
-    
+    print("loss: " + str(l_test))
     writer.add_text("evaluation/noise level", str(noise_level), 0)
     writer.add_scalar('evaluation/loss', l_test)
     miou_prec_rec_writing(config, y_pred_list, y_list, 'evaluation', writer, 0)
     miou_prec_rec_writing_13(config, y_pred_list, y_list, 'evaluation', writer, 0)
-    conf_matrix(config, y_pred_list, y_list, writer, 0)
+    #conf_matrix(config, y_pred_list, y_list, writer, 0)

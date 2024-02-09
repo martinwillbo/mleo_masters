@@ -11,6 +11,7 @@ from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import os
 import math
 import random
+import segmentation_models_pytorch as smp
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, label_image
 from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2, custom_sine
 
@@ -29,18 +30,31 @@ def loop2(config, writer, hydra_log_dir):
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers, 
                             pin_memory = True)
     
-    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
-                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    if config.model.name == 'resnet50':
     
-    model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
-    if config.dropout:
-        dropout_rate = 0.5  # Example dropout rate, adjust as needed
-        classifier = list(model.classifier.children())
-        classifier.insert(-1, nn.Dropout(dropout_rate))  # Insert dropout before the last layer in the classifier
-        model.classifier = nn.Sequential(*classifier)
+        model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
+                                    dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+        
+        model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
+        if config.dropout:
+            dropout_rate = 0.5  # Example dropout rate, adjust as needed
+            classifier = list(model.classifier.children())
+            classifier.insert(-1, nn.Dropout(dropout_rate))  # Insert dropout before the last layer in the classifier
+            model.classifier = nn.Sequential(*classifier)
+        
+        model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     
-    model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-    #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
+    elif config.model.name == 'FCN8':
+        model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
+
+    elif config.model.name == 'unet':
+        model = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = config.model.n_channels,
+            classes= config.model.n_class
+        )
+
     model.to(config.device)
     
 
@@ -54,8 +68,13 @@ def loop2(config, writer, hydra_log_dir):
         optimizer = SGD(model.parameters(), lr=config.lr, momentum=config.momentum, weight_decay=config.weight_decay)
 
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
-    train_loss = nn.CrossEntropyLoss()
-    eval_loss = nn.CrossEntropyLoss()
+        
+    if config.loss_function == 'CE':
+        train_loss = nn.CrossEntropyLoss()
+        eval_loss = nn.CrossEntropyLoss()
+    elif config.loss_function == 'tversky':
+        train_loss = smp.losses.TverskyLoss(mode='multiclass', alpha=config.model.tversky_a, beta=config.model.tversky_b)
+        eval_loss = smp.losses.TverskyLoss(mode='multiclass', alpha=config.model.tversky_a, beta=config.model.tversky_b)
     
     epoch = 0
     best_val_loss = np.inf
@@ -105,8 +124,10 @@ def loop2(config, writer, hydra_log_dir):
             y = y.to(config.device)
             
             with autocast():
-                y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
-                #y_pred = model(x)
+                if config.model.name == 'resnet50':
+                    y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
+                elif config.model.name == 'FCN8' or config.model.name == 'unet':
+                    y_pred = model(x)
                 l = train_loss(y_pred, y)
             optimizer.zero_grad()
             scaler.scale(l).backward()
@@ -160,8 +181,10 @@ def loop2(config, writer, hydra_log_dir):
 
                 x = x.to(config.device)
                 y = y.to(config.device)
-                y_pred = model(x)['out']
-                #y_pred = model(x)
+                if config.model.name == 'resnet50':
+                    y_pred = model(x)['out']
+                elif config.model.name == 'FCN8' or config.model.name == 'unet':
+                    y_pred = model(x)
                 l = eval_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())

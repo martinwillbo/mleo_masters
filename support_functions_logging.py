@@ -107,6 +107,7 @@ def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
     print('Epoch mean miou: '+str(np.mean(epoch_miou_prec_rec[0,:])))
     print('Epoch mean precision: '+str(np.mean(epoch_miou_prec_rec[1,:])))
     print('Epoch mean recall: '+str(np.mean(epoch_miou_prec_rec[2,:])))
+    writer.flush()
 
 def miou_prec_rec_writing_13(config, y_pred_list, y_list, part, writer, epoch):
     y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0), dtype=torch.uint8)
@@ -118,8 +119,8 @@ def miou_prec_rec_writing_13(config, y_pred_list, y_list, part, writer, epoch):
     #print(y_pred_list.shape)
 
     # Set values > 12 to 13
-    y_pred_list[y_pred_list > 12] = 13
-    y_list[y_list > 12] = 13
+    y_pred_list[y_pred_list > 11] = 13
+    y_list[y_list > 11] = 13
 
     # Create an empty tensor for epoch_miou_prec_rec
     epoch_miou_prec_rec = torch.full((3, 1), float('nan'))
@@ -147,6 +148,7 @@ def miou_prec_rec_writing_13(config, y_pred_list, y_list, part, writer, epoch):
     writer.add_scalar(part+'/miou fixed 13th class', epoch_miou_prec_rec[0, 0].item(), epoch)
     writer.add_scalar(part+'/precision fixed 13th class', epoch_miou_prec_rec[1, 0].item(), epoch)
     writer.add_scalar(part+'/recall fixed 13th class', epoch_miou_prec_rec[2, 0].item(), epoch)
+    writer.flush()
 
 def conf_matrix(config, y_pred_list, y_list, writer, epoch):
     y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0))

@@ -55,10 +55,10 @@ class DatasetClass(Dataset):
             X_tif_paths = [path for path in X_tif_paths if not any(s in path for s in val_set_paths)]
             Y_tif_paths = [path for path in Y_tif_paths if not any(s in path for s in val_set_paths)]
 
-
-        data_stop_point = math.floor(len(X_tif_paths)*(self.config.dataset.dataset_size))
-        X_tif_paths = X_tif_paths[0:data_stop_point]
-        Y_tif_paths = Y_tif_paths[0:data_stop_point]
+        if part == 'train' or part == 'val':
+            data_stop_point = math.floor(len(X_tif_paths)*(self.config.dataset.dataset_size))
+            X_tif_paths = X_tif_paths[0:data_stop_point]
+            Y_tif_paths = Y_tif_paths[0:data_stop_point]
 
         #split_point = math.floor(len(X_tif_paths)*(1-self.config.dataset.val_set_size))
 
