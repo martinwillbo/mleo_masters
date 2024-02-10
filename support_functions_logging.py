@@ -104,9 +104,11 @@ def miou_prec_rec_writing(config, y_pred_list, y_list, part, writer, epoch):
     writer.add_text(part+'/miou per class', ', '.join(map(str, epoch_miou_prec_rec[0,:])), epoch)
     writer.add_text(part+'/precision per class', ', '.join(map(str, epoch_miou_prec_rec[1,:])), epoch)
     writer.add_text(part+'/recall per class', ', '.join(map(str, epoch_miou_prec_rec[2,:])), epoch)
+    writer.flush()
     print('Epoch mean miou: '+str(np.mean(epoch_miou_prec_rec[0,:])))
     print('Epoch mean precision: '+str(np.mean(epoch_miou_prec_rec[1,:])))
     print('Epoch mean recall: '+str(np.mean(epoch_miou_prec_rec[2,:])))
+
 
 def miou_prec_rec_writing_13(config, y_pred_list, y_list, part, writer, epoch):
     y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0), dtype=torch.uint8)
@@ -147,6 +149,7 @@ def miou_prec_rec_writing_13(config, y_pred_list, y_list, part, writer, epoch):
     writer.add_scalar(part+'/miou fixed 13th class', epoch_miou_prec_rec[0, 0].item(), epoch)
     writer.add_scalar(part+'/precision fixed 13th class', epoch_miou_prec_rec[1, 0].item(), epoch)
     writer.add_scalar(part+'/recall fixed 13th class', epoch_miou_prec_rec[2, 0].item(), epoch)
+    writer.flush()
 
 def conf_matrix(config, y_pred_list, y_list, writer, epoch):
     y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0))
@@ -195,7 +198,7 @@ def conf_matrix(config, y_pred_list, y_list, writer, epoch):
 
     # Add confusion matrix image to TensorBoard
     writer.add_image('epoch: ' +str(epoch) +' Val/confusion_matrix', cm_image, epoch)
-
+    writer.flush()
     buf.close()
     plt.close(fig)
 
@@ -281,3 +284,4 @@ def save_image(index, x, y_pred, y, epoch, config, writer):
             writer.add_image('Epoch: ' + str(epoch) + ', Val/x, batch: ' + str(index), x_tensor, epoch)
             writer.add_image('Epoch: ' + str(epoch) + ', Val/y, batch: ' + str(index), colored_y_tensor, epoch) #unsqueeze adds dim
             writer.add_image('Epoch: ' + str(epoch) + ', Val/y_pred, batch: ' + str(index), colored_y_pred_tensor, epoch)
+            writer.flush()
