@@ -59,7 +59,7 @@ def image_wise_fade(x_priv, noise_level):
 
     return x_priv_noise
 
-def zero_out(noise_level, model):
+def zero_out_resnet(noise_level, model):
     with torch.no_grad():
         conv1_weights = model.backbone.conv1.weight
         mask_shape = conv1_weights[:, 3:5, :, :].shape
@@ -71,6 +71,25 @@ def zero_out(noise_level, model):
         conv1_weights[:, 3:5, :, :] *= mask
 
     return model
+
+def zero_out(noise_level, model):
+    with torch.no_grad():
+        stages = model.encoder.get_stages()
+
+        # The first convolutional layer is part of the second stage (index 1) in the list
+        # which is an nn.Sequential containing _conv_stem, _bn0, _swish
+        first_conv_layer = stages[1][0].weight.data  # Accessing _conv_stem directly within nn.Sequential
+
+        mask_shape = first_conv_layer[:, 3:5, :, :].shape
+
+        # Create a mask with noise_level amount of zeros
+        mask = torch.bernoulli(torch.full(mask_shape, 1 - noise_level)).to(first_conv_layer.device)
+
+        # Apply the mask
+        first_conv_layer[:, 3:5, :, :] *= mask
+
+    return model
+
 
 def stepwise_linear_function_1(x, max_epochs):
     print("ABORT")
@@ -98,7 +117,7 @@ def stepwise_linear_function_2(epoch, max_epochs):
     
 def custom_sine(x):
     amplitude = 0.5
-    period = 100
+    period = 20
     phase_shift = np.pi / 2  # Shifts the start to 0.5 and makes it go upwards
     vertical_shift = 0.5
     

@@ -11,7 +11,7 @@ defaults:
   - transform: basic
 
 seed: 42
-device: cuda:3 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
+device: cuda:1 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
 use_transform: True
 batch_size: 8
 eval_every: 1
@@ -31,8 +31,8 @@ dropout: False
 eval_type: None #for evaluation
 
 noise: True
-noise_type: pixel_wise_fade #for training
-noise_distribution_type: image #for training
+noise_type: zero_out #for training
+noise_distribution_type: None #for training
 stepwise_linear_function: function_2
 
 

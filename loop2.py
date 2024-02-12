@@ -56,8 +56,6 @@ def loop2(config, writer, hydra_log_dir):
         )
 
     model.to(config.device)
-    
-
     scaler = GradScaler()
 
     if config.optimizer == 'adam':
