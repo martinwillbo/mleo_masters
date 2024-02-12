@@ -18,7 +18,7 @@ def main(config):
     torch.manual_seed(config.seed)
     torch.cuda.manual_seed(config.seed)
 
-    #NOTE: Don't have to use tensorboard to log experiments, but should implement something else if so (Aleksis have code for this).
+    #NOTE: Don't have to use tensorboard to log experiments, but should implement something else if so (Aleksis has code for this).
     #name more cleverly
     current_timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     hydra_log_dir = '../log_res/'+current_timestamp
