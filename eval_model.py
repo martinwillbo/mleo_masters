@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from loop2 import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image
+from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image
 from torch.utils.data import DataLoader
 import util
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
