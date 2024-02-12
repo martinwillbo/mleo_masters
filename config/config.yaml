@@ -31,9 +31,9 @@ momentum: 0.9
 
 
 model:
-  name: resnet50 #unet
+  name: unet
   pretrained: DeepLabV3_ResNet50_Weights.DEFAULT #None does not work, but they seem to want it
   pretrained_backbone: ResNet50_Weights.IMAGENET1K_V2 #default, can also use enum, read docs. ResNet50_Weights.IMAGENET1K_V2 are improved from ...1K_V1 
   n_class: 19 #13 for grouped, 19 for all but should be for training so set 19
-  n_channels: 5
+  n_channels: 4
 

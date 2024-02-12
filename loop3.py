@@ -64,13 +64,14 @@ def loop3(config, writer, hydra_log_dir):
         train_loss = nn.CrossEntropyLoss()
         eval_loss = nn.CrossEntropyLoss()   
 
-    if config.loss_function == 'dice':
-        train_loss = DiceLoss(config) #dice loss is a modified version of jaccard
-        eval_loss =  DiceLoss(config)
+    #if config.loss_function == 'dice':
+    #    train_loss = DiceLoss(config) #dice loss is a modified version of jaccard
+    #    eval_loss =  DiceLoss(config)
 
     if config.loss_function == 'tverski':
         train_loss = smp.losses.TverskyLoss(mode='multiclass')
         eval_loss = smp.losses.TverskyLoss(mode='multiclass')
+        CE_loss = nn.CrossEntropyLoss() 
     
     print(train_loss)
     print(eval_loss)
@@ -131,6 +132,7 @@ def loop3(config, writer, hydra_log_dir):
         if epoch % config.eval_every == 0:
             model.eval()
             val_loss = []
+            CE_val_loss =[]
             val_y_pred_list = []
             val_y_list = []
 
@@ -155,8 +157,11 @@ def loop3(config, writer, hydra_log_dir):
                      
                 y_pred = y_pred.to(torch.float32)
                 l = eval_loss(y_pred, y)
+                l_CE =  CE_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())
+                CE_val_loss.append(l_CE.item())
+                
         
                 if counter in idx_list and epoch % 30 == 0:
                     x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
@@ -175,6 +180,10 @@ def loop3(config, writer, hydra_log_dir):
             l_val = np.mean(val_loss)
             writer.add_scalar('val/loss', l_val, epoch)
             print('Val loss: '+str(l_val))
+
+            CE_val = np.mean(CE_val_loss)
+            writer.add_scalar('val/Cross_Entropy', CE_val, epoch)
+            print('Val CE: '+str(CE_val))
 
             miou_prec_rec_writing(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
             miou_prec_rec_writing_13(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
