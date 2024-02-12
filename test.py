@@ -4,7 +4,7 @@ import numpy as np
 import util
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from loop2 import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix 
+from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix 
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 import os
