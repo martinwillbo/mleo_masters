@@ -7,7 +7,7 @@ from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 import os
 from tqdm import tqdm
 import numpy as np
-from support_functions_noise import set_noise
+from support_functions_noise import zero_out
 import segmentation_models_pytorch as smp
 
 def eval_model(config, writer, training_path, eval_type):
@@ -41,12 +41,14 @@ def eval_model(config, writer, training_path, eval_type):
     #Set weights to 0
     if eval_type == "zero_out":
         with torch.no_grad():
-            model.backbone.conv1.weight[:, 3:5, :, :] = 0
+            model = zero_out(noise_level=1, model=model, three_five=False)
+            #model.backbone.conv1.weight[:, 3:5, :, :] = 0
 
     if eval_type == "zero_out_5/3":
         with torch.no_grad():
-            model.backbone.conv1.weight[:, 3:5, :, :] = 0
-            model.backbone.conv1.weight[:, 0:3, :, :] *= 5/3 #size up weights 
+            model = zero_out(noise_level=1, model=model, three_five=True)
+            #model.backbone.conv1.weight[:, 3:5, :, :] = 0
+            #model.backbone.conv1.weight[:, 0:3, :, :] *= 5/3 #size up weights 
 
 
     model.to(config.device)

@@ -59,7 +59,7 @@ def image_wise_fade(x_priv, noise_level):
 
     return x_priv_noise
 
-def zero_out(noise_level, model):
+def zero_out(noise_level, model, three_five=False):
     with torch.no_grad():
         stages = model.encoder.get_stages()
         # The first convolutional layer is part of the second stage (index 1) in the list
@@ -70,6 +70,8 @@ def zero_out(noise_level, model):
         mask = torch.bernoulli(torch.full(mask_shape, 1 - noise_level)).to(first_conv_layer.device)
         # Apply the mask
         first_conv_layer[:, 3:5, :, :] *= mask
+        if three_five:
+            first_conv_layer[:, 0:3, :, :] *= 5/3 #size up weights
     return model
 
 def stepwise_linear_function_1(x, max_epochs):
