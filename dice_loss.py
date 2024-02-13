@@ -27,6 +27,7 @@ class DiceLoss(nn.Module):
         # 1-12 get twice tthe
         #weights_12 = 2/31*torch.ones(12)
         #weights_13_plus = 1/31*torch.ones(7)
+        
         #weights = torch.cat((weights_12, weights_13_plus)).cuda()
 
         #weigted average over classes
