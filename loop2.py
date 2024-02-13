@@ -72,7 +72,7 @@ def loop2(config, writer, hydra_log_dir):
     elif config.loss_function == 'tversky':
         train_loss = smp.losses.TverskyLoss(mode='multiclass', alpha=config.model.tversky_a, beta=config.model.tversky_b)
         eval_loss = smp.losses.TverskyLoss(mode='multiclass', alpha=config.model.tversky_a, beta=config.model.tversky_b)
-    
+        CE_loss = nn.CrossEntropyLoss()
     epoch = 0
     best_val_loss = np.inf
 
@@ -141,6 +141,7 @@ def loop2(config, writer, hydra_log_dir):
 
             epoch_loss.append(l.item())
             
+            
 
         #Save loss
         writer.add_scalar('train/loss', np.mean(epoch_loss), epoch)
@@ -156,6 +157,7 @@ def loop2(config, writer, hydra_log_dir):
         if epoch % config.eval_every == 0:
             model.eval()
             val_loss = []
+            val_CE_loss = []
             val_y_pred_list = []
             val_y_list = []
 
@@ -185,8 +187,10 @@ def loop2(config, writer, hydra_log_dir):
                 elif config.model.name == 'FCN8' or config.model.name == 'unet':
                     y_pred = model(x)
                 l = eval_loss(y_pred, y)
+                CE_l = CE_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())
+                val_CE_loss.append(CE_l.item())
         
                 if counter in idx_list and epoch % 15 == 0:
                     x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
@@ -203,7 +207,9 @@ def loop2(config, writer, hydra_log_dir):
 
             #Save loss
             l_val = np.mean(val_loss)
+            l_CE_val = np.mean(val_CE_loss)
             writer.add_scalar('val/loss', l_val, epoch)
+            writer.add_scalar('CE/loss', l_CE_val, epoch)
             print('Val loss: '+str(l_val))
 
             miou_prec_rec_writing(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)

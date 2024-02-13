@@ -94,21 +94,21 @@ def handle_df(log_dir):
     print(f"Row with minimum 'val/loss': {min_val_loss_idx}")
 
 # Directory where your TensorBoard logs are stored
-model_folder = '2024-02-09_15-07-03'
+model_folder = '2024-02-09_10-11-25'
 
 log_dir = '../../logs/'+model_folder+'/tensorboard'
 
 #extracted manually
-base_values_wo = [0.8038167, 0.6085486, 0.7509828, 0.636876, 0.81301343, 0.39043948, 0.64369786, 0.40655535, 0.7757048, 0.5586019, 0.6027413, 0.67422533, 0.5716616, 0.8249599, 0.0028337273, 4.7015596e-06, 0.06651074, 0.27852723, 0.038257338]
-#base_values_LUPI = [0.87521106, 0.7419038, 0.81973195, 0.83298403, 0.9133609, 0.66294664, 0.79159534, 0.60244775, 0.8982074, 0.7144704, 0.8457025, 0.8352307, 0.591786, 0.90839034, 0.7514763, 0.58104175, 0.590506, 0.88457185, 0.19094262]
+base_values_wo = [0.8038167, 0.6085486, 0.7509828, 0.636876, 0.81301343, 0.39043948, 0.64369786, 0.40655535, 0.7757048, 0.5586019, 0.6027413, 0.67422533, 0.5716616, 0.8249599, 0.002833728, 4.7015583e-06, 0.06651074, 0.27852723, 0.038257338]
+base_values_LUPI = [0.8353008, 0.6128503, 0.76629245, 0.65490055, 0.80666745, 0.41286272, 0.66755223, 0.41386184, 0.7902842, 0.5685992, 0.59474975, 0.6355176, 0.61501586, 0.74447453, 0.0058739297, 4.102077e-06, 0.085229434, 0.3405365, 0.024147043]
 base_values_wo_5 = [0.7710723, 0.5863532, 0.6997886, 0.5748548, 0.78606343, 0.24458766, 0.60252434, 0.32578334, 0.6547799, 0.53388226, 0.5384141, 0.6387581, 0.53271747, 0.80992764, 0.0, 2.0705726e-05, 0.00015649453, 0.41941866, 0.0011152776]
 base_values_LUPI_5 = [0.804736, 0.57583934, 0.71938103, 0.57596546, 0.8587578, 0.2658925, 0.6209361, 0.3633851, 0.66790587, 0.5566513, 0.53037965, 0.62785035, 0.5324492, 0.7470633, 0.0, 0.0, 0.0, 0.52929753, 0.023372378]
 
 #plot_histogram(base_values_wo, log_dir, title="Histogram of mIoU per Class at Min Val Loss Epoch")
 
 #title_5="Histogram of mIoU per class for model trained with and without privileged information, 5 percent of dataset"
-plot_2_histograms(base_values_LUPI_5, base_values_wo_5, log_dir, title="mIoU_hist_base_5")
-#plot_2_histograms(base_values_LUPI, base_values_wo, log_dir, title="mIoU_hist_base_100")
+#plot_2_histograms(base_values_LUPI_5, base_values_wo_5, log_dir, title="mIoU_hist_base_5")
+plot_2_histograms(base_values_LUPI, base_values_wo, log_dir, title="mIoU_hist_base_100")
 
 #handle_df(log_dir)
 

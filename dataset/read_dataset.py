@@ -11,6 +11,7 @@ import sys
 import util
 import random
 import matplotlib.pyplot as plt
+import json
 
 class DatasetClass(Dataset):
     def __init__(self, config, part):
@@ -51,6 +52,9 @@ class DatasetClass(Dataset):
         X_tif_paths, Y_tif_paths = zip(*combined)
         X_tif_paths, Y_tif_paths = list(X_tif_paths), list(Y_tif_paths)
 
+        with open(self.config.path_to_metadata, 'r') as f: #add path to metadata in config
+            self.metadata_dict = json.load(f)
+
         assert len(X_tif_paths) == len(Y_tif_paths)
 
         val_set_paths = ["D004", "D014", "D029", "D031", "D058", "D066", "D067", "D077"]
@@ -60,21 +64,6 @@ class DatasetClass(Dataset):
         elif part == 'train':
             X_tif_paths = [path for path in X_tif_paths if not any(s in path for s in val_set_paths)]
             Y_tif_paths = [path for path in Y_tif_paths if not any(s in path for s in val_set_paths)]
-
-        #if part == 'train' or part == 'val':
-        #    data_stop_point = math.floor(len(X_tif_paths)*(self.config.dataset.dataset_size))
-        #    X_tif_paths = X_tif_paths[0:data_stop_point]
-        #    Y_tif_paths = Y_tif_paths[0:data_stop_point]
-
-        #split_point = math.floor(len(X_tif_paths)*(1-self.config.dataset.val_set_size))
-
-        #if self.part == 'train':
-        #    # no shuffle when splitting - change maybe
-        #    X_tif_paths = X_tif_paths[0:split_point]
-        #    Y_tif_paths = Y_tif_paths[0:split_point]
-        #if self.part == 'val':
-        #    X_tif_paths = X_tif_paths[split_point:]
-        #    Y_tif_paths = Y_tif_paths[split_point:]
 
         #print('Constructing ' + self.part + ' set...')
         if config.dataset.det_crop and part == 'train': #THIS IS BROKEN WITH THE SHUFFLING
@@ -98,14 +87,6 @@ class DatasetClass(Dataset):
         
         print('Tif size: ' + str(sys.getsizeof(self.X_tif_paths)*8)) #takes like 3MB
         print("Num samples: " + str(len(self.X_tif_paths)))
-        #temp_X = self._read_data_old(X_tif_paths, is_label = False)
-        #temp_Y = self._read_data_old(Y_tif_paths, is_label = True)
-        #print(len(temp_X))
-        #print(len(temp_Y))
-        #self.X.extend(temp_X)
-        #self.Y.extend(temp_Y)
-        #print(min(item.min().item() for item in self.Y))
-        #print(max(item.max().item() for item in self.Y))
     
     def __getitem__(self, index):
         #print(self.X_tif_paths[index], self.Y_tif_paths[index])
@@ -166,35 +147,20 @@ class DatasetClass(Dataset):
             if not self.config.dataset.using_priv:
                 data = data[:3,:,:]
         return data
-
     
-    def _read_data_old(self, tif_paths, is_label):
-        temp_data = []
-        for i, path in tqdm(enumerate(tif_paths)):
-            data = np.array(tifffile.imread(path))
-            data = data.astype(np.uint8) #all data is uint8
-            if is_label: #classes are 1 to 19, have to be 0 to 18
-                if self.config.model.n_class < 19: #group last classes as in challenge
-                    data[data > 12] = 13
-                data = data - 1 
-            if not is_label:
-                data = np.transpose(data, (2,0,1))
-                if not self.config.dataset.using_priv:
-                    data = data[:3,:,:]
-            if self.config.dataset.det_crop:
-                data_list = self.det_crop_old(data, is_label)
-                temp_data.extend(data_list)
-            elif self.config.dataset.scale:
-                data = self._rescale(data, is_label)
-                temp_data.append(data)
-            else:
-                temp_data.append(data)
-            #if i == 20:
-            #    return temp_data
-            #if i == 2 and self.part == 'val':
-            #    return temp_data
+    def _read_metadata(self, img_name): 
+        curr_img = self.metadata_dict[img_name]
 
-        return temp_data
+        #normalize and make to integers
+        x_coord, y_coord = self.metadata_dict[curr_img]["patch_centroid_x"], self.metadata_dict[curr_img]["patch_centroid_y"]
+        #normalize and make to integer
+        alt = self.metadata_dict[curr_img]["patch_centroid_z"]
+        #one hot encode (seems to be only two types, one with UCE-... and one CAMERA#017)
+        cam = self.metadata_dict[curr_img]['camera']
+        #convert date to days since 01-01, and time to minutes from 00.00, and normalize
+        date, time = self.metadata_dict[curr_img]['data'], self.metadata_dict[curr_img]['time']
+        
+
 
     def _normalize(self, data):
         #NOTE: These operations expect shape (H,W,C)
@@ -243,27 +209,6 @@ class DatasetClass(Dataset):
         x = x[:, start_h:end_h, start_w:end_w]
         y = y[start_h:end_h, start_w:end_w]
         return x,y
-
-    def det_crop_old(self, data, is_label):
-        if is_label:
-            h, w = data.shape[0], data.shape[1]
-        else:
-            h, w = data.shape[1], data.shape[2]
-        crop_size = self.config.dataset.crop_size
-        crop_step_size = self.config.dataset.crop_step_size
-        all_crops = []
-        for start_h in range(0,h - crop_size + 1, crop_step_size):
-            for start_w in range(0,w - crop_size + 1, crop_step_size):
-                end_h = start_h + crop_size
-                end_w = start_w + crop_size
-                if is_label:
-                    crop = data[start_h:end_h, start_w:end_w]
-                else:
-                    crop = data[:, start_h:end_h, start_w:end_w]
-                if self.config.dataset.scale:
-                    crop = self._rescale(crop, is_label)
-                all_crops.append(crop)
-        return all_crops
     
 #NOTE: Given the from of loop these functions should be in any dataset module that you design (given that you keep it unchanged)
 def train_set(config):

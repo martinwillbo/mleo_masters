@@ -11,7 +11,7 @@ defaults:
   - transform: basic
 
 seed: 42
-device: cuda:1 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
+device: cuda:3 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
 use_transform: True
 batch_size: 8
 eval_every: 1
@@ -28,9 +28,10 @@ beta1: 0.9
 momentum: 0.9
 loss_function: tversky
 dropout: False
-eval_type: None #for evaluation
 
-noise: True
+eval_type: test #for evaluation
+
+noise: False
 noise_type: zero_out #for training
 noise_distribution_type: None #for training
 stepwise_linear_function: function_2
@@ -40,7 +41,7 @@ model:
   pretrained: DeepLabV3_ResNet50_Weights.DEFAULT #None does not work, but they seem to want it
   pretrained_backbone: ResNet50_Weights.IMAGENET1K_V2 #default, can also use enum, read docs
   n_class: 19 #13 for grouped, 19 for all
-  n_channels: 5
+  n_channels: 3
   name: unet
   tversky_a: 0.5
   tversky_b: 0.5
