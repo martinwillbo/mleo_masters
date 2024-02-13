@@ -13,8 +13,7 @@ import math
 import random
 import segmentation_models_pytorch as smp
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, label_image
-from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2, custom_sine
-
+from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2, custom_sine, image_wise_fade
 
 
 def loop2(config, writer, hydra_log_dir):
@@ -173,6 +172,8 @@ def loop2(config, writer, hydra_log_dir):
 
                 if config.noise:
                     if config.noise_type == 'zero_out':
+                        #test:)))
+                        x[:, 3:5, :, :] = image_wise_fade(x[:, 3:5, :, :], 1.0)
                         model = zero_out(1.0, model)
                     else:
                         x = set_noise(config, x, 1.0, config.noise_type)

@@ -72,7 +72,7 @@ def zero_out_resnet(noise_level, model):
 
     return model
 
-def zero_out(noise_level, model):
+def zero_out(noise_level, model, three_five=False):
     with torch.no_grad():
         stages = model.encoder.get_stages()
 
@@ -87,6 +87,8 @@ def zero_out(noise_level, model):
 
         # Apply the mask
         first_conv_layer[:, 3:5, :, :] *= mask
+        if three_five:
+            first_conv_layer[:, 0:3, :, :] *= 5/3 #size up weights
 
     return model
 
