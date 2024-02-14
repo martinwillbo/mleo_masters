@@ -118,7 +118,7 @@ def set_noise(config, x, noise_level, noise_type):
     elif noise_type == "image_wise_fade":
         x[:, 3:5, :, :] = image_wise_fade(x[:, 3:5, :, :], noise_level)
     
-    else:
-        print("Invalid noise_type")
+    #else:
+    #    print("Invalid noise_type")
 
     return x
