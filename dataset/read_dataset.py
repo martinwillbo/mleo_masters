@@ -29,8 +29,9 @@ class DatasetClass(Dataset):
 
         #only for trying with 4 channel
         if self.config.model.n_channels == 4:
-            self.layer_means = self.layer_means[0:4] #only bgr  
-            self.layer_stds = self.layer_stds[0:4]    
+            sub = [0, 1, 2 ,4]
+            self.layer_means = self.layer_means[sub] #only bgr  
+            self.layer_stds = self.layer_stds[sub]    
     
         if part == 'val' or part == 'train':       
             X_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.X_path + '_' + 'train')
@@ -143,7 +144,8 @@ class DatasetClass(Dataset):
             if not self.config.dataset.using_priv:
                 data = data[:3,:,:]
             if self.config.model.n_channels == 4:
-                    data = data[:4,:,:] 
+                    sub = [0, 1, 2 ,4]
+                    data = data[sub,:,:] 
         return data
     
     def _read_data_old(self, tif_paths, is_label):
@@ -158,7 +160,8 @@ class DatasetClass(Dataset):
             if not is_label:
                 data = np.transpose(data, (2,0,1))
                 if not self.config.dataset.using_priv:
-                    data = data[:3,:,:]
+                    sub = [0, 1, 2 ,4]
+                    data = data[sub,:,:]
                 if self.config.model.n_channels == 4: #only when using 4 channels
                     data = data[:4,:,:]                
             if self.config.dataset.det_crop:

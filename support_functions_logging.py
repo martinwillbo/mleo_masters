@@ -255,7 +255,7 @@ def save_image(index, x, y_pred, y, epoch, config, writer):
 
             x_tensor = torch.from_numpy(x)
             
-            if config.model.n_channels == 5:
+            if config.model.n_channels > 3:
                 x_priv = x_tensor[3:]
                 #Not ideal normalization to be honest, as we don't know how strong the signal is
                 min_vals = x_priv.view(x_priv.size(0), -1).min(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
