@@ -7,7 +7,7 @@ from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 import os
 from tqdm import tqdm
 import numpy as np
-from support_functions_noise import zero_out
+from support_functions_noise import zero_out, set_noise
 import segmentation_models_pytorch as smp
 
 def eval_model(config, writer, training_path, eval_type):
@@ -16,14 +16,6 @@ def eval_model(config, writer, training_path, eval_type):
     val_set = dataset_module.val_set(config)
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers,
                             pin_memory = True)
-
-
-    #Initialize model
-    #model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
-    #                            dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
-    #
-    #model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
-    #model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
 
     model = smp.Unet(
             encoder_weights="imagenet",
@@ -35,8 +27,6 @@ def eval_model(config, writer, training_path, eval_type):
     #Load and overwrite model
     saved_model_path = os.path.join(training_path, 'best_model.pth')
     model.load_state_dict(torch.load(saved_model_path))
-
-    print(model)
 
     #Set weights to 0
     if eval_type == "zero_out":
