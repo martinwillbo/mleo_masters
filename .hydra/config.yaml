@@ -1,0 +1,58 @@
+seed: 42
+device: cpu
+use_transform: true
+batch_size: 64
+eval_every: 10
+save_model_freq: 500
+val_batch_size: 1
+num_workers: 6
+lr: 0.0002
+max_epochs: 250
+save_optimizer: false
+weight_decay: 0
+optimizer: adam
+beta1: 0.9
+momentum: 0.9
+model:
+  pretrained: DeepLabV3_ResNet50_Weights.DEFAULT
+  pretrained_backbone: ResNet50_Weights.IMAGENET1K_V2
+  n_class: 19
+  n_channels: 3
+dataset:
+  script_location: dataset/read_dataset.py
+  path: ../datasets/flair_2_toy_dataset
+  norm_path: path_to_norm_stats
+  X_path: flair_2_toy_aerial
+  Y_path: flair_2_toy_labels
+  val_set_size: 0.2
+  det_crop: false
+  crop_step_size: 512
+  crop_size: 8
+  random_crop: true
+  using_priv: false
+  scale: false
+  mean:
+  - 113.7693
+  - 118.0902
+  - 109.2753
+  - 102.3808
+  - 16.7343
+  std:
+  - 52.3925
+  - 46.0153
+  - 45.2657
+  - 39.4576
+  - 29.5914
+transform:
+  script_location: transform/basic.py
+  order:
+  - up-down
+  - left-right
+  - color-jitter
+  p_left_right_flip: 0.5
+  p_up_down_flip: 0.5
+  p_color_jitter: 0.1
+  color_jitter_brightness: 0.2
+  color_jitter_contrast: 0.2
+  color_jitter_saturation: 0.2
+  color_jitter_hue: 0.2
