@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 from tqdm import tqdm
 import tifffile
+import json
 import numpy as np
 import random
 import torch
@@ -16,8 +17,9 @@ class DatasetClass(Dataset):
         self.part = part
         self.X = []
         self.Y = []
+        self.aerial_to_senti = {}
 
-        #Read in desiread transform
+        #Read in desired transform
         transform_module = util.load_module(self.config.transform.script_location)
         self.transform = transform_module.get_transform(self.config)
         self.layer_means = np.array(self.config.dataset.mean)
@@ -35,33 +37,48 @@ class DatasetClass(Dataset):
         if part == 'val' or part == 'train':       
             X_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.X_path + '_' + 'train')
             Y_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.Y_path + '_' + 'train')
+            SENTI_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.senti_path + '_' + 'train')
         elif part == 'test':
             X_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_aerial_test')
             Y_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_labels_test')
+            SENTI_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_sen_test')
    
         #print(X_BASE_PATH)
         
-        X_tif_paths = self._read_paths(X_BASE_PATH)
-        Y_tif_paths = self._read_paths(Y_BASE_PATH)
+        X_tif_paths = self._read_paths(X_BASE_PATH, ".tif")
+        Y_tif_paths = self._read_paths(Y_BASE_PATH, ".tif")
+        senti_data_paths = self._read_paths(SENTI_BASE_PATH, "data.npy") # all aerial images within the same area have the same 
+        senti_mask_paths = self._read_paths(SENTI_BASE_PATH, "masks.npy")# sentinel image so redundant to store one for each       
 
-        combined = list(zip(X_tif_paths, Y_tif_paths))
+        aerial_to_senti_path = os.path.join(self.config.dataset.path, 'flair-2_centroids_sp_to_patch.json') # load the dictionary wwith mapping from sentinel to aerial patches
+        with open(aerial_to_senti_path) as file:
+            self.aerial_to_senti = json.load(file) 
+
+        combined = list(zip(X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths))
         random.shuffle(combined)
-        X_tif_paths, Y_tif_paths = zip(*combined)
-        X_tif_paths, Y_tif_paths = list(X_tif_paths), list(Y_tif_paths)
-        assert len(X_tif_paths) == len(Y_tif_paths)
+        X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths = zip(*combined)
+        X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths = list(X_tif_paths), list(Y_tif_paths), list(senti_data_paths), list(senti_mask_paths)
+        assert len(X_tif_paths) == len(Y_tif_paths) == len(senti_data_paths) == len(senti_mask_paths)
 
         val_set_paths = ["D004", "D014", "D029", "D031", "D058", "D066", "D067", "D077"] # defined in flair paper
 
         if part == 'val':
             X_tif_paths = [path for path in X_tif_paths if any(s in path for s in val_set_paths)]
             Y_tif_paths = [path for path in Y_tif_paths if any(s in path for s in val_set_paths)]
+            senti_data_paths = [path for path in senti_data_paths if any(s in path for s in val_set_paths)]
+            senti_mask_paths = [path for path in senti_mask_paths if any(s in path for s in val_set_paths)]
+
         elif part == 'train':
             X_tif_paths = [path for path in X_tif_paths if not any(s in path for s in val_set_paths)]
             Y_tif_paths = [path for path in Y_tif_paths if not any(s in path for s in val_set_paths)]
+            senti_data_paths = [path for path in senti_data_paths if not any(s in path for s in val_set_paths)]
+            senti_mask_paths = [path for path in senti_mask_paths if not any(s in path for s in val_set_paths)]
 
         data_stop_point = math.floor(len(X_tif_paths)*(self.config.dataset.dataset_size))
         X_tif_paths = X_tif_paths[0:data_stop_point]
         Y_tif_paths = Y_tif_paths[0:data_stop_point]
+        senti_data_paths = senti_data_paths[0:data_stop_point]
+        senti_mask_paths = senti_mask_paths[0:data_stop_point]
 
         #print('Constructing ' + self.part + ' set...')
         # This is for determenistic cropping - curr. not used
@@ -73,6 +90,9 @@ class DatasetClass(Dataset):
         else:
             self.X_tif_paths = X_tif_paths
             self.Y_tif_paths = Y_tif_paths
+        
+        self.senti_data_paths = senti_data_paths
+        self.senti_mask_paths = senti_mask_paths
             
         #print('Tif size: ' + str(sys.getsizeof(self.X_tif_paths)*8)) #takes like 3MB
 
@@ -91,6 +111,19 @@ class DatasetClass(Dataset):
         #x = self.X[index]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
         #y = self.Y[index]
+        senti = self._read_senti_data(self.senti_data_paths[index])
+        mask = self._read_senti_mask(self.senti_mask_paths[index])
+
+
+
+
+
+
+        #crop the senti data and use mask before any transformation
+
+
+
+
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
@@ -123,13 +156,13 @@ class DatasetClass(Dataset):
         assert len(self.X_tif_paths) == len(self.Y_tif_paths)
         return len(self.X_tif_paths)
     
-    def _read_paths(self, BASE_PATH):
-        tif_paths = []
+    def _read_paths(self, BASE_PATH, ending):
+        paths = []
         for root, dirs, files in os.walk(BASE_PATH):
             for file in sorted(files):
-                if file.endswith(".tif"):
-                    tif_paths.append(os.path.join(root, file))
-        return tif_paths
+                if file.endswith(ending):
+                    paths.append(os.path.join(root, file))
+        return paths
     
     def _read_data(self, tif_path, is_label):
         data = np.array(tifffile.imread(tif_path))
@@ -146,6 +179,13 @@ class DatasetClass(Dataset):
                     data = data[:4,:,:] 
         return data
     
+    def _read_senti_data(self, npy_path): #TO BE IMPLEMENTED
+        #data = np.load(npy_path)
+        return 0
+
+    def _read_senti_mask(self, npy_path): #TO BE IMPLEMENTED
+        return 0
+
     def _read_data_old(self, tif_paths, is_label):
         temp_data = []
         for i, path in tqdm(enumerate(tif_paths)):
