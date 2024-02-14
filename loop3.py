@@ -68,7 +68,7 @@ def loop3(config, writer, hydra_log_dir):
     #    train_loss = DiceLoss(config) #dice loss is a modified version of jaccard
     #    eval_loss =  DiceLoss(config)
 
-    if config.loss_function == 'tverski':
+    if config.loss_function == 'tversky':
         train_loss = smp.losses.TverskyLoss(mode='multiclass')
         eval_loss = smp.losses.TverskyLoss(mode='multiclass')
         CE_loss = nn.CrossEntropyLoss() 
