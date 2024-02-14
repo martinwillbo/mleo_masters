@@ -163,11 +163,11 @@ def loop3(config, writer, hydra_log_dir):
                 CE_val_loss.append(l_CE.item())
                 
         
-                if counter in idx_list and epoch % 30 == 0:
-                    x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
-                    y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
-                    y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
-                    save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)                    
+                #if counter in idx_list and epoch % 30 == 0:
+                #    x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
+                #    y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
+                #    y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
+                #    save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)                    
 
                 y_pred = y_pred.to(torch.uint8).cpu().contiguous().detach().numpy()
                 y = y.to(torch.uint8).cpu().contiguous().detach().numpy()
