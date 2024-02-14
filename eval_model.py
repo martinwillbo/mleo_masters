@@ -7,7 +7,7 @@ from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 import os
 from tqdm import tqdm
 import numpy as np
-from support_functions_noise import zero_out, set_noise
+from support_functions_noise import zero_out, set_noise, pixel_wise_fade
 import segmentation_models_pytorch as smp
 
 def eval_model(config, writer, training_path, eval_type):
@@ -31,6 +31,7 @@ def eval_model(config, writer, training_path, eval_type):
     #Set weights to 0
     if eval_type == "zero_out":
         with torch.no_grad():
+        
             model = zero_out(noise_level=1.0, model=model, three_five=False)
             #model.backbone.conv1.weight[:, 3:5, :, :] = 0
 
@@ -61,6 +62,9 @@ def eval_model(config, writer, training_path, eval_type):
     noise_level = 1.0 #want it to be only noise
     for batch in tqdm(val_iter):
         x, y = batch
+
+        if eval_type == 'zero_out' or eval_type == 'zero_out_5/3': #make sure no data is inputed
+            x[:,3:5,:,:] = pixel_wise_fade(x[:,3:5,:,:], 1.0)
 
         if eval_type != 'normal':
             x = set_noise(config, x, noise_level, eval_type)
