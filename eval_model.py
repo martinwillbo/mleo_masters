@@ -79,8 +79,8 @@ def eval_model(config, writer, training_path, eval_type):
         y = y.to(config.device)
 
         with torch.no_grad():
-            y_pred = model(x)['out']
-            #y_pred = model(x)
+            #y_pred = model(x)['out']
+            y_pred = model(x)
 
         l = eval_loss_f(y_pred, y)
         eval_loss.append(l.item())
