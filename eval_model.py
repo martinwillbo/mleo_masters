@@ -64,7 +64,7 @@ def eval_model(config, writer, training_path, eval_type):
         x, y = batch
 
         if eval_type == 'zero_out' or eval_type == 'zero_out_5/3': #make sure no data is inputed
-            x[:,3:5,:,:] = pixel_wise_fade(x[:,3:5,:,:], 1.0)
+            x[:,3:5,:,:] = 0
 
         if eval_type != 'normal':
             x = set_noise(config, x, noise_level, eval_type)
