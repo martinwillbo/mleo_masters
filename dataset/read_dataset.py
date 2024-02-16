@@ -176,20 +176,17 @@ class DatasetClass(Dataset):
 
         #Extract image index
         filename = os.path.basename(X_path)
-        #print(filename)
         image_index = filename.split('/')[-1]
-        #print(image_index)
 
         #Get centroid
         x_cent, y_cent = self.aerial_to_senti[image_index]
-        print(self.aerial_to_senti[image_index])
-
+       
         #Extract patch
         side = self.config.dataset.senti_size
         data = data[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
         mask = mask[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
 
-        data = np.concatinate((data, mask), dim=1)
+        data = np.concatenate((data, mask), dim=1)
         return data  
 
     def _read_data_old(self, tif_paths, is_label):
