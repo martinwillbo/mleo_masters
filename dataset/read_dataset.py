@@ -158,10 +158,6 @@ class DatasetClass(Dataset):
         count = 0
         for root, dirs, files in os.walk(BASE_PATH):
             
-            #if ending == 'data.npy' and count == 0:
-            #    print(len(dirs))
-            #    print(len(files))
-            #    count = 1
 
             for file in sorted(files):
                 if file.endswith(ending):
@@ -169,7 +165,7 @@ class DatasetClass(Dataset):
         return paths
     
     def _read_paths(self, BASE_PATH, ending, X_path = None):
-
+        print(ending)
         paths = []
         if ending == '.tif':
             for root, dirs, files in os.walk(BASE_PATH):
