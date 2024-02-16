@@ -55,7 +55,7 @@ class DatasetClass(Dataset):
             self.aerial_to_senti = json.load(file)  
             #self.aerial_to_senti = aerial_to_senti
             #print(self.aerial_to_senti['IMG_015476'])
-            print(self.aerial_to_senti['IMG_000001'])
+            print(self.aerial_to_senti[IMG_000001])
             #print(len(X_tif_paths))
 
 
