@@ -189,6 +189,7 @@ class DatasetClass(Dataset):
         return paths
     
     def count_files(self, base_path):
+
         subsubdirectories_counts = {}
         
         # Walk through all subdirectories
@@ -196,7 +197,7 @@ class DatasetClass(Dataset):
             # Filter out subdirectories that are not subsubdirectories
             subsubdirs = [d for d in dirs if os.path.isdir(os.path.join(root, d))]
             for directory in subsubdirs:
-                directory_path = os.path.join(root, directory)
+                directory_path = os.path.join(root, directory + 'img')
                 files_in_directory = len(os.listdir(directory_path))
                 subsubdirectories_counts[directory] = files_in_directory
         
