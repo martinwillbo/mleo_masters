@@ -200,8 +200,8 @@ class DatasetClass(Dataset):
                 directory_path = os.path.join(root, directory)
                 subsubdirs = os.listdir(directory_path)
                 for subdir in subsubdirs:
-                    print(subdir)
-                    subsub_path = os.path.join(directory_path, subdir + '/img')
+                    
+                    subsub_path = os.path.join(directory_path, subdir)
                     print(subsub_path)
                     files_in_directory = len(os.listdir(subsub_path))
                     aerial_counts[subdir] = files_in_directory
