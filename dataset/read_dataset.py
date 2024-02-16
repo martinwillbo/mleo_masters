@@ -140,9 +140,6 @@ class DatasetClass(Dataset):
         #x /= self.layer_stds
         #NOTE: Pytorch models typically expect shape (C, H, W)
         #x = np.transpose(x, (2,0,1))
-        print('senti ')
-        print(senti.dtype)
-        print('x ' + x.dtype)
         
         return torch.tensor(x, dtype = torch.float), torch.tensor(senti, dtype = torch.float), torch.tensor(y, dtype = torch.long)
     
@@ -176,6 +173,8 @@ class DatasetClass(Dataset):
     def _read_senti_patch(self, data_path, mask_path, X_path): #TO BE IMPLEMENTED
         data = np.load(data_path) #T x C x H x W
         mask = np.load(data_path) #T x 2 x H x W
+        data = data.astype(np.uint8)
+        mask = mask.astype(np.uint8)
 
         #Extract image index
         filename = os.path.basename(X_path)
