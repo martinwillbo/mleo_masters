@@ -190,19 +190,23 @@ class DatasetClass(Dataset):
     
     def count_files(self, base_path):
 
-        subsubdirectories_counts = {}
+        aerial_counts = {}
         
         # Walk through all subdirectories
         for root, dirs, files in os.walk(base_path):
             # Filter out subdirectories that are not subsubdirectories
-            subsubdirs = [d for d in dirs if os.path.isdir(os.path.join(root, d))]
-            print(subsubdirs)
-            for directory in subsubdirs:
-                directory_path = os.path.join(root, directory + '/img/')
-                files_in_directory = len(os.listdir(directory_path))
-                subsubdirectories_counts[directory] = files_in_directory
+            subdirs = [d for d in dirs if os.path.isdir(os.path.join(root, d))]
+            for directory in subdirs:
+                directory_path = os.path.join(root, directory)
+                subsubdirs = os.listdir(directory_path)
+                for subdir in subsubdirs:
+                    print(subdir)
+                    subsub_path = os.path.join(directory_path, subdir + '/img')
+                    print(subsub_path)
+                    files_in_directory = len(os.listdir(subsub_path))
+                    aerial_counts[subdir] = files_in_directory
         
-        return subsubdirectories_counts
+        return aerial_counts
 
     
     def _read_data(self, tif_path, is_label):
