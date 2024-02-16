@@ -17,7 +17,6 @@ class DatasetClass(Dataset):
         self.part = part
         self.X = []
         self.Y = []
-        self.aerial_to_senti = {}
 
         #Read in desired transform
         transform_module = util.load_module(self.config.transform.script_location)
@@ -52,7 +51,7 @@ class DatasetClass(Dataset):
 
         aerial_to_senti_path = os.path.join(self.config.dataset.path, 'flair-2_centroids_sp_to_patch.json') # load the dictionary wwith mapping from sentinel to aerial patches
         with open(aerial_to_senti_path) as file:
-            self.aerial_to_senti = json.load(file) 
+            self.aerial_to_senti = json.load(file)  
 
         combined = list(zip(X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths))
         random.shuffle(combined)
@@ -111,18 +110,9 @@ class DatasetClass(Dataset):
         #x = self.X[index]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
         #y = self.Y[index]
-        senti = self._read_senti_data(self.senti_data_paths[index])
-        mask = self._read_senti_mask(self.senti_mask_paths[index])
+       # senti = self._read_npy(self.senti_data_paths[index], self.senti_mask_paths[index])
 
-
-
-
-
-
-        #crop the senti data and use mask before any transformation
-
-
-
+        senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index])
 
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
@@ -150,7 +140,7 @@ class DatasetClass(Dataset):
         #NOTE: Pytorch models typically expect shape (C, H, W)
         #x = np.transpose(x, (2,0,1))
         
-        return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
+        return torch.tensor(x, dtype = torch.float), torch.tensor(senti, dtype = torch.float), torch.tensor(y, dtype = torch.long)
     
     def __len__(self):
         assert len(self.X_tif_paths) == len(self.Y_tif_paths)
@@ -179,12 +169,29 @@ class DatasetClass(Dataset):
                     data = data[:4,:,:] 
         return data
     
-    def _read_senti_data(self, npy_path): #TO BE IMPLEMENTED
-        #data = np.load(npy_path)
-        return 0
+    def _read_senti_patch(self, data_path, mask_path): #TO BE IMPLEMENTED
+        data = np.load(data_path) #T x C x H x W
+        mask = np.load(data_path) #T x 2 x H x W
 
-    def _read_senti_mask(self, npy_path): #TO BE IMPLEMENTED
+        #Extract image index
+        filename = os.path.basename(data_path)
+        image_index = filename.split('.')[0].split('/')[-1]
+
+        #Get centroid
+        x_cent, y_cent = self.aerial_to_senti[image_index]
+
+        #Extract patch
+        side = self.config.dataset.senti_size
+        data = data[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
+        mask = mask[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
+
+        data = np.concatinate((data, mask), dim=1)
+        return data
+ 
+    def _crop_senti(data, masks):
+        
         return 0
+    
 
     def _read_data_old(self, tif_paths, is_label):
         temp_data = []

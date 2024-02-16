@@ -93,7 +93,7 @@ def loop3(config, writer, hydra_log_dir):
         y_list = []
         
         for batch in tqdm(train_iter):
-            x,y = batch
+            x, senti, y = batch
             x = x.to(config.device) # dtype=torch.float32)
             y = y.to(config.device)         
 
@@ -146,7 +146,7 @@ def loop3(config, writer, hydra_log_dir):
             val_iter = iter(val_loader)
             for batch in tqdm(val_iter):
 
-                x,y = batch
+                x, senti, y = batch
                 x = x.to(config.device)
                 y = y.to(config.device)       
 
