@@ -163,7 +163,7 @@ class DatasetClass(Dataset):
         return paths
     
     def _read_paths(self, BASE_PATH, ending, X_path = None):
-        print(ending)
+        #print(ending)
         paths = []
         if ending == '.tif':
             for root, dirs, files in os.walk(BASE_PATH):
@@ -178,8 +178,8 @@ class DatasetClass(Dataset):
 
             for root, dirs, files in os.walk(BASE_PATH):
                 for file in sorted(files):
-                        print(file)
-                        print(root)
+                        #print(file)
+                        #print(root)
                         area_name = os.path.basename(file)
                         area_name = area_name.split('/')[-2]
                         count = area_counts[area_name]
@@ -192,6 +192,8 @@ class DatasetClass(Dataset):
         for root, dirs, files in os.walk(BASE_PATH):
             for area in dirs:
                 area_name = os.path.basename(area)
+                print('Name')
+                print(area_name)
                 area_name = area_name.split('/')[-1]
                 counts[area_name] = len(files)
         return counts
