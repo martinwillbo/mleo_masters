@@ -140,6 +140,8 @@ class DatasetClass(Dataset):
         #x /= self.layer_stds
         #NOTE: Pytorch models typically expect shape (C, H, W)
         #x = np.transpose(x, (2,0,1))
+        print('senti ' + senti.dtype)
+        print('x ' + x.dtype)
         
         return torch.tensor(x, dtype = torch.float), torch.tensor(senti, dtype = torch.float), torch.tensor(y, dtype = torch.long)
     
