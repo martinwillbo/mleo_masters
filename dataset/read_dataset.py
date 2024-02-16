@@ -186,7 +186,7 @@ class DatasetClass(Dataset):
         data = data[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
         mask = mask[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
 
-        data = np.concatenate((data, mask), dim=1)
+        data = np.concatenate((data, mask), axis=1)
         return data  
 
     def _read_data_old(self, tif_paths, is_label):
