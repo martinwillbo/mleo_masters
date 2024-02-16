@@ -58,7 +58,7 @@ class DatasetClass(Dataset):
         random.shuffle(combined)
         X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths = zip(*combined)
         X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths = list(X_tif_paths), list(Y_tif_paths), list(senti_data_paths), list(senti_mask_paths)
-        assert len(X_tif_paths) == len(Y_tif_paths) == len(senti_data_paths) == len(senti_mask_paths)
+        assert len(X_tif_paths) == len(Y_tif_paths) == len(senti_data_paths) == len(senti_mask_paths) == len(self.aerial_to_senti)
 
         val_set_paths = ["D004", "D014", "D029", "D031", "D058", "D066", "D067", "D077"] # defined in flair paper
 
