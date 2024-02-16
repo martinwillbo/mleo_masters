@@ -57,6 +57,13 @@ class DatasetClass(Dataset):
             #print('här är den')
             #print(self.aerial_to_senti.get('IMG_000001'))
 
+        count = 0
+        for key in self.aerial_to_senti:
+            print(key)
+            count += 1
+            if count == 3:
+                break
+
 
         combined = list(zip(X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths))
         random.shuffle(combined)
