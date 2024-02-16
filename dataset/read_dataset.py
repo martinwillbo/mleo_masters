@@ -79,6 +79,7 @@ class DatasetClass(Dataset):
         Y_tif_paths = Y_tif_paths[0:data_stop_point]
         senti_data_paths = senti_data_paths[0:data_stop_point]
         senti_mask_paths = senti_mask_paths[0:data_stop_point]
+        print(len(senti_data_paths))
 
         #print('Constructing ' + self.part + ' set...')
         # This is for determenistic cropping - curr. not used
@@ -93,6 +94,8 @@ class DatasetClass(Dataset):
         
         self.senti_data_paths = senti_data_paths
         self.senti_mask_paths = senti_mask_paths
+
+        print(self.senti_data_paths)
             
         #print('Tif size: ' + str(sys.getsizeof(self.X_tif_paths)*8)) #takes like 3MB
 
@@ -112,9 +115,9 @@ class DatasetClass(Dataset):
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
         #y = self.Y[index]
        # senti = self._read_npy(self.senti_data_paths[index], self.senti_mask_paths[index])
-        print(len(self.senti_data_paths))
-        print(len(self.senti_mask_paths))
-        print(index)
+        #print(len(self.senti_data_paths))
+        #print(len(self.senti_mask_paths))
+        #print(index)
 
         senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index])
 
