@@ -173,24 +173,52 @@ class DatasetClass(Dataset):
 
         elif ending != 'data.npy' or ending == 'masks.npy':
     
-            #We want to add one senti path for each aerial
-            area_counts = self.count_files_in_subdirs(X_path)
+            #We want to add one senti path for each aerial path
+            area_counts = self.count_files(X_path)
 
             for root, dirs, files in os.walk(BASE_PATH):
                 for file in sorted(files):
-                        #print(file)
-                        #print(root)
-                        area_name = os.path.basename(file)
-                        area_name = area_name.split('/')[-2]
+
+                        print(root)
+                        path_name = os.path.basename(root)
+                        area_name = path_name.split('/')[-2]
                         count = area_counts[area_name]
-                        for i in range(count):
-                            paths.append(os.path.join(root, file))           
+                        if file.endswith(ending):
+                            for i in range(count):
+                                paths.append(os.path.join(root, file))           
         return paths
     
+    def count_files(base_path):
+        subsubdirectories_counts = {}
+        
+        # Walk through all subdirectories
+        for root, dirs, files in os.walk(base_path):
+            # Filter out subdirectories that are not subsubdirectories
+            subsubdirs = [d for d in dirs if os.path.isdir(os.path.join(root, d))]
+            for directory in subsubdirs:
+                directory_path = os.path.join(root, directory)
+                files_in_directory = len(os.listdir(directory_path))
+                subsubdirectories_counts[directory] = files_in_directory
+        
+        return subsubdirectories_counts
+
+
+    
     def count_files_in_subdirs(self, BASE_PATH):
-        counts = {}
-        for root, dirs, files in os.walk(BASE_PATH):
-            print(dirs)
+        counts = []
+        for dir in os.listdir(BASE_PATH):
+            subdir
+            for subdir in os.listdir()
+            for root, dirs, files in os.walk(base_path):
+                # Calculate the file count for the current directory
+                file_count = len(files)
+                
+                # Store the file count for the current subdirectory
+                subdir = os.path.relpath(root, base_path)
+                subdir_file_counts[subdir] = file_count
+
+    
+           
             for area in dirs:
                 area_name = os.path.basename(area)
                 #print('Name')
