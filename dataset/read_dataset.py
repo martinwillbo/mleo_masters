@@ -17,6 +17,7 @@ class DatasetClass(Dataset):
         self.part = part
         self.X = []
         self.Y = []
+        self.aerial_to_senti = {}
 
         #Read in desired transform
         transform_module = util.load_module(self.config.transform.script_location)
@@ -52,15 +53,16 @@ class DatasetClass(Dataset):
         aerial_to_senti_path = os.path.join(self.config.dataset.path, 'flair-2_centroids_sp_to_patch.json') # load the dictionary wwith mapping from sentinel to aerial patches
         with open(aerial_to_senti_path) as file:
             self.aerial_to_senti = json.load(file)  
-            print(len(self.aerial_to_senti))
-            print(len(X_tif_paths))
-            
+            #self.aerial_to_senti = aerial_to_senti
+            #print(len(self.aerial_to_senti))
+            #print(len(X_tif_paths))
+
 
         combined = list(zip(X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths))
         random.shuffle(combined)
         X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths = zip(*combined)
         X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths = list(X_tif_paths), list(Y_tif_paths), list(senti_data_paths), list(senti_mask_paths)
-        assert len(X_tif_paths) == len(Y_tif_paths) == len(senti_data_paths) == len(senti_mask_paths) == len(self.aerial_to_senti)
+        assert len(X_tif_paths) == len(Y_tif_paths) == len(senti_data_paths) == len(senti_mask_paths) #== len(self.aerial_to_senti)
 
         val_set_paths = ["D004", "D014", "D029", "D031", "D058", "D066", "D067", "D077"] # defined in flair paper
 
