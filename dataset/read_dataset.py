@@ -112,7 +112,7 @@ class DatasetClass(Dataset):
         #y = self.Y[index]
        # senti = self._read_npy(self.senti_data_paths[index], self.senti_mask_paths[index])
 
-        senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index])
+        senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index])
 
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
@@ -169,15 +169,16 @@ class DatasetClass(Dataset):
                     data = data[:4,:,:] 
         return data
     
-    def _read_senti_patch(self, data_path, mask_path): #TO BE IMPLEMENTED
+    def _read_senti_patch(self, data_path, mask_path, X_path): #TO BE IMPLEMENTED
         data = np.load(data_path) #T x C x H x W
         mask = np.load(data_path) #T x 2 x H x W
 
         #Extract image index
-        filename = os.path.basename(data_path)
+        filename = os.path.basename(X_path)
         print(filename)
         image_index = filename.split('.')[0].split('/')[-1]
         print(image_index)
+        
         #Get centroid
         x_cent, y_cent = self.aerial_to_senti[image_index]
 
