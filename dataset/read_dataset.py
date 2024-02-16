@@ -51,19 +51,8 @@ class DatasetClass(Dataset):
         senti_mask_paths = self._read_paths(SENTI_BASE_PATH, "masks.npy")# sentinel image so redundant to store one for each       
 
         aerial_to_senti_path = os.path.join(self.config.dataset.path, 'flair-2_centroids_sp_to_patch.json') # load the dictionary wwith mapping from sentinel to aerial patches
-        print(aerial_to_senti_path)
         with open(aerial_to_senti_path) as file:
-            self.aerial_to_senti = json.load(file)  
-            #print('här är den')
-            #print(self.aerial_to_senti.get('IMG_000001'))
-
-        count = 0
-        for key in self.aerial_to_senti:
-            print(key)
-            count += 1
-            if count == 3:
-                break
-
+            self.aerial_to_senti = json.load(file)
 
         combined = list(zip(X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths))
         random.shuffle(combined)
@@ -187,9 +176,9 @@ class DatasetClass(Dataset):
 
         #Extract image index
         filename = os.path.basename(X_path)
-        print(filename)
-        image_index = filename.split('.')[0].split('/')[-1]
-        print(image_index)
+        #print(filename)
+        image_index = filename.split('/')[-1]
+        #print(image_index)
 
         #Get centroid
         x_cent, y_cent = self.aerial_to_senti[image_index]
