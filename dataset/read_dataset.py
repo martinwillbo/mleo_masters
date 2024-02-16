@@ -190,9 +190,10 @@ class DatasetClass(Dataset):
     def count_files_in_subdirs(self, BASE_PATH):
         counts = {}
         for root, dirs, files in os.walk(BASE_PATH):
+            print(dirs)
             for area in dirs:
                 area_name = os.path.basename(area)
-                print('Name')
+                #print('Name')
                 print(area_name)
                 area_name = area_name.split('/')[-1]
                 counts[area_name] = len(files)
