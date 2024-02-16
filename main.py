@@ -3,8 +3,6 @@ import hydra
 import numpy as np
 import torch
 import random
-#import loop
-import loop2
 import loop3
 import os
 #import test
