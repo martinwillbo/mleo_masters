@@ -176,7 +176,7 @@ class DatasetClass(Dataset):
         #Extract image index
         filename = os.path.basename(data_path)
         image_index = filename.split('.')[0].split('/')[-1]
-
+        print(image_index)
         #Get centroid
         x_cent, y_cent = self.aerial_to_senti[image_index]
 
@@ -186,12 +186,7 @@ class DatasetClass(Dataset):
         mask = mask[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
 
         data = np.concatinate((data, mask), dim=1)
-        return data
- 
-    def _crop_senti(data, masks):
-        
-        return 0
-    
+        return data  
 
     def _read_data_old(self, tif_paths, is_label):
         temp_data = []
