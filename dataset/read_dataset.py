@@ -53,6 +53,8 @@ class DatasetClass(Dataset):
         with open(aerial_to_senti_path) as file:
             self.aerial_to_senti = json.load(file)  
             print(len(self.aerial_to_senti))
+            print(len(X_tif_paths))
+            
 
         combined = list(zip(X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths))
         random.shuffle(combined)
