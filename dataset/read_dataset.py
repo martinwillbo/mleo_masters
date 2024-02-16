@@ -43,11 +43,10 @@ class DatasetClass(Dataset):
             Y_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_labels_test')
             SENTI_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_sen_test')
    
-        
         X_tif_paths = self._read_paths(X_BASE_PATH, ".tif")
         Y_tif_paths = self._read_paths(Y_BASE_PATH, ".tif")
-        senti_data_paths = self._read_paths(SENTI_BASE_PATH, "data.npy") # all aerial images within the same area have the same 
-        senti_mask_paths = self._read_paths(SENTI_BASE_PATH, "masks.npy")# sentinel image so redundant to store one for each 
+        senti_data_paths = self._read_paths(SENTI_BASE_PATH, "data.npy", X_BASE_PATH) # all aerial images within the same area have the same 
+        senti_mask_paths = self._read_paths(SENTI_BASE_PATH, "masks.npy", X_BASE_PATH)# sentinel image so redundant to store one for each 
         #print(senti_data_paths[0]) 
 
         aerial_to_senti_path = os.path.join(self.config.dataset.path, 'flair-2_centroids_sp_to_patch.json') # load the dictionary wwith mapping from sentinel to aerial patches
@@ -154,22 +153,22 @@ class DatasetClass(Dataset):
         assert len(self.X_tif_paths) == len(self.Y_tif_paths)
         return len(self.X_tif_paths)
     
-    def _read_paths(self, BASE_PATH, ending, X_paths = None):
+    def _read_paths_old(self, BASE_PATH, ending, X_paths = None):
         paths = []
         count = 0
         for root, dirs, files in os.walk(BASE_PATH):
             
-            if ending == 'data.npy' and count == 0:
-                print(len(dirs))
-                print(len(files))
-                count = 1
+            #if ending == 'data.npy' and count == 0:
+            #    print(len(dirs))
+            #    print(len(files))
+            #    count = 1
 
             for file in sorted(files):
                 if file.endswith(ending):
                     paths.append(os.path.join(root, file))
         return paths
     
-    def _read_paths_2(self, BASE_PATH, ending, X_path = None):
+    def _read_paths(self, BASE_PATH, ending, X_path = None):
 
         paths = []
         if ending == '.tif':
@@ -177,21 +176,28 @@ class DatasetClass(Dataset):
                 for file in sorted(files):
                     paths.append(os.path.join(root, file))
 
-        elif ending == 'data.npy' or ending == 'masks.npy':
+        elif ending != 'data.npy' or ending == 'masks.npy':
             
             #We want to add one senti path for each aerial
+            area_counts = self.count_files_in_subdirs(X_path)
 
-            aerial_counts = self.count_files_in_dirs(X_path)
-
-            for root, dirs, files in os.walk(X_path):
+            for root, dirs, files in os.walk(BASE_PATH):
                 for file in sorted(files):
-                    paths.append(os.path.join(root, file))
+                    for area in dirs:
+                        area_name = os.path.basename(area)
+                        area_name = area_name.split('/')[-1]
+                        count = area_counts[area_name]
+                        for i in range(count):
+                            paths.append(os.path.join(root, file))           
         return paths
     
-    def count_files_in_dirs(self, BASE_PATH):
-        counts = []
+    def count_files_in_subdirs(self, BASE_PATH):
+        counts = {}
         for root, dirs, files in os.walk(BASE_PATH):
-            counts.append(len(files))
+            for area in dirs:
+                area_name = os.path.basename(area)
+                area_name = area_name.split('/')[-1]
+                counts[area_name] = len(files)
         return counts
 
     
