@@ -154,7 +154,7 @@ class DatasetClass(Dataset):
         assert len(self.X_tif_paths) == len(self.Y_tif_paths)
         return len(self.X_tif_paths)
     
-    def _read_paths(self, BASE_PATH, files_path , ending):
+    def _read_paths(self, BASE_PATH, ending):
         paths = []
         count = 0
         for root, dirs, files in os.walk(BASE_PATH):
@@ -162,7 +162,7 @@ class DatasetClass(Dataset):
             if count == 0:
                 print(dirs)
                 count = 1
-                
+
             for file in sorted(files):
                 if ending == '.tif':
                     paths.append(os.path.join(root, file))
