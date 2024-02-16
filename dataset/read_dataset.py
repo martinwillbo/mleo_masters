@@ -212,7 +212,7 @@ class DatasetClass(Dataset):
                     data = data[:4,:,:] 
         return data
     
-    def _read_senti_patch(self, X_path): #TO BE IMPLEMENTED
+    def _read_senti_patch(self, data_path, mask_path, X_path): #TO BE IMPLEMENTED
 
         data = np.load(data_path) #T x C x H x W
         mask = np.load(data_path) #T x 2 x H x W
