@@ -178,9 +178,10 @@ class DatasetClass(Dataset):
         print(filename)
         image_index = filename.split('.')[0].split('/')[-1]
         print(image_index)
-        
+
         #Get centroid
         x_cent, y_cent = self.aerial_to_senti[image_index]
+        print(self.aerial_to_senti[image_index])
 
         #Extract patch
         side = self.config.dataset.senti_size
