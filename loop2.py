@@ -14,7 +14,7 @@ import random
 import segmentation_models_pytorch as smp
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, label_image
 from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2, custom_sine, image_wise_fade
-
+from unet_module import UNetWithMetadata, UnetFeatureMetadata, UnetFeatureMetadata_2
 
 def loop2(config, writer, hydra_log_dir):
     dataset_module = util.load_module(config.dataset.script_location)
@@ -53,9 +53,16 @@ def loop2(config, writer, hydra_log_dir):
             in_channels = config.model.n_channels,
             classes= config.model.n_class
         )
+    elif config.model.name == 'unet_mtd':
+        model = UNetWithMetadata(n_channels=config.model.n_channels, n_class=config.model.n_class, n_metadata=6)
+    elif config.model.name == 'unet_mtd_feature':
+        model = UnetFeatureMetadata(n_channels=config.model.n_channels, n_class=config.model.n_class, n_metadata=6)
+    elif config.model.name == 'unet_mtd_feature_2':
+        model = UnetFeatureMetadata_2(n_channels=config.model.n_channels, n_class=config.model.n_class, linear_mtd_preprocess=config.model.linear_mtd_preprocess)
 
     model.to(config.device)
     scaler = GradScaler()
+    
 
     if config.optimizer == 'adam':
         #TODO: Introduce config option for betas
@@ -99,7 +106,7 @@ def loop2(config, writer, hydra_log_dir):
         
         
         for batch in tqdm(train_iter):
-            x,y = batch
+            x,y, mtd = batch
 
             if config.noise:
 
@@ -119,12 +126,15 @@ def loop2(config, writer, hydra_log_dir):
 
             x = x.to(config.device)
             y = y.to(config.device)
+            mtd = mtd.to(config.device)
             
             with autocast():
                 if config.model.name == 'resnet50':
                     y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
                 elif config.model.name == 'FCN8' or config.model.name == 'unet':
                     y_pred = model(x)
+                elif config.model.name == 'unet_mtd' or config.model.name == 'unet_mtd_feature' or config.model.name == 'unet_mtd_feature_2':
+                    y_pred = model(x, mtd)
                 l = train_loss(y_pred, y)
             optimizer.zero_grad()
             scaler.scale(l).backward()
@@ -170,7 +180,7 @@ def loop2(config, writer, hydra_log_dir):
 
             val_iter = iter(val_loader)
             for batch in tqdm(val_iter):
-                x,y = batch
+                x,y, mtd = batch
 
                 if config.noise:
                     if config.noise_type == 'zero_out':
@@ -182,10 +192,15 @@ def loop2(config, writer, hydra_log_dir):
 
                 x = x.to(config.device)
                 y = y.to(config.device)
+                mtd = mtd.to(config.device)
+
                 if config.model.name == 'resnet50':
                     y_pred = model(x)['out']
                 elif config.model.name == 'FCN8' or config.model.name == 'unet':
                     y_pred = model(x)
+                elif config.model.name == 'unet_mtd' or config.model.name == 'unet_mtd_feature' or config.model.name == 'unet_mtd_feature_2':
+                    y_pred = model(x, mtd)
+
                 l = eval_loss(y_pred, y)
                 CE_l = CE_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)

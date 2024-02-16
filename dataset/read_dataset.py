@@ -30,6 +30,9 @@ class DatasetClass(Dataset):
             self.layer_means = self.layer_means[0:3] #only bgr
             self.layer_stds = self.layer_stds[0:3]
         
+        self.mtd_mean = np.array(self.config.dataset.mtd_mean)
+        self.mtd_std = np.array(self.config.dataset.mtd_std)
+        
         if part == 'val' or part == 'train':
             X_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.X_path + '_' + 'train')
             Y_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.Y_path + '_' + 'train')
@@ -52,7 +55,7 @@ class DatasetClass(Dataset):
         X_tif_paths, Y_tif_paths = zip(*combined)
         X_tif_paths, Y_tif_paths = list(X_tif_paths), list(Y_tif_paths)
 
-        with open(self.config.path_to_metadata, 'r') as f: #add path to metadata in config
+        with open(os.path.join(self.config.dataset.path, self.config.dataset.path_to_metadata), 'r') as f: #add path to metadata in config
             self.metadata_dict = json.load(f)
 
         assert len(X_tif_paths) == len(Y_tif_paths)
@@ -94,9 +97,11 @@ class DatasetClass(Dataset):
         #x = self.X[index]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
         #y = self.Y[index]
+        mtd_list = self._read_metadata(self.X_tif_paths[index][-14:-4])
+
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
-            return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
+            return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(mtd_list, dtype = torch.float)
        
         if self.config.dataset.det_crop:
             #get exactly one crop
@@ -116,7 +121,7 @@ class DatasetClass(Dataset):
         
         x = self._normalize(x)
 
-        return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
+        return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(mtd_list, dtype = torch.float)
     
     def __len__(self):
         assert len(self.X_tif_paths) == len(self.Y_tif_paths)
@@ -151,16 +156,34 @@ class DatasetClass(Dataset):
     def _read_metadata(self, img_name): 
         curr_img = self.metadata_dict[img_name]
 
-        #normalize and make to integers
-        x_coord, y_coord = self.metadata_dict[curr_img]["patch_centroid_x"], self.metadata_dict[curr_img]["patch_centroid_y"]
-        #normalize and make to integer
-        alt = self.metadata_dict[curr_img]["patch_centroid_z"]
+        #what to do with these? Encode somehow?
+        domain, zone = curr_img["domain"], curr_img["zone"]
         #one hot encode (seems to be only two types, one with UCE-... and one CAMERA#017)
-        cam = self.metadata_dict[curr_img]['camera']
-        #convert date to days since 01-01, and time to minutes from 00.00, and normalize
-        date, time = self.metadata_dict[curr_img]['data'], self.metadata_dict[curr_img]['time']
-        
+        cam = curr_img['camera']
+        cam = 1 if "UCE" in cam else 0
 
+        #normalize and make to integers
+        x_coord, y_coord = curr_img["patch_centroid_x"], curr_img["patch_centroid_y"]
+        #normalize and make to integer
+        alt = curr_img["patch_centroid_z"]
+        #convert date to days since 01-01, and time to minutes from 00.00, and normalize
+        date, time = curr_img['date'], curr_img['time']
+        _, mm, dd = date.split('-')
+        date = int(mm)*30 + int(dd)
+
+        hh, mm = time.split('h')
+        time = int(hh)*60 + int(mm)
+
+        mtd_list = [x_coord, y_coord, alt, date, time]
+        mtd_list -= self.mtd_mean
+        mtd_list /= self.mtd_std
+
+        mtd_list = np.append(mtd_list, cam)
+
+        return mtd_list 
+
+    
+   
 
     def _normalize(self, data):
         #NOTE: These operations expect shape (H,W,C)

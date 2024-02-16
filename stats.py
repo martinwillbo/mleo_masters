@@ -40,3 +40,37 @@ def stats(config):
     print(f"Mean across channels: {mean}")
     print(f"Standard deviation across channels: {std}")
     return mean, std
+
+import json
+import statistics
+
+def metadata_stats():
+    with open('/raid/aleksispi/master-theses/agnes-malte-spring2024/flair_aerial_metadata.json', 'r') as f: 
+        metadata_dict = json.load(f)
+    x_coord_list = []
+    y_coord_list = []
+    alt_list = []
+    date_list = []
+    time_list = []
+    for img in metadata_dict:
+        x_coord_list.append(metadata_dict[img]["patch_centroid_x"])
+        y_coord_list.append(metadata_dict[img]["patch_centroid_y"])
+        alt_list.append(metadata_dict[img]["patch_centroid_z"])
+        
+        date = metadata_dict[img]["date"]
+        _, mm, dd = date.split('-')
+        date_list.append( int(mm)*30 + int(dd))
+
+        time = metadata_dict[img]["time"]
+        hh = int(time.split('h')[0]) 
+        mm = int(time.split('h')[1]) 
+        time_list.append(hh*60 + mm)
+
+    print(statistics.mean(x_coord_list), statistics.mean(y_coord_list), statistics.mean(alt_list), statistics.mean(date_list), statistics.mean(time_list))
+    print(statistics.stdev(x_coord_list), statistics.stdev(y_coord_list), statistics.stdev(alt_list), statistics.stdev(date_list), statistics.stdev(time_list))
+
+    
+
+metadata_stats()
+
+      
