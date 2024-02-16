@@ -202,31 +202,6 @@ class DatasetClass(Dataset):
         
         return subsubdirectories_counts
 
-
-    
-    def count_files_in_subdirs(self, BASE_PATH):
-        counts = []
-        for dir in os.listdir(BASE_PATH):
-            subdir
-            for subdir in os.listdir()
-            for root, dirs, files in os.walk(base_path):
-                # Calculate the file count for the current directory
-                file_count = len(files)
-                
-                # Store the file count for the current subdirectory
-                subdir = os.path.relpath(root, base_path)
-                subdir_file_counts[subdir] = file_count
-
-    
-           
-            for area in dirs:
-                area_name = os.path.basename(area)
-                #print('Name')
-                print(area_name)
-                area_name = area_name.split('/')[-1]
-                counts[area_name] = len(files)
-        return counts
-
     
     def _read_data(self, tif_path, is_label):
         data = np.array(tifffile.imread(tif_path))
