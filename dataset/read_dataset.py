@@ -157,8 +157,6 @@ class DatasetClass(Dataset):
         paths = []
         count = 0
         for root, dirs, files in os.walk(BASE_PATH):
-            
-
             for file in sorted(files):
                 if file.endswith(ending):
                     paths.append(os.path.join(root, file))
@@ -170,18 +168,18 @@ class DatasetClass(Dataset):
         if ending == '.tif':
             for root, dirs, files in os.walk(BASE_PATH):
                 for file in sorted(files):
-                    paths.append(os.path.join(root, file))
+                    if file.endswith(ending): # should not be necessary
+                        paths.append(os.path.join(root, file))
 
         elif ending != 'data.npy' or ending == 'masks.npy':
-            
+    
             #We want to add one senti path for each aerial
             area_counts = self.count_files_in_subdirs(X_path)
 
             for root, dirs, files in os.walk(BASE_PATH):
                 for file in sorted(files):
-                    for area in dirs:
-                        area_name = os.path.basename(area)
-                        area_name = area_name.split('/')[-1]
+                        area_name = os.path.basename(file)
+                        area_name = area_name.split('/')[-2]
                         count = area_counts[area_name]
                         for i in range(count):
                             paths.append(os.path.join(root, file))           
