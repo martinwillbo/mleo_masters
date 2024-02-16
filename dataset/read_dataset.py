@@ -188,7 +188,7 @@ class DatasetClass(Dataset):
                                 paths.append(os.path.join(root, file))           
         return paths
     
-    def count_files(base_path):
+    def count_files(self, base_path):
         subsubdirectories_counts = {}
         
         # Walk through all subdirectories
