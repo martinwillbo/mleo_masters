@@ -53,10 +53,7 @@ class DatasetClass(Dataset):
         aerial_to_senti_path = os.path.join(self.config.dataset.path, 'flair-2_centroids_sp_to_patch.json') # load the dictionary wwith mapping from sentinel to aerial patches
         with open(aerial_to_senti_path) as file:
             self.aerial_to_senti = json.load(file)  
-            #self.aerial_to_senti = aerial_to_senti
-            #print(self.aerial_to_senti['IMG_015476'])
-            print(self.aerial_to_senti[IMG_000001])
-            #print(len(X_tif_paths))
+            print(self.aerial_to_senti.get('IMG_000001'))
 
 
         combined = list(zip(X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths))
