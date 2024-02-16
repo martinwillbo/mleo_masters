@@ -95,7 +95,7 @@ class DatasetClass(Dataset):
         self.senti_data_paths = senti_data_paths
         self.senti_mask_paths = senti_mask_paths
 
-        print(self.senti_data_paths)
+        print(len(self.senti_data_paths))
             
         #print('Tif size: ' + str(sys.getsizeof(self.X_tif_paths)*8)) #takes like 3MB
 
