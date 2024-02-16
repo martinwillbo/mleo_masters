@@ -48,10 +48,8 @@ class DatasetClass(Dataset):
         X_tif_paths = self._read_paths(X_BASE_PATH, ".tif")
         Y_tif_paths = self._read_paths(Y_BASE_PATH, ".tif")
         senti_data_paths = self._read_paths(SENTI_BASE_PATH, "data.npy") # all aerial images within the same area have the same 
-        senti_mask_paths = self._read_paths(SENTI_BASE_PATH, "masks.npy")# sentinel image so redundant to store one for each  
-
-        print(len(senti_data_paths))
-        print(len(X_tif_paths))     
+        senti_mask_paths = self._read_paths(SENTI_BASE_PATH, "masks.npy")# sentinel image so redundant to store one for each 
+        print(senti_data_paths[0]) 
 
         aerial_to_senti_path = os.path.join(self.config.dataset.path, 'flair-2_centroids_sp_to_patch.json') # load the dictionary wwith mapping from sentinel to aerial patches
         with open(aerial_to_senti_path) as file:
@@ -121,6 +119,7 @@ class DatasetClass(Dataset):
         #print(len(self.senti_data_paths))
         #print(len(self.senti_mask_paths))
         #print(index)
+        #print(self.X_tif_paths)
 
         senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index])
 
@@ -179,7 +178,8 @@ class DatasetClass(Dataset):
                     data = data[:4,:,:] 
         return data
     
-    def _read_senti_patch(self, data_path, mask_path, X_path): #TO BE IMPLEMENTED
+    def _read_senti_patch(self, X_path): #TO BE IMPLEMENTED
+
         data = np.load(data_path) #T x C x H x W
         mask = np.load(data_path) #T x 2 x H x W
         data = data.astype(np.uint8)
