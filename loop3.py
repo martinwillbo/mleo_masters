@@ -15,7 +15,6 @@ import math
 import random
 import cv2
 import matplotlib.pyplot as plt
-from dice_loss import DiceLoss
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, label_image, save_image
 
 
