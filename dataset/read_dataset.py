@@ -43,7 +43,6 @@ class DatasetClass(Dataset):
             Y_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_labels_test')
             SENTI_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_sen_test')
    
-        #print(X_BASE_PATH)
         
         X_tif_paths = self._read_paths(X_BASE_PATH, ".tif")
         Y_tif_paths = self._read_paths(Y_BASE_PATH, ".tif")
@@ -155,13 +154,43 @@ class DatasetClass(Dataset):
         assert len(self.X_tif_paths) == len(self.Y_tif_paths)
         return len(self.X_tif_paths)
     
-    def _read_paths(self, BASE_PATH, ending):
+    def _read_paths(self, BASE_PATH, files_path , ending):
         paths = []
+        count = 0
         for root, dirs, files in os.walk(BASE_PATH):
+            
+            if count == 0:
+                print(dirs)
+                count = 1
+                
             for file in sorted(files):
-                if file.endswith(ending):
+                if ending == '.tif':
                     paths.append(os.path.join(root, file))
+                #elif ending == 'data.npy' or ending == 'masks.npy':
+
         return paths
+    
+    def _read_paths_2(self, BASE_PATH, files_path, ending):
+
+        X_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.X_path + '_' + 'train')
+        paths = []
+        if ending == '.tif':
+            for root, dirs, files in os.walk(BASE_PATH):
+                for file in sorted(files):
+                    paths.append(os.path.join(root, file))
+        elif ending == 'data.npy' or ending == 'masks.npy':
+
+            for root, dirs, files in os.walk(BASE_PATH):
+                for file in sorted(files):
+                    paths.append(os.path.join(root, file))
+            # Count the number of images in files_path
+            num_images = len([name for name in os.listdir(files_path) if os.path.isfile(os.path.join(files_path, name))])
+            
+            # Add as many copies of the path as there are images in files_path
+            for i in range(num_images):
+                paths.append(BASE_PATH)
+        return paths
+
     
     def _read_data(self, tif_path, is_label):
         data = np.array(tifffile.imread(tif_path))
