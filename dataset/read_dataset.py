@@ -175,6 +175,7 @@ class DatasetClass(Dataset):
 
         #Extract image index
         filename = os.path.basename(data_path)
+        print(filename)
         image_index = filename.split('.')[0].split('/')[-1]
         print(image_index)
         #Get centroid
