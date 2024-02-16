@@ -178,11 +178,8 @@ class DatasetClass(Dataset):
 
             for root, dirs, files in os.walk(BASE_PATH):
                 for file in sorted(files):
-
                         
-                        path_name = os.path.basename(root)
-                        print(path_name)
-                        area_name = path_name.split('/')[-2]
+                        area_name = root.split('/')[-2]
                         count = area_counts[area_name]
                         if file.endswith(ending):
                             for i in range(count):
