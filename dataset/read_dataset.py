@@ -112,6 +112,9 @@ class DatasetClass(Dataset):
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
         #y = self.Y[index]
        # senti = self._read_npy(self.senti_data_paths[index], self.senti_mask_paths[index])
+        print(len(self.senti_data_paths))
+        print(len(self.senti_mask_paths))
+        print(index)
 
         senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index])
 
