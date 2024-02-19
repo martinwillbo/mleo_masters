@@ -189,8 +189,7 @@ class DatasetClass(Dataset):
                             print('k: ' + str(count))
                             for i in range(count):
                                 paths.append(os.path.join(root, file))         
-        print('lite')
-        print(paths[0:3])                          
+                      
         return paths
     
     def count_files(self, base_path):
