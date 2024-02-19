@@ -192,7 +192,7 @@ class DatasetClass(Dataset):
 
         aerial_counts = {}
         
-        for root, dirs, files in os.walk(directory):
+        for root, dirs, files in os.walk(base_path):
             if len(files) > 0:
                 aerial_counts[root] = len(files)
 
