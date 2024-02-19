@@ -212,9 +212,12 @@ class DatasetClass(Dataset):
         #Get centroid
         x_cent, y_cent = self.aerial_to_senti[image_index]
 
-        print(X_path)
-        print(image_index)
-        print(data_path)
+        #print(X_path)
+        #print(image_index)
+        #print(data_path)
+        print(x_cent, y_cent)
+        print(data.shape)
+
        
         #Extract patch
         side = self.config.dataset.senti_size
