@@ -206,7 +206,7 @@ class DatasetClass(Dataset):
     def _read_senti_patch(self, data_path, mask_path, X_path): #TO BE IMPLEMENTED
 
         data = np.load(data_path) #T x C x H x W
-        mask = np.load(data_path) #T x 2 x H x W
+        mask = np.load(mask_path) #T x 2 x H x W
         data = data.astype(np.uint8)
         mask = mask.astype(np.uint8)
 
@@ -223,6 +223,7 @@ class DatasetClass(Dataset):
         mask = mask[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
 
         data = np.concatenate((data, mask), axis=1)
+        print(data.shape)
         return data  
 
     def _read_data_old(self, tif_paths, is_label):
