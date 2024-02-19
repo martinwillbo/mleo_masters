@@ -194,7 +194,10 @@ class DatasetClass(Dataset):
         
         for root, dirs, files in os.walk(base_path):
             if len(files) > 0:
-                aerial_counts[root] = len(files)
+                path_sections = root.split(os.sep)  # Split the path using the separator
+                last_three_sections = os.sep.join(path_sections[-3:])  # Join the last three sections
+        
+                aerial_counts[last_three_sections] = len(files)
 
 
         for path, count in aerial_counts.items():
