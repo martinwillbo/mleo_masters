@@ -192,20 +192,14 @@ class DatasetClass(Dataset):
 
         aerial_counts = {}
         
-        # Walk through all subdirectories
-        for root, dirs, files in os.walk(base_path):
-            # Filter out subdirectories that are not subsubdirectories
-            subdirs = [d for d in dirs if os.path.isdir(os.path.join(root, d))]
-            for directory in subdirs:
-                directory_path = os.path.join(root, directory)
-                subsubdirs = os.listdir(directory_path)
-                for subdir in subsubdirs:
-                    
-                    subsub_path = os.path.join(directory_path, subdir)
-                    print(subsub_path)
-                    files_in_directory = len(os.listdir(subsub_path))
-                    aerial_counts[subdir] = files_in_directory
-        
+        for root, dirs, files in os.walk(directory):
+            if len(files) > 0:
+                aerial_counts[root] = len(files)
+
+
+        for path, count in file_counts.items():
+            print(f"{path}: {count} files")
+
         return aerial_counts
 
     
