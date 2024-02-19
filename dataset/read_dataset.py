@@ -174,7 +174,7 @@ class DatasetClass(Dataset):
                     if file.endswith(ending): # should not be necessary
                         paths.append(os.path.join(root, file))
 
-        elif ending != 'data.npy' or ending == 'masks.npy':
+        elif ending == 'data.npy' or ending == 'masks.npy':
     
             #We want to add one senti path for each aerial path
             area_counts = self.count_files(X_path)
@@ -185,8 +185,8 @@ class DatasetClass(Dataset):
                             path_sections = root.split(os.sep)
                             area_name = os.sep.join(path_sections[-3:-1])
                             count = area_counts[area_name]
-                            print(area_name)
-                            print('k: ' + str(count))
+                            #print(area_name)
+                            #print('k: ' + str(count))
                             for i in range(count):
                                 paths.append(os.path.join(root, file))         
                       
