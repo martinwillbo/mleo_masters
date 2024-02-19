@@ -215,6 +215,9 @@ class DatasetClass(Dataset):
         #print(X_path)
         #print(image_index)
         #print(data_path)
+        print(data.shape)
+        print(mask.shape)
+        
         
        
         #Extract patch
