@@ -215,14 +215,15 @@ class DatasetClass(Dataset):
         #print(X_path)
         #print(image_index)
         #print(data_path)
-        print(x_cent, y_cent)
-        print(data.shape)
-
+        
        
         #Extract patch
         side = self.config.dataset.senti_size
         data = data[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
         mask = mask[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
+
+        print(data.shape)
+        print(mask.shape)
 
         data = np.concatenate((data, mask), axis=1)
         
