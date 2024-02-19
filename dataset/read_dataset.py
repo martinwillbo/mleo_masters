@@ -217,7 +217,7 @@ class DatasetClass(Dataset):
         #print(data_path)
         print(data.shape)
         print(mask.shape)
-        
+        print(x_cent, y_cent)
         
        
         #Extract patch
