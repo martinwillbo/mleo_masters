@@ -219,8 +219,8 @@ class DatasetClass(Dataset):
        
         #Extract patch
         side = self.config.dataset.senti_size
-        data = data[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
-        mask = mask[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
+        #data = data[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
+        #mask = mask[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
 
         data = np.concatenate((data, mask), axis=1)
         print(data.shape)
