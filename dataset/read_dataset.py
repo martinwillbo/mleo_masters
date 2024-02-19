@@ -47,10 +47,6 @@ class DatasetClass(Dataset):
         Y_tif_paths = self._read_paths(Y_BASE_PATH, ".tif")
         senti_data_paths = self._read_paths(SENTI_BASE_PATH, "data.npy", X_BASE_PATH) # all aerial images within the same area have the same 
         senti_mask_paths = self._read_paths(SENTI_BASE_PATH, "masks.npy", X_BASE_PATH)# sentinel image so redundant to store one for each 
-        print(len(X_tif_paths))
-        print(len(senti_data_paths))
-        print(len(senti_mask_paths))
-
 
         aerial_to_senti_path = os.path.join(self.config.dataset.path, 'flair-2_centroids_sp_to_patch.json') # load the dictionary wwith mapping from sentinel to aerial patches
         with open(aerial_to_senti_path) as file:
@@ -81,6 +77,11 @@ class DatasetClass(Dataset):
         Y_tif_paths = Y_tif_paths[0:data_stop_point]
         senti_data_paths = senti_data_paths[0:data_stop_point]
         senti_mask_paths = senti_mask_paths[0:data_stop_point]
+
+        print(X_tif_paths)
+        print(Y_tif_paths)
+        print(senti_data_paths)
+        print(senti_mask_paths)
         
 
         #print('Constructing ' + self.part + ' set...')
@@ -97,32 +98,13 @@ class DatasetClass(Dataset):
         self.senti_data_paths = senti_data_paths
         self.senti_mask_paths = senti_mask_paths
 
-       
-            
-        #print('Tif size: ' + str(sys.getsizeof(self.X_tif_paths)*8)) #takes like 3MB
-
-        #temp_X = self._read_data_old(X_tif_paths, is_label = False)
-        #temp_Y = self._read_data_old(Y_tif_paths, is_label = True)
-        #print(len(temp_X))
-        #print(len(temp_Y))
-        #self.X.extend(temp_X)
-        #self.Y.extend(temp_Y)
-        #print(min(item.min().item() for item in self.Y))
-        #print(max(item.max().item() for item in self.Y))
-
     def __getitem__(self, index):
         #print(index)
         x = self._read_data(self.X_tif_paths[index], is_label = False)
         #x = self.X[index]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
-        #y = self.Y[index]
-       # senti = self._read_npy(self.senti_data_paths[index], self.senti_mask_paths[index])
-        #print(len(self.senti_data_paths))
-        #print(len(self.senti_mask_paths))
-        #print(index)
-        #print(self.X_tif_paths)
 
-        senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index])
+        senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index]) # this takes the data and masks and concatinates along dim=1
 
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
@@ -166,7 +148,7 @@ class DatasetClass(Dataset):
         return paths
     
     def _read_paths(self, BASE_PATH, ending, X_path = None):
-        #print(ending)
+        
         paths = []
         if ending == '.tif':
             for root, dirs, files in os.walk(BASE_PATH):
@@ -176,17 +158,17 @@ class DatasetClass(Dataset):
 
         elif ending == 'data.npy' or ending == 'masks.npy':
     
-            #We want to add one senti path for each aerial path
+            #Stores the number of times a sentinel image should be added to path list
             area_counts = self.count_files(X_path)
 
             for root, dirs, files in os.walk(BASE_PATH):
                 for file in sorted(files):
                         if file.endswith(ending):
-                            path_sections = root.split(os.sep)
-                            area_name = os.sep.join(path_sections[-3:-1])
+
+                            path_split = root.split(os.sep)
+                            area_name = os.sep.join(path_split[-3:-1]) #domain + area name - should be unique
                             count = area_counts[area_name]
-                            #print(area_name)
-                            #print('k: ' + str(count))
+                            
                             for i in range(count):
                                 paths.append(os.path.join(root, file))         
                       
