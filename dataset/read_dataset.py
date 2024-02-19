@@ -78,10 +78,10 @@ class DatasetClass(Dataset):
         senti_data_paths = senti_data_paths[0:data_stop_point]
         senti_mask_paths = senti_mask_paths[0:data_stop_point]
 
-        print(X_tif_paths)
-        print(Y_tif_paths)
-        print(senti_data_paths)
-        print(senti_mask_paths)
+        print(X_tif_paths[56])
+        print(Y_tif_paths[56])
+        print(senti_data_paths[56])
+        print(senti_mask_paths[56])
         
 
         #print('Constructing ' + self.part + ' set...')
