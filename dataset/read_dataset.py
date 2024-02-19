@@ -197,7 +197,7 @@ class DatasetClass(Dataset):
                 aerial_counts[root] = len(files)
 
 
-        for path, count in file_counts.items():
+        for path, count in aerial_counts.items():
             print(f"{path}: {count} files")
 
         return aerial_counts
