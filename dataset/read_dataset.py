@@ -77,11 +77,6 @@ class DatasetClass(Dataset):
         Y_tif_paths = Y_tif_paths[0:data_stop_point]
         senti_data_paths = senti_data_paths[0:data_stop_point]
         senti_mask_paths = senti_mask_paths[0:data_stop_point]
-
-        print(X_tif_paths[56])
-        print(Y_tif_paths[56])
-        print(senti_data_paths[56])
-        print(senti_mask_paths[56])
         
 
         #print('Constructing ' + self.part + ' set...')
@@ -216,6 +211,10 @@ class DatasetClass(Dataset):
 
         #Get centroid
         x_cent, y_cent = self.aerial_to_senti[image_index]
+
+        print(X_path)
+        print(image_index)
+        print(data_path)
        
         #Extract patch
         side = self.config.dataset.senti_size
@@ -223,7 +222,7 @@ class DatasetClass(Dataset):
         #mask = mask[:,:, y_cent-side:y_cent+side, x_cent-side:x_cent+side]
 
         data = np.concatenate((data, mask), axis=1)
-        print(data.shape)
+        
         return data  
 
     def _read_data_old(self, tif_paths, is_label):
