@@ -179,8 +179,8 @@ class DatasetClass(Dataset):
             for root, dirs, files in os.walk(BASE_PATH):
                 for file in sorted(files):
                         if file.endswith(ending):
-                            area_name = root.split('/')[-2]
-                            
+                            path_sections = root.split(os.sep)
+                            area_name = os.sep.join(path_sections[-3:-1])
                             count = area_counts[area_name]
                             print(area_name)
                             print('k: ' + str(count))
@@ -195,13 +195,9 @@ class DatasetClass(Dataset):
         for root, dirs, files in os.walk(base_path):
             if len(files) > 0:
                 path_sections = root.split(os.sep)  # Split the path using the separator
-                last_three_sections = os.sep.join(path_sections[-3:-1])  # Join 
+                area_name = os.sep.join(path_sections[-3:-1])  # Join 
         
-                aerial_counts[last_three_sections] = len(files)
-
-
-        for path, count in aerial_counts.items():
-            print(f"{path}: {count} files")
+                aerial_counts[area_name] = len(files)
 
         return aerial_counts
 
