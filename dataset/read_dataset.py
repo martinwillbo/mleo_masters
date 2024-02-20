@@ -275,7 +275,7 @@ class DatasetClass(Dataset):
                 noise_ratio = np.sum(noise_pixels, axis=(1, 2)) / np.prod(noise_pixels.shape[1:])
                 
                 # Exclude patches with excessive noise from mean calculation
-                valid_patches = group_patches[noise_ratio <= 0.6]
+                valid_patches = group_patches[noise_ratio <= 1.0]
                 if len(valid_patches) > 0:
                     monthly_means.append(np.mean(valid_patches, axis=0))
                     prev_month_mean = np.mean(valid_patches, axis=0)
