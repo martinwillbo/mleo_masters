@@ -272,7 +272,7 @@ class DatasetClass(Dataset):
             if group_patches.any():
                 # Check for noise corruption in each patch of the batch
                 noise_pixels = np.logical_or(group_masks[:, 0, :, :] > 0.5, group_masks[:, 1, :, :] > 0.5)
-                noise_ratio = np.sum(noise_pixels, axis=(1, 2, 3)) / np.prod(noise_pixels.shape[1:])
+                noise_ratio = np.sum(noise_pixels, axis=(1, 2)) / np.prod(noise_pixels.shape[1:])
                 
                 # Exclude patches with excessive noise from mean calculation
                 valid_patches = group_patches[noise_ratio <= 0.6]
