@@ -99,7 +99,7 @@ class DatasetClass(Dataset):
         
         self.senti_data_paths = senti_data_paths
         self.senti_mask_paths = senti_mask_paths
-        self.senti_data_paths = senti_data_paths
+        self.senti_dates_paths = senti_dates_paths
 
     def __getitem__(self, index):
         #print(index)
