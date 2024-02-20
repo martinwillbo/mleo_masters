@@ -246,7 +246,7 @@ class DatasetClass(Dataset):
 
         #save the data for each senti patch
         for file in products:
-            dates.append(datetime.datetime(int(file[15:19][:2]), int(file[15:19][2:])))
+            dates.append(datetime.datetime(2020, int(file[15:19][:2]), int(file[15:19][2:]))) #year not rel but expected
 
         return np.array(dates)
 
