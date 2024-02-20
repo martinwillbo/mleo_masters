@@ -1,8 +1,10 @@
 from torch.utils.data import Dataset
 from tqdm import tqdm
 import tifffile
+import datetime
 import json
 import numpy as np
+import pandas as pd
 import random
 import torch
 import os
@@ -47,6 +49,8 @@ class DatasetClass(Dataset):
         Y_tif_paths = self._read_paths(Y_BASE_PATH, ".tif")
         senti_data_paths = self._read_paths(SENTI_BASE_PATH, "data.npy", X_BASE_PATH) # all aerial images within the same area have the same 
         senti_mask_paths = self._read_paths(SENTI_BASE_PATH, "masks.npy", X_BASE_PATH)# sentinel image so redundant to store one for each 
+        senti_dates_paths = self._read_paths(SENTI_BASE_PATH, "products.txt", X_BASE_PATH) 
+
 
         aerial_to_senti_path = os.path.join(self.config.dataset.path, 'flair-2_centroids_sp_to_patch.json') # load the dictionary wwith mapping from sentinel to aerial patches
         with open(aerial_to_senti_path) as file:
@@ -56,7 +60,7 @@ class DatasetClass(Dataset):
         random.shuffle(combined)
         X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths = zip(*combined)
         X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths = list(X_tif_paths), list(Y_tif_paths), list(senti_data_paths), list(senti_mask_paths)
-        assert len(X_tif_paths) == len(Y_tif_paths) == len(senti_data_paths) == len(senti_mask_paths) #== len(self.aerial_to_senti)
+        assert len(X_tif_paths) == len(Y_tif_paths) == len(senti_data_paths) == len(senti_mask_paths) == len(senti_dates_paths)
 
         val_set_paths = ["D004", "D014", "D029", "D031", "D058", "D066", "D067", "D077"] # defined in flair paper
 
@@ -100,10 +104,15 @@ class DatasetClass(Dataset):
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
 
         senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index]) # this takes the data and masks and concatinates along dim=1
+        dates = self._read_dates(self.senti_dates_paths[index])        
 
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
-            return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)
+            senti = self._normalize_senti(senti)
+            monthly_senti = self._monthly_image(senti, dates)
+
+            return torch.tensor(x, dtype = torch.float), torch.tensor(monthly_senti, dtype= torch.long), torch.tensor(y, dtype = torch.long)
+        
         if self.config.dataset.det_crop:
             #get exactly one crop
             crop_coords = self.crop_coordinates[index % len(self.crop_coordinates)]
@@ -120,6 +129,8 @@ class DatasetClass(Dataset):
         #NOTE: These operations expect shape (H,W,C)
         #Normalize images, after transform
         x = self._normalize(x)    
+        #senti = self._normalize_senti(senti)
+        monthly_senti = self._monthly_image(senti, dates)
 
         #x = np.transpose(x, (1,2,0)).astype(float)
         #x -= self.layer_means
@@ -127,7 +138,7 @@ class DatasetClass(Dataset):
         #NOTE: Pytorch models typically expect shape (C, H, W)
         #x = np.transpose(x, (2,0,1))
         
-        return torch.tensor(x, dtype = torch.float), torch.tensor(senti, dtype = torch.float), torch.tensor(y, dtype = torch.long)
+        return torch.tensor(x, dtype = torch.float), torch.tensor(monthly_senti, dtype = torch.float), torch.tensor(y, dtype = torch.long)
     
     def __len__(self):
         assert len(self.X_tif_paths) == len(self.Y_tif_paths)
@@ -151,10 +162,10 @@ class DatasetClass(Dataset):
                     if file.endswith(ending): # should not be necessary
                         paths.append(os.path.join(root, file))
 
-        elif ending == 'data.npy' or ending == 'masks.npy':
+        elif ending == 'data.npy' or ending == 'masks.npy' or ending == 'products.txt':
     
             #Stores the number of times a sentinel image should be added to path list
-            area_counts = self.count_files(X_path)
+            area_counts = self._count_files(X_path)
 
             for root, dirs, files in os.walk(BASE_PATH):
                 for file in sorted(files):
@@ -169,7 +180,7 @@ class DatasetClass(Dataset):
                       
         return paths
     
-    def count_files(self, base_path):
+    def _count_files(self, base_path):
 
         aerial_counts = {}
         
@@ -198,7 +209,7 @@ class DatasetClass(Dataset):
                     data = data[:4,:,:] 
         return data
     
-    def _read_senti_patch(self, data_path, mask_path, X_path): #TO BE IMPLEMENTED
+    def _read_senti_patch(self, data_path, mask_path, X_path): 
 
         data = np.load(data_path) #T x C x H x W
         mask = np.load(mask_path) #T x 2 x H x W
@@ -211,55 +222,71 @@ class DatasetClass(Dataset):
 
         #Get centroid
         x_cent, y_cent = self.aerial_to_senti[image_index]
-
-        #print(X_path)
-        #print(image_index)
-        #print(data_path)
-        #print(data.shape)
-        #print(mask.shape)
-        #print(x_cent, y_cent)
-        
        
         #Extract patch
         side = self.config.dataset.senti_size
-        data = data[:,:, x_cent-side:x_cent+side, y_cent-side:y_cent+side]
-        mask = mask[:,:, x_cent-side:x_cent+side, y_cent-side:y_cent+side]
-
-        print(data.shape)
-        print(mask.shape)
+        data = data[:,:, x_cent-side:x_cent+side+1, y_cent-side:y_cent+side+1]
+        mask = mask[:,:, x_cent-side:x_cent+side+1, y_cent-side:y_cent+side+1]
 
         data = np.concatenate((data, mask), axis=1)
         
         return data  
+    
+    def _read_dates(self, txt_file):
 
-    def _read_data_old(self, tif_paths, is_label):
-        temp_data = []
-        for i, path in tqdm(enumerate(tif_paths)):
-            data = np.array(tifffile.imread(path))
-            data = data.astype(np.uint8) #all data is uint8
-            if is_label: #classes are 1 to 19, have to be 0 to 18
-                if self.config.model.n_class < 19: #group last classes as in challenge
-                    data[data > 12] = 13
-                data = data - 1
-            if not is_label:
-                data = np.transpose(data, (2,0,1))
-                if not self.config.dataset.using_priv:
-                    data = data[:3,:,:]
-                if self.config.model.n_channels == 4: #only when using 4 channels
-                    data = data[:4,:,:]                
-            if self.config.dataset.det_crop:
-                data_list = self.det_crop_old(data, is_label)
-                temp_data.extend(data_list)
-            elif self.config.dataset.scale:
-                data = self._rescale(data, is_label)
-                temp_data.append(data)
+        #Open text file with date info
+        with open(txt_file, 'r') as f:
+            products= f.read().splitlines()
+        
+        dates = []
+
+        #save the data for each senti patch
+        for file in products:
+            dates.append(datetime.datetime(int(file[15:19][:2]), int(file[15:19][2:])))
+
+        return np.array(dates)
+
+    
+    def _monthly_image(self, senti_patch, senti_raw_dates):
+
+        mask = senti_patch[:,-2:,:,:]
+        patch = senti_patch[:,:-2,:,:]
+
+        monthly_means = []
+        prev_month_mean = None
+        
+        # Convert dates to a DataFrame for easy manipulation
+        df_dates = pd.DataFrame({'dates': senti_raw_dates})
+        
+        # Group patches by month
+        grouped_patches = df_dates.groupby(df_dates['dates'].dt.to_period('M')).apply(lambda x: patch[x.index])
+        grouped_masks = df_dates.groupby(df_dates['dates'].dt.to_period('M')).apply(lambda x: mask[x.index])
+        
+        # Iterate over groups
+        for group_patches, group_masks in zip(grouped_patches, grouped_masks):
+            if group_patches.any():
+                # Check for noise corruption in each patch of the batch
+                noise_pixels = np.logical_or(group_masks[:, 0, :, :] > 0.5, group_masks[:, 1, :, :] > 0.5)
+                noise_ratio = np.sum(noise_pixels, axis=(1, 2, 3)) / np.prod(noise_pixels.shape[1:])
+                
+                # Exclude patches with excessive noise from mean calculation
+                valid_patches = group_patches[noise_ratio <= 0.6]
+                if len(valid_patches) > 0:
+                    monthly_means.append(np.mean(valid_patches, axis=0))
+                    prev_month_mean = np.mean(valid_patches, axis=0)
+                else:
+                    #print(f"All images for {group_name} discarded due to excessive noise corruption.")
+                    if prev_month_mean is not None:
+                        monthly_means.append(prev_month_mean)
+                    else:
+                        print('No data for previous month')
             else:
-                temp_data.append(data)
-            #if i == 20:
-            #    return temp_data
-            #if i == 2 and self.part == 'val':
-            #    return temp_data
-        return temp_data
+                if prev_month_mean is not None:
+                    monthly_means.append(prev_month_mean)
+                else:
+                    print('No data for previous month')
+            
+        return np.array(monthly_means)
     
     def _rescale(self, data, is_label):
         if not is_label:
@@ -283,6 +310,29 @@ class DatasetClass(Dataset):
         #NOTE: Pytorch models typically expect shape (C, H, W)
         data = np.transpose(data, (2,0,1))
         return data
+    
+    def _normalize_senti(self, senti):
+        
+        #separate data and mask
+        mask = senti[:,-2:,:,:]
+        data = senti[:,:-2,:,:]
+
+        # Transpose data 
+        data = np.transpose(data, (0, 2, 3, 1)).astype(float)
+        
+        # Subtract mean values
+        data -= self.senti_layer_means
+        
+        # Divide by standard deviation values
+        data /= self.senti_layer_stds
+        
+        # Transpose back 
+        data = np.transpose(data, (0, 3, 1, 2))
+        senti = np.concatenate((data, mask), axis=1)
+
+        return senti
+
+
     
     def _get_crop_coordinates(self, data):
         h, w = data.shape[1], data.shape[2] #x,y has the same shape

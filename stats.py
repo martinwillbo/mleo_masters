@@ -10,32 +10,34 @@ def stats(config):
     train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = False, num_workers = config.num_workers,
                             pin_memory = True)
     # Initialize variables for accumulating channel-wise sums
-    channel_sums = torch.zeros(5)
-    channel_squared_diff = torch.zeros(5)
+    channel_sums = torch.zeros(10)
+    channel_squared_diff = torch.zeros(10)
     #num_batches = 0
     train_iter = iter(train_loader)
     num_img = 0
 
-    for X, _ in tqdm(train_iter):
-        num_img += len(X)
-        print(X.mean(dim=(0,2,3)))
+    for _, senti, _ in tqdm(train_iter):
+        #dim will be batch x month x channel x height x
+        num_img += len(senti)
+        senti = senti.mean(senti, dim=1)
+        #print(senti.mean(dim=(0,2,3)))
         # Calculate channel-wise sums and squared sums
-        channel_sums += X.sum(dim=(0, 2, 3))
+        channel_sums += senti.sum(dim=(0, 2, 3))
     # Calculate mean and standard deviation across all batches
-    mean = channel_sums / (num_img * 512 * 512)
+    mean = channel_sums / (num_img * 21 * 21)
     print(mean)
 
     train_iter = iter(train_loader)
-    for X, _ in tqdm(train_iter):
+    for _, senti, _ in tqdm(train_iter):
         #DOES NOT WORK
-        X = X[:, :, :, :]
-        print(X.mean(dim=(0,2,3)))
+        senti = senti.mean(senti, dim=1)
+        #print(X.mean(dim=(0,2,3)))
         channel_reshaped = mean.view(1, 5, 1, 1)
-        X_diff = X - channel_reshaped
-        print(X_diff.mean(dim=(0,2,3)))
-        channel_squared_diff += (X_diff**2).sum(dim=(0, 2, 3))
+        _diff = senti - channel_reshaped
+        print(_diff.mean(dim=(0,2,3)))
+        channel_squared_diff += (_diff**2).sum(dim=(0, 2, 3))
     
-    variance = (channel_squared_diff / (num_img * 512 * 512))
+    variance = (channel_squared_diff / (num_img * 21 * 21))
     std = torch.sqrt(variance)
     print(f"Mean across channels: {mean}")
     print(f"Standard deviation across channels: {std}")
