@@ -69,18 +69,21 @@ class DatasetClass(Dataset):
             Y_tif_paths = [path for path in Y_tif_paths if any(s in path for s in val_set_paths)]
             senti_data_paths = [path for path in senti_data_paths if any(s in path for s in val_set_paths)]
             senti_mask_paths = [path for path in senti_mask_paths if any(s in path for s in val_set_paths)]
+            senti_dates_paths = [path for path in senti_dates_paths if any(s in path for s in val_set_paths)] 
 
         elif part == 'train':
             X_tif_paths = [path for path in X_tif_paths if not any(s in path for s in val_set_paths)]
             Y_tif_paths = [path for path in Y_tif_paths if not any(s in path for s in val_set_paths)]
             senti_data_paths = [path for path in senti_data_paths if not any(s in path for s in val_set_paths)]
             senti_mask_paths = [path for path in senti_mask_paths if not any(s in path for s in val_set_paths)]
+            senti_dates_paths = [path for path in senti_dates_paths if not any(s in path for s in val_set_paths)]
 
         data_stop_point = math.floor(len(X_tif_paths)*(self.config.dataset.dataset_size))
         X_tif_paths = X_tif_paths[0:data_stop_point]
         Y_tif_paths = Y_tif_paths[0:data_stop_point]
         senti_data_paths = senti_data_paths[0:data_stop_point]
         senti_mask_paths = senti_mask_paths[0:data_stop_point]
+        senti_dates_paths= senti_dates_paths[0:data_stop_point]
         
 
         #print('Constructing ' + self.part + ' set...')
@@ -96,6 +99,7 @@ class DatasetClass(Dataset):
         
         self.senti_data_paths = senti_data_paths
         self.senti_mask_paths = senti_mask_paths
+        self.senti_data_paths = senti_data_paths
 
     def __getitem__(self, index):
         #print(index)
