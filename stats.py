@@ -35,7 +35,6 @@ def stats(config):
                             # Extract pixels for the current channel
                             pixels = image[channel_index].flatten()
                             # Append pixels to the channel list
-                            print(pixels.dtype)
                             if(np.sum(pixels) > 0):
                                   channel_lists[channel_index].extend(pixels)
                             else:
