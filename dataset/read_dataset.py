@@ -111,9 +111,11 @@ class DatasetClass(Dataset):
         dates = self._read_dates(self.senti_dates_paths[index]) 
         print(self.senti_data_paths[index])   
         print(self.senti_mask_paths[index])    
-        print('date ' + str(len(dates)))
+        #print('date ' + str(len(dates)))
         print(self.senti_dates_paths[index])
-        print('senti ' + str(len(senti)))
+        print(self.X_tif_paths[index])
+        print(self.Y_tif_paths[index])
+        #print('senti ' + str(len(senti)))
         
 
         if self.part == 'val' or self.part == 'test':
