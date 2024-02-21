@@ -247,52 +247,66 @@ class DatasetClass(Dataset):
 
         #save the data for each senti patch
         for file in products:
-            dates.append(datetime.datetime(2020, int(file[15:19][:2]), int(file[15:19][2:]))) #year not rel but expected
+            dates.append(datetime.datetime(int(file[11:15]), int(file[15:19][:2]), int(file[15:19][2:]))) #year not relevant but expected
 
         return np.array(dates)
 
     
     def _monthly_image(self, senti_patch, senti_raw_dates):
 
+        #masks last 2 channels
         mask = senti_patch[:,-2:,:,:]
-        patch = senti_patch[:,:-2,:,:]
+        patches = senti_patch[:,:-2,:,:]
 
-        monthly_means = []
+        mean_patches = []
         prev_month_mean = None
-        
-        # Convert dates to a DataFrame for easy manipulation
-        df_dates = pd.DataFrame({'dates': senti_raw_dates})
-        
-        # Group patches by month
-        grouped_patches = df_dates.groupby(df_dates['dates'].dt.to_period('M')).apply(lambda x: patch[x.index])
-        grouped_masks = df_dates.groupby(df_dates['dates'].dt.to_period('M')).apply(lambda x: mask[x.index])
-        
-        # Iterate over groups
-        for group_patches, group_masks in zip(grouped_patches, grouped_masks):
-            if group_patches.any():
-                # Check for noise corruption in each patch of the batch
-                noise_pixels = np.logical_or(group_masks[:, 0, :, :] > 0.5, group_masks[:, 1, :, :] > 0.5)
-                noise_ratio = np.sum(noise_pixels, axis=(1, 2)) / np.prod(noise_pixels.shape[1:])
-                
-                # Exclude patches with excessive noise from mean calculation
-                valid_patches = group_patches[noise_ratio <= 1.0]
-                if len(valid_patches) > 0:
-                    monthly_means.append(np.mean(valid_patches, axis=0))
-                    prev_month_mean = np.mean(valid_patches, axis=0)
+
+        #filter out dates
+        dates_to_keep = self._filter_dates(mask, area_threshold=0.5, proba_threshold=60)
+        senti_raw_dates = senti_raw_dates[dates_to_keep]
+
+        #filter masks and patches to use
+        mask = mask[dates_to_keep,:,:,:]
+        patches = patches[dates_to_keep,:,:,:]
+
+        month_range = pd.period_range(start=senti_raw_dates[0].strftime('%Y-%m-%d'),end=senti_raw_dates[-1].strftime('%Y-%m-%d'), freq='M')
+
+        # calc mean for each month
+        for m in month_range:
+
+            month_dates = list(filter(lambda i: (senti_raw_dates[i].month == m.month) and (senti_raw_dates[i].year==m.year), range(len(senti_raw_dates))))
+
+            if len(month_dates)!=0:
+                prev_mean = np.mean(patches[month_dates], axis=0)
+                mean_patches.append(prev_mean)
+                #average_dates.append((datetime.datetime(int(self.ref_year), int(self.ref_date.split('-')[0]), int(self.ref_date.split('-')[1])) 
+                                    # -datetime.datetime(int(self.ref_year), int(m.month), 15)).days  )
+            else: 
+                if prev_mean is not None:
+                    mean_patches.append(prev_mean)
                 else:
-                    #print(f"All images for {group_name} discarded due to excessive noise corruption.")
-                    if prev_month_mean is not None:
-                        monthly_means.append(prev_month_mean)
-                    else:
-                        print('No data for previous month')
-            else:
-                if prev_month_mean is not None:
-                    monthly_means.append(prev_month_mean)
-                else:
-                    print('No data for previous month')
+                    print('No previous data, zero_padding instead')
+                    mean_patches.append(np.zeros((10, 2*self.config.dataset.senti_size + 1, 2*self.config.dataset.senti_size + 1)))
+
+        if len(mean_patches) != 12:
+            print('Some month missing')
             
-        return np.array(monthly_means)
+        return np.array(mean_patches)
+        
+        
     
+    def _filter_dates(self, mask, area_threshold:float=0.5, proba_threshold:int=60):
+        
+        dates_to_keep = []
+        
+        for t in range(mask.shape[0]):
+            cover = np.count_nonzero((mask[t, 0, :,:]>=proba_threshold)) + np.count_nonzero((mask[t, 1, :,:]>=proba_threshold))
+            cover /= mask.shape[2]*mask.shape[3]
+            if cover < area_threshold:
+                dates_to_keep.append(t)
+
+        return dates_to_keep
+        
     def _rescale(self, data, is_label):
         if not is_label:
             data = np.transpose(data, (1,2,0))
