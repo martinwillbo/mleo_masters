@@ -260,17 +260,17 @@ class DatasetClass(Dataset):
         mask = senti_patch[:,-2:,:,:]
         patches = senti_patch[:,:-2,:,:]
 
-        mean_patches = []
-        prev_month_mean = None
-
         #filter out dates
         dates_to_keep = self._filter_dates(mask, area_threshold=0.5, proba_threshold=60)
-        
         dates = senti_raw_dates[dates_to_keep]
 
         #filter masks and patches to use
         mask = mask[dates_to_keep,:,:,:]
         patches = patches[dates_to_keep,:,:,:]
+
+        #Initialize
+        mean_patches = []
+        prev_mean = None
 
         # calc mean for each month
         for m in range(1,13):
