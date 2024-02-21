@@ -26,6 +26,7 @@ def stats(config):
     channel_lists = [[] for _ in range(num_channels)]  # Create empty lists for each channel
     for _, senti, _ in tqdm(train_iter):        
             # Iterate through months
+            senti = np.array(senti)
             for month in senti:
                 # Iterate through images in the month
                 for image in month:
@@ -34,6 +35,7 @@ def stats(config):
                             # Extract pixels for the current channel
                             pixels = image[channel_index].flatten()
                             # Append pixels to the channel list
+                            print(pixels.dtype)
                             if(np.sum(pixels) > 0):
                                   channel_lists[channel_index].extend(pixels)
                             else:
