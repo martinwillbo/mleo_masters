@@ -24,7 +24,7 @@ def stats(config):
     image_width = 21
     count = 0
     channel_lists = [[] for _ in range(num_channels)]  # Create empty lists for each channel
-    for _, senti, _ in tqdm(train_iter):        
+    for _, _, senti in tqdm(train_iter):        
             # Iterate through months
             senti = np.array(senti)
             for month in senti:
@@ -42,8 +42,8 @@ def stats(config):
 
                     
 
-    mean = np.mean(channel_lists)
-    std = np.std(channel_lists)
+    mean = np.mean(channel_lists, axis=1)
+    std = np.std(channel_lists, axis=1)
 
     print(mean)
     print(std)

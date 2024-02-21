@@ -26,6 +26,8 @@ class DatasetClass(Dataset):
         self.transform = transform_module.get_transform(self.config)
         self.layer_means = np.array(self.config.dataset.mean)
         self.layer_stds = np.array(self.config.dataset.std)
+        self.senti_layer_means = np.array(self.config.dataset.mean_senti)
+        self.senti_layer_stds = np.array(self.config.dataset.std_senti)
 
         if not self.config.dataset.using_priv:
             self.layer_means = self.layer_means[0:3] #only bgr
@@ -117,7 +119,7 @@ class DatasetClass(Dataset):
             senti = self._normalize_senti(senti)
             monthly_senti = self._monthly_image(senti, dates)
 
-            return torch.tensor(x, dtype = torch.float), torch.tensor(monthly_senti, dtype= torch.long), torch.tensor(y, dtype = torch.long)
+            return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(monthly_senti, dtype= torch.long)
         
         if self.config.dataset.det_crop:
             #get exactly one crop
@@ -145,7 +147,7 @@ class DatasetClass(Dataset):
         #NOTE: Pytorch models typically expect shape (C, H, W)
         #x = np.transpose(x, (2,0,1))
         
-        return torch.tensor(x, dtype = torch.float), torch.tensor(monthly_senti, dtype = torch.float), torch.tensor(y, dtype = torch.long)
+        return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(monthly_senti, dtype = torch.float)
     
     def __len__(self):
         assert len(self.X_tif_paths) == len(self.Y_tif_paths)
