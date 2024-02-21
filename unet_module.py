@@ -80,12 +80,12 @@ class UnetFeatureSenti(nn.Module):
         feature_senti_channel_list = [120, 32, 24, 40, 112, 320]
 
         self.SEBlock_1 = SEBlock(feature_channel_list[1], feature_senti_channel_list[1])
-        SEBlock_2 = SEBlock(feature_channel_list[2], feature_senti_channel_list[2])
-        SEBlock_3 = SEBlock(feature_channel_list[3], feature_senti_channel_list[3])
-        SEBlock_4 = SEBlock(feature_channel_list[4], feature_senti_channel_list[4])
-        SEBlock_5 = SEBlock(feature_channel_list[5], feature_senti_channel_list[5])
+        self.SEBlock_2 = SEBlock(feature_channel_list[2], feature_senti_channel_list[2])
+        self.SEBlock_3 = SEBlock(feature_channel_list[3], feature_senti_channel_list[3])
+        self.SEBlock_4 = SEBlock(feature_channel_list[4], feature_senti_channel_list[4])
+        self.SEBlock_5 = SEBlock(feature_channel_list[5], feature_senti_channel_list[5])
 
-        self.SEBlock_list = [self.SEBlock_1, SEBlock_2, SEBlock_3, SEBlock_4, SEBlock_5]
+#        self.SEBlock_list = [self.SEBlock_1, SEBlock_2, SEBlock_3, SEBlock_4, SEBlock_5]
 
     def forward(self, x, senti):
         #print(senti.shape)
@@ -100,10 +100,14 @@ class UnetFeatureSenti(nn.Module):
         #SE_features = 0*features.copy()
         #SE_features[0] = features[0]
         features[1] = self.SEBlock_1(features[1], features_senti[1])
+        features[2] = self.SEBlock_1(features[2], features_senti[2])
+        features[3] = self.SEBlock_1(features[3], features_senti[3])
+        features[4] = self.SEBlock_1(features[4], features_senti[4])
+        features[5] = self.SEBlock_1(features[5], features_senti[5])
         
 
-        for i in range(1,6):
-            features[i] = self.SEBlock_list[i](features[i], features_senti[i])
+       # for i in range(1,6):
+       #     features[i] = self.SEBlock_list[i](features[i], features_senti[i])
 
         y_pred = self.unet.decoder(*features)
         y_pred = self.unet.segmentation_head(y_pred)
