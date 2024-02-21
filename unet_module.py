@@ -99,7 +99,7 @@ class UnetFeatureSenti(nn.Module):
         
         #SE_features = 0*features.copy()
         #SE_features[0] = features[0]
-        features[1] = self.SEBlock1(features[1], features_senti[1])
+        features[1] = self.SEBlock_1(features[1], features_senti[1])
         
 
         for i in range(1,6):
