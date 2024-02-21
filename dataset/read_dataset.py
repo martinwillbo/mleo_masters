@@ -262,7 +262,7 @@ class DatasetClass(Dataset):
         prev_month_mean = None
 
         #filter out dates
-        dates_to_keep = self._filter_dates(mask, area_threshold=0.5, proba_threshold=60)
+        dates_to_keep = self._filter_dates(mask, area_threshold=1.0, proba_threshold=100)
         #print(senti_raw_dates)
         #print(dates_to_keep)
         senti_raw_dates = senti_raw_dates[dates_to_keep]
