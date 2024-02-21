@@ -263,7 +263,9 @@ class DatasetClass(Dataset):
 
         #filter out dates
         dates_to_keep = self._filter_dates(mask, area_threshold=0.5, proba_threshold=60)
-        senti_raw_dates = senti_raw_dates[dates_to_keep,:,:,:]
+        print(senti_raw_dates)
+        print(dates_to_keep)
+        senti_raw_dates = senti_raw_dates[dates_to_keep]
 
         #filter masks and patches to use
         mask = mask[dates_to_keep,:,:,:]
