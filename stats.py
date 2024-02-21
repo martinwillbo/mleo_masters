@@ -21,10 +21,10 @@ def stats(config):
 
         senti = senti.numpy()
         senti_batch = senti.reshape(-1, 10, 21, 21)    
-        senti_imgs = np.concatenate(senti_batch, senti_imgs, axis = 0)
+        senti_imgs = np.concatenate((senti_batch, senti_imgs), axis = 0)
 
     mean = np.mean(senti_imgs, axis = (0,2,3))
-    std = np.mean(senti_imgs, axis = (0,2,3))
+    std = np.std(senti_imgs, axis = (0,2,3))
     print(mean)
     print(std)
     return mean, std
