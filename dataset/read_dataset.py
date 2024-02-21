@@ -109,6 +109,8 @@ class DatasetClass(Dataset):
 
         senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index]) # this takes the data and masks and concatinates along dim=1
         dates = self._read_dates(self.senti_dates_paths[index])         
+        assert len(senti) == len(dates)    
+
 
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
