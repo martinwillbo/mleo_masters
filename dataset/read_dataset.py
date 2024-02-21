@@ -109,7 +109,8 @@ class DatasetClass(Dataset):
 
         senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index]) # this takes the data and masks and concatinates along dim=1
         dates = self._read_dates(self.senti_dates_paths[index]) 
-        print(self.senti_data_paths[index])       
+        print(self.senti_data_paths[index])   
+        print(self.senti_mask_paths[index])    
         print('date ' + str(len(dates)))
         print(self.senti_dates_paths[index])
         print('senti ' + str(len(senti)))
