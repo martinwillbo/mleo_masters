@@ -88,8 +88,9 @@ class UnetFeatureSenti(nn.Module):
         self.SEBlock_list = [SEBlock_1, SEBlock_2, SEBlock_3, SEBlock_4, SEBlock_5]
 
     def forward(self, x, senti):
-
+        print(senti.shape)
         senti = senti.view(-1, senti.shape[-3], senti.shape[-2], senti.shape[-1])
+        print(senti.shape)
         #get features from encoder
         features = self.unet.encoder(x)
         #get features from senti_encoder
