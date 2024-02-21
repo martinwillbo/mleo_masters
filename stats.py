@@ -29,7 +29,21 @@ def stats(config):
 
     train_iter = iter(train_loader)
     for _, senti, _ in tqdm(train_iter):
-        #DOES NOT WORK
+
+        # Assuming 'batch' is your batch tensor with dimensions (batch_size, 12, 21, 21)
+
+        # Sum pixel values along the width and height dimensions (2, 3) for each image
+        pixel_sum_per_image = torch.sum(senti, dim=(2, 3))
+
+        # Check if the pixel sum for each image within each item is zero
+        is_zero_sum_image = torch.sum(pixel_sum_per_image, dim=1) == 0
+
+        # Find indices where the pixel sum for any image within each item is not zero
+        non_zero_indices_per_item = torch.nonzero(is_zero_sum_image == False)
+
+        # Remove images with zero pixel sum within each item
+        senti = torch.index_select(senti, 0, non_zero_indices_per_item.squeeze(1))
+        
         senti = torch.mean(senti, dim=1)
         #print(X.mean(dim=(0,2,3)))
         channel_reshaped = mean.view(1, 5, 1, 1)
