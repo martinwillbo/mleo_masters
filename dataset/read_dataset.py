@@ -279,8 +279,8 @@ class DatasetClass(Dataset):
             month_dates = list(filter(lambda i: (dates[i].month == m), range(len(dates))))
 
             if len(month_dates)!=0:
-                print(len(patches))
-                print(month_dates)
+                #print(len(patches))
+                #print(month_dates)
                 prev_mean = np.mean(patches[month_dates,:,:,:], axis=0)
                 mean_patches.append(prev_mean)
                 
