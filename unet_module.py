@@ -75,7 +75,7 @@ class UnetFeatureSenti(nn.Module):
             classes= n_classes
         )  # Your existing U-Net model
         #overwrite
-        self.senti_encoder = get_encoder(encoder_name= 'efficientnet-b0', weights = 'imagenet', encoder_depth=5, in_channels=n_senti_channels)
+        self.senti_encoder = get_encoder('efficientnet-b0', weights = 'imagenet', encoder_depth=5, in_channels=n_senti_channels)
         feature_channel_list = [5, 48, 32, 56, 160, 448]
         feature_senti_channel_list = [10, 0, 0, 0, 0, 0]
 
