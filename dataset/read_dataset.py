@@ -279,7 +279,7 @@ class DatasetClass(Dataset):
             month_dates = list(filter(lambda i: (dates[i].month == m.month) and (dates[i].year==m.year), range(len(dates))))
 
             if len(month_dates)!=0:
-                prev_mean = np.mean(patches[month_dates], axis=0)
+                prev_mean = np.mean(patches[month_dates,:,:,:], axis=0)
                 mean_patches.append(prev_mean)
                 #print('OK!')
                 #average_dates.append((datetime.datetime(int(self.ref_year), int(self.ref_date.split('-')[0]), int(self.ref_date.split('-')[1])) 
