@@ -111,7 +111,7 @@ class DatasetClass(Dataset):
         dates = self._read_dates(self.senti_dates_paths[index]) 
         print(self.senti_data_paths[index])       
         print('date ' + str(len(dates)))
-        print(self.senti_mask_paths[index])
+        print(self.senti_dates_paths[index])
         print('senti ' + str(len(senti)))
         
 
