@@ -79,7 +79,7 @@ class UnetFeatureSenti(nn.Module):
         feature_channel_list = [5, 48, 32, 56, 160, 448]
         feature_senti_channel_list = [120, 32, 24, 40, 112, 320]
 
-        SEBlock_1 = SEBlock(feature_channel_list[1], feature_senti_channel_list[1])
+        self.SEBlock_1 = SEBlock(feature_channel_list[1], feature_senti_channel_list[1])
         SEBlock_2 = SEBlock(feature_channel_list[2], feature_senti_channel_list[2])
         SEBlock_3 = SEBlock(feature_channel_list[3], feature_senti_channel_list[3])
         SEBlock_4 = SEBlock(feature_channel_list[4], feature_senti_channel_list[4])
@@ -89,7 +89,7 @@ class UnetFeatureSenti(nn.Module):
 
     def forward(self, x, senti):
         #print(senti.shape)
-        print(senti.device, x.device, self.device)
+        
         senti = senti.view(senti.shape[0], -1 , senti.shape[-2], senti.shape[-1])
         #print(senti.shape)
         #get features from encoder
@@ -99,6 +99,8 @@ class UnetFeatureSenti(nn.Module):
         
         #SE_features = 0*features.copy()
         #SE_features[0] = features[0]
+        features[1] = self.SEBlock1(features[1], features_senti[1])
+        
 
         for i in range(1,6):
             features[i] = self.SEBlock_list[i](features[i], features_senti[i])
