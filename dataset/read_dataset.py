@@ -137,7 +137,7 @@ class DatasetClass(Dataset):
         #NOTE: These operations expect shape (H,W,C)
         #Normalize images, after transform
         x = self._normalize(x)    
-        #senti = self._normalize_senti(senti)
+        senti = self._normalize_senti(senti)
         #print(senti.shape)
         monthly_senti = self._monthly_image(senti, dates)
 
