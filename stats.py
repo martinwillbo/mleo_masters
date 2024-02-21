@@ -16,15 +16,27 @@ def stats(config):
     #num_batches = 0
     train_iter = iter(train_loader)
     num_img = 0
-    senti_imgs = []
-    for _, senti, _ in tqdm(train_iter):
+    
+    batch_size = 8
+    num_months = 12
+    num_channels = 10
+    image_height = 21
+    image_width = 21
+    channel_lists = [[] for _ in range(num_channels)]  # Create empty lists for each channel
+    for _, senti, _ in tqdm(train_iter):        
+            # Iterate through months
+            for month in senti:
+                # Iterate through images in the month
+                for image in month:
+                    # Iterate through channels
+                    for channel_index in range(num_channels):
+                        # Extract pixels for the current channel
+                        pixels = image[channel_index].flatten()
+                        # Append pixels to the channel list
+                        channel_lists[channel_index].extend(pixels)
 
-        senti = senti.numpy()
-        senti_batch = senti.reshape(-1, 10, 21, 21)    
-        senti_imgs = np.concatenate((senti_batch, senti_imgs), axis = 0)
-
-    mean = np.mean(senti_imgs, axis = (0,2,3))
-    std = np.std(senti_imgs, axis = (0,2,3))
+    mean = np.mean(channel_lists)
+    std = np.std(channel_lists)
     print(mean)
     print(std)
     return mean, std
