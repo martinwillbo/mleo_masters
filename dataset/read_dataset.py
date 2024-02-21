@@ -56,10 +56,10 @@ class DatasetClass(Dataset):
         with open(aerial_to_senti_path) as file:
             self.aerial_to_senti = json.load(file)
 
-        combined = list(zip(X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths))
+        combined = list(zip(X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths, senti_dates_paths))
         random.shuffle(combined)
-        X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths = zip(*combined)
-        X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths = list(X_tif_paths), list(Y_tif_paths), list(senti_data_paths), list(senti_mask_paths)
+        X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths, senti_dates_paths = zip(*combined)
+        X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths, senti_dates_paths = list(X_tif_paths), list(Y_tif_paths), list(senti_data_paths), list(senti_mask_paths), list(senti_dates_paths)
         assert len(X_tif_paths) == len(Y_tif_paths) == len(senti_data_paths) == len(senti_mask_paths) == len(senti_dates_paths)
 
         val_set_paths = ["D004", "D014", "D029", "D031", "D058", "D066", "D067", "D077"] # defined in flair paper
