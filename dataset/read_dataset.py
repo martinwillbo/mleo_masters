@@ -274,29 +274,22 @@ class DatasetClass(Dataset):
         month_range = pd.period_range(start=dates[0].strftime('%Y-%m-%d'),end=dates[-1].strftime('%Y-%m-%d'), freq='M')
 
         # calc mean for each month
-        for m in month_range:
+        for m in range(1,13):
 
             month_dates = list(filter(lambda i: (dates[i].month == m.month), range(len(dates))))
-            print(month_range)
-            print(month_dates)
+            #print(month_range)
+            #print(month_dates)
 
             if len(month_dates)!=0:
                 prev_mean = np.mean(patches[month_dates,:,:,:], axis=0)
                 mean_patches.append(prev_mean)
-                #print('OK!')
-                #average_dates.append((datetime.datetime(int(self.ref_year), int(self.ref_date.split('-')[0]), int(self.ref_date.split('-')[1])) 
-                                    # -datetime.datetime(int(self.ref_year), int(m.month), 15)).days  )
+                
             else: 
                 if prev_mean is not None:
                     mean_patches.append(prev_mean)
                 else:
                     print('No previous data, zero_padding instead')
-                    mean_patches.append(np.zeros((10, 2*self.config.dataset.senti_size + 1, 2*self.config.dataset.senti_size + 1)))
-
-        if len(mean_patches) != 12:
-            #for dt in senti_raw_dates:
-            print(len(senti_raw_dates))
-                
+                    mean_patches.append(np.zeros((10, 2*self.config.dataset.senti_size + 1, 2*self.config.dataset.senti_size + 1)))               
                       
 
         return np.array(mean_patches)
