@@ -108,15 +108,7 @@ class DatasetClass(Dataset):
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
 
         senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index]) # this takes the data and masks and concatinates along dim=1
-        dates = self._read_dates(self.senti_dates_paths[index]) 
-        print(self.senti_data_paths[index])   
-        print(self.senti_mask_paths[index])    
-        #print('date ' + str(len(dates)))
-        print(self.senti_dates_paths[index])
-        print(self.X_tif_paths[index])
-        print(self.Y_tif_paths[index])
-        #print('senti ' + str(len(senti)))
-        
+        dates = self._read_dates(self.senti_dates_paths[index])         
 
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
@@ -270,13 +262,13 @@ class DatasetClass(Dataset):
         prev_month_mean = None
 
         #filter out dates
-        #dates_to_keep = self._filter_dates(mask, area_threshold=1.0, proba_threshold=100)
+        dates_to_keep = self._filter_dates(mask, area_threshold=0.5, proba_threshold=60)
         
         dates = senti_raw_dates#[dates_to_keep]
 
         #filter masks and patches to use
-        #mask = mask[dates_to_keep,:,:,:]
-        #patches = patches[dates_to_keep,:,:,:]
+        mask = mask[dates_to_keep,:,:,:]
+        patches = patches[dates_to_keep,:,:,:]
 
         # calc mean for each month
         for m in range(1,13):
@@ -284,8 +276,6 @@ class DatasetClass(Dataset):
             month_dates = list(filter(lambda i: (dates[i].month == m), range(len(dates))))
 
             if len(month_dates)!=0:
-                #print(len(patches))
-                #print(month_dates)
                 prev_mean = np.mean(patches[month_dates,:,:,:], axis=0)
                 mean_patches.append(prev_mean)
                 
