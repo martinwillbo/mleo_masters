@@ -50,7 +50,7 @@ def loop3(config, writer, hydra_log_dir):
         model = UnetFeatureSenti(n_channels=config.model.n_channels, n_senti_channels=120, n_classes=config.model.n_class)
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
 
-    model.to(config.device)
+    model = model.to(config.device)
     
     scaler = GradScaler()
 
