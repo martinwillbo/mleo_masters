@@ -263,8 +263,8 @@ class DatasetClass(Dataset):
 
         #filter out dates
         dates_to_keep = self._filter_dates(mask, area_threshold=0.5, proba_threshold=60)
-        print(senti_raw_dates)
-        print(dates_to_keep)
+        #print(senti_raw_dates)
+        #print(dates_to_keep)
         senti_raw_dates = senti_raw_dates[dates_to_keep]
 
         #filter masks and patches to use
@@ -281,6 +281,7 @@ class DatasetClass(Dataset):
             if len(month_dates)!=0:
                 prev_mean = np.mean(patches[month_dates], axis=0)
                 mean_patches.append(prev_mean)
+                print('OK!')
                 #average_dates.append((datetime.datetime(int(self.ref_year), int(self.ref_date.split('-')[0]), int(self.ref_date.split('-')[1])) 
                                     # -datetime.datetime(int(self.ref_year), int(m.month), 15)).days  )
             else: 
