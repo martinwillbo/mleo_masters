@@ -287,7 +287,7 @@ class DatasetClass(Dataset):
                 if prev_mean is not None:
                     mean_patches.append(prev_mean)
                 else:
-                    print('No previous data, zero_padding instead')
+                    #print('No previous data, zero_padding instead')
                     mean_patches.append(np.zeros((10, 2*self.config.dataset.senti_size + 1, 2*self.config.dataset.senti_size + 1)))               
                       
 

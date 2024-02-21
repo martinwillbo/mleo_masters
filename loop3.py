@@ -47,7 +47,7 @@ def loop3(config, writer, hydra_log_dir):
         model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
 
     if config.model.name == 'unet_senti':
-        model = UnetFeatureSenti(n_channels=config.model.n_channels, n_senti_channels=10, n_classes=config.model.n_class)
+        model = UnetFeatureSenti(n_channels=config.model.n_channels, n_senti_channels=120, n_classes=config.model.n_class)
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
 
     model.to(config.device)
