@@ -26,8 +26,8 @@ def main(config):
     writer = SummaryWriter(log_dir=log_dir)
     # writer = SummaryWriter(log_dir='.')
 
-    mean, std = stats.stats(config)
-    #loop3.loop3(config, writer, hydra_log_dir)
+    #mean, std = stats.stats(config)
+    loop3.loop3(config, writer, hydra_log_dir)
     #loop2.loop2(config, writer, hydra_log_dir)
     # test.eval_on_test(config, writer = None)
 
