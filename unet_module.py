@@ -89,7 +89,7 @@ class UnetFeatureSenti(nn.Module):
 
     def forward(self, x, senti):
 
-        senti = senti.veiw(-1, senti.shape[-3], senti.shape[-2], senti.shape[-1])
+        senti = senti.view(-1, senti.shape[-3], senti.shape[-2], senti.shape[-1])
         #get features from encoder
         features = self.unet.encoder(x)
         #get features from senti_encoder
