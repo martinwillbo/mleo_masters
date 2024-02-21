@@ -263,24 +263,21 @@ class DatasetClass(Dataset):
 
         #filter out dates
         #dates_to_keep = self._filter_dates(mask, area_threshold=1.0, proba_threshold=100)
-        #print(senti_raw_dates)
-        #print(dates_to_keep)
+        
         dates = senti_raw_dates#[dates_to_keep]
 
         #filter masks and patches to use
         #mask = mask[dates_to_keep,:,:,:]
         #patches = patches[dates_to_keep,:,:,:]
 
-        month_range = pd.period_range(start=dates[0].strftime('%Y-%m-%d'),end=dates[-1].strftime('%Y-%m-%d'), freq='M')
-
         # calc mean for each month
         for m in range(1,13):
 
             month_dates = list(filter(lambda i: (dates[i].month == m), range(len(dates))))
-            #print(month_range)
-            #print(month_dates)
 
             if len(month_dates)!=0:
+                print(len(patches))
+                print(month_dates)
                 prev_mean = np.mean(patches[month_dates,:,:,:], axis=0)
                 mean_patches.append(prev_mean)
                 
