@@ -96,7 +96,7 @@ class UnetFeatureSenti(nn.Module):
         #get features from senti_encoder
         features_senti = self.senti_encoder(senti)
         
-        SE_features = 0*features.clone()
+        SE_features = 0*features.copy()
         SE_features[0] = features[0]
 
         for i in range(1,6):
