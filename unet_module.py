@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import segmentation_models_pytorch as smp
 from segmentation_models_pytorch.base.modules import Conv2dReLU, Attention
-from segmentation_models_pytorch.encoder import get_encoder
+from segmentation_models_pytorch.encoders import get_encoder
 
 
 
