@@ -22,21 +22,28 @@ def stats(config):
     num_channels = 10
     image_height = 21
     image_width = 21
+    count = 0
     channel_lists = [[] for _ in range(num_channels)]  # Create empty lists for each channel
     for _, senti, _ in tqdm(train_iter):        
             # Iterate through months
             for month in senti:
                 # Iterate through images in the month
                 for image in month:
-                    # Iterate through channels
-                    for channel_index in range(num_channels):
-                        # Extract pixels for the current channel
-                        pixels = image[channel_index].flatten()
-                        # Append pixels to the channel list
-                        channel_lists[channel_index].extend(pixels)
+                    if not np.all(image == 0):
+                        # Iterate through channels
+                        for channel_index in range(num_channels):
+                            # Extract pixels for the current channel
+                            pixels = image[channel_index].flatten()
+                            # Append pixels to the channel list
+                            channel_lists[channel_index].extend(pixels)
+                    else:
+                         count += 1
 
     mean = np.mean(channel_lists)
     std = np.std(channel_lists)
+
     print(mean)
     print(std)
+    print('count: ' + str(count))
+
     return mean, std
