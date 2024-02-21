@@ -85,7 +85,7 @@ class UnetFeatureSenti(nn.Module):
         SEBlock_4 = SEBlock(feature_channel_list[4], feature_senti_channel_list[4])
         SEBlock_5 = SEBlock(feature_channel_list[5], feature_senti_channel_list[5])
 
-        self.SEBlock_list = [SEBlock_1, SEBlock_2, SEBlock_3, SEBlock_4, SEBlock_5]
+        self.SEBlock_list = [self.SEBlock_1, SEBlock_2, SEBlock_3, SEBlock_4, SEBlock_5]
 
     def forward(self, x, senti):
         #print(senti.shape)
