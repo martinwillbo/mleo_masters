@@ -299,7 +299,7 @@ class DatasetClass(Dataset):
         
         
     
-    def _filter_dates(self, mask, area_threshold:float=0.5, proba_threshold:int=60):
+    def _filter_dates(self, mask, area_threshold, proba_threshold):
         
         dates_to_keep = []
         
