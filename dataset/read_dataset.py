@@ -262,14 +262,14 @@ class DatasetClass(Dataset):
         prev_month_mean = None
 
         #filter out dates
-        dates_to_keep = self._filter_dates(mask, area_threshold=1.0, proba_threshold=100)
+        #dates_to_keep = self._filter_dates(mask, area_threshold=1.0, proba_threshold=100)
         #print(senti_raw_dates)
         #print(dates_to_keep)
-        dates = senti_raw_dates[dates_to_keep]
+        dates = senti_raw_dates#[dates_to_keep]
 
         #filter masks and patches to use
-        mask = mask[dates_to_keep,:,:,:]
-        patches = patches[dates_to_keep,:,:,:]
+        #mask = mask[dates_to_keep,:,:,:]
+        #patches = patches[dates_to_keep,:,:,:]
 
         month_range = pd.period_range(start=dates[0].strftime('%Y-%m-%d'),end=dates[-1].strftime('%Y-%m-%d'), freq='M')
 
@@ -292,8 +292,10 @@ class DatasetClass(Dataset):
                     mean_patches.append(np.zeros((10, 2*self.config.dataset.senti_size + 1, 2*self.config.dataset.senti_size + 1)))
 
         if len(mean_patches) != 12:
-            for dt in senti_raw_dates:
-                print(dt)
+            #for dt in senti_raw_dates:
+            print(len(senti_raw_dates))
+                
+                      
 
         return np.array(mean_patches)
         
