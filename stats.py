@@ -29,7 +29,7 @@ def stats(config):
             for month in senti:
                 # Iterate through images in the month
                 for image in month:
-                    if not np.all(image == 0):
+                    if np.any(image != 0):
                         # Iterate through channels
                         for channel_index in range(num_channels):
                             # Extract pixels for the current channel
