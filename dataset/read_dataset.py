@@ -281,7 +281,7 @@ class DatasetClass(Dataset):
             if len(month_dates)!=0:
                 prev_mean = np.mean(patches[month_dates], axis=0)
                 mean_patches.append(prev_mean)
-                print('OK!')
+                #print('OK!')
                 #average_dates.append((datetime.datetime(int(self.ref_year), int(self.ref_date.split('-')[0]), int(self.ref_date.split('-')[1])) 
                                     # -datetime.datetime(int(self.ref_year), int(m.month), 15)).days  )
             else: 
@@ -292,7 +292,7 @@ class DatasetClass(Dataset):
                     mean_patches.append(np.zeros((10, 2*self.config.dataset.senti_size + 1, 2*self.config.dataset.senti_size + 1)))
 
         if len(mean_patches) != 12:
-            print('Some month missing')
+            print(len(mean_patches))
 
         return np.array(mean_patches)
         
