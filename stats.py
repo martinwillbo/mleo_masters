@@ -29,15 +29,17 @@ def stats(config):
             for month in senti:
                 # Iterate through images in the month
                 for image in month:
-                    if np.any(image != 0):
                         # Iterate through channels
                         for channel_index in range(num_channels):
                             # Extract pixels for the current channel
                             pixels = image[channel_index].flatten()
                             # Append pixels to the channel list
-                            channel_lists[channel_index].extend(pixels)
-                    else:
-                         count += 1
+                            if(np.sum(pixels) > 0):
+                                  channel_lists[channel_index].extend(pixels)
+                            else:
+                                  count += 1
+
+                    
 
     mean = np.mean(channel_lists)
     std = np.std(channel_lists)
