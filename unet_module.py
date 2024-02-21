@@ -95,7 +95,7 @@ class UnetFeatureSenti(nn.Module):
         features = self.unet.encoder(x)
         #get features from senti_encoder
         features_senti = self.senti_encoder(senti)
-        print(features_senti.shape)
+        print(len(features_senti))
 
         SE_features = torch.tensor(features.shape)
         SE_features[0] = features[0]
