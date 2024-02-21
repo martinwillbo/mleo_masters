@@ -276,7 +276,7 @@ class DatasetClass(Dataset):
         # calc mean for each month
         for m in range(1,13):
 
-            month_dates = list(filter(lambda i: (dates[i].month == m.month), range(len(dates))))
+            month_dates = list(filter(lambda i: (dates[i].month == m), range(len(dates))))
             #print(month_range)
             #print(month_dates)
 
