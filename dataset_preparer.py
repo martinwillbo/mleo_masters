@@ -86,13 +86,13 @@ class DatasetPreparer:
             for path in Y_tif_paths:
                 f.write("%s\n" % path)
 # Example usage
-#config = {
-#    'path': '/raid/aleksispi/master-theses/agnes-malte-spring2024',
-#    'X_path': 'flair_aerial',
-#    'Y_path': 'flair_labels',
-#    'dataset_size': 0.05  # Use 1.0 for full dataset, less for a fraction
-#}
-#random.seed(42)
-#preparer = DatasetPreparer(config)
-#preparer.prepare_dataset('train')
-#preparer.prepare_dataset('val')
+config = {
+    'path': '../datasets/flair',
+    'X_path': 'flair_aerial',
+    'Y_path': 'flair_labels',
+    'dataset_size': 0.05  # Use 1.0 for full dataset, less for a fraction
+}
+random.seed(42)
+preparer = DatasetPreparer(config)
+preparer.prepare_dataset('train')
+preparer.prepare_dataset('val')

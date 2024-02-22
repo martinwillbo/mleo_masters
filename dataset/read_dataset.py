@@ -86,26 +86,40 @@ class DatasetClass(Dataset):
         senti_mask_paths = senti_mask_paths[0:data_stop_point]
         senti_dates_paths= senti_dates_paths[0:data_stop_point]
 
-        if len(X_tif_paths) % config.batch_size == 1:
-            X_tif_paths = [path for path in X_tif_paths if not any(s in path for s in val_set_paths)][:-1]
-            Y_tif_paths = [path for path in Y_tif_paths if not any(s in path for s in val_set_paths)][:-1]
-            senti_data_paths = [path for path in senti_data_paths if not any(s in path for s in val_set_paths)][:-1]
-            senti_mask_paths = [path for path in senti_mask_paths if not any(s in path for s in val_set_paths)][:-1]
-            senti_dates_paths = [path for path in senti_dates_paths if not any(s in path for s in val_set_paths)][:-1]
+        if len(X_tif_paths) % config.batch_size == 1 and part == 'train':
+            self.X_tif_paths = X_tif_paths[:-1]
+            self.Y_tif_paths = Y_tif_paths[:-1]
+            self.senti_data_paths = senti_data_paths[:-1]
+            self.senti_mask_paths = senti_mask_paths[:-1]
+            self.senti_dates_paths= senti_dates_paths[:-1]
+        elif len(X_tif_paths) % config.val_batch_size == 1 and part == 'val':
+            self.X_tif_paths = X_tif_paths[:-1]
+            self.Y_tif_paths = Y_tif_paths[:-1]
+            self.senti_data_paths = senti_data_paths[:-1]
+            self.senti_mask_paths = senti_mask_paths[:-1]
+            self.senti_dates_paths= senti_dates_paths[:-1]
+        elif len(X_tif_paths) % config.test_batch_size == 1 and part == 'test':
+            self.X_tif_paths = X_tif_paths[:-1]
+            self.Y_tif_paths = Y_tif_paths[:-1]
+            self.senti_data_paths = senti_data_paths[:-1]
+            self.senti_mask_paths = senti_mask_paths[:-1]
+            self.senti_dates_paths= senti_dates_paths[:-1]
+        else:
+            self.X_tif_paths = X_tif_paths
+            self.Y_tif_paths = Y_tif_paths
+            self.senti_data_paths = senti_data_paths
+            self.senti_mask_paths = senti_mask_paths
+            self.senti_dates_paths = senti_dates_paths
         
         # This is for determenistic cropping - curr. not used
+            
         if config.dataset.det_crop and self.part == 'train': #THIS IS BROKEN WITH THE SHUFFLING
             self.crop_coordinates = self._get_crop_coordinates(self._read_data(X_tif_paths[0], is_label=False)) #use one img for cropping coords
             num_crops = len(self.crop_coordinates)
             self.X_tif_paths = [path for path in X_tif_paths for _ in range(num_crops)]
             self.Y_tif_paths = [path for path in Y_tif_paths for _ in range(num_crops)]
-        else:
-            self.X_tif_paths = X_tif_paths
-            self.Y_tif_paths = Y_tif_paths
+
         
-        self.senti_data_paths = senti_data_paths
-        self.senti_mask_paths = senti_mask_paths
-        self.senti_dates_paths = senti_dates_paths
 
     def __getitem__(self, index):
        
