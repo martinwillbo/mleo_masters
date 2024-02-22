@@ -48,17 +48,17 @@ class DatasetClass(Dataset):
             SENTI_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_sen_test')
 
         if part == 'train' and config.dataset.dataset_size == 0.05:
-            X_tif_paths = self._read_paths_from_file('../datasets/paths/X_paths_train_5.txt')
-            Y_tif_paths = self._read_paths_from_file('../datasets/paths/Y_paths_train_5.txt')
-            senti_data_paths = self._read_paths_from_file('../datasets/paths/senti_data_paths_train_5.txt')
-            senti_mask_paths = self._read_paths_from_file('../datasets/paths/senti_mask_paths_train_5.txt')
-            senti_dates_paths = self._read_paths_from_file('../datasets/paths/senti_dates_paths_train_5.txt')
+            X_tif_paths = self._read_paths_from_file('../datasets/paths/X_paths_train_5_v2.txt')
+            Y_tif_paths = self._read_paths_from_file('../datasets/paths/Y_paths_train_5_v2.txt')
+            senti_data_paths = self._read_paths_from_file('../datasets/paths/senti_data_paths_train_5_v2.txt')
+            senti_mask_paths = self._read_paths_from_file('../datasets/paths/senti_mask_paths_train_5_v2.txt')
+            senti_dates_paths = self._read_paths_from_file('../datasets/paths/senti_dates_paths_train_5_v2.txt')
         elif part == 'val' and config.dataset.dataset_size == 0.05:
-            X_tif_paths = self._read_paths_from_file('../datasets/paths/X_paths_val_5.txt')
-            Y_tif_paths = self._read_paths_from_file('../datasets/paths/Y_paths_val_5.txt')
-            senti_data_paths = self._read_paths_from_file('../datasets/paths/senti_data_paths_val_5.txt')
-            senti_mask_paths = self._read_paths_from_file('../datasets/paths/senti_mask_paths_val_5.txt')
-            senti_dates_paths = self._read_paths_from_file('../datasets/paths/senti_dates_paths_val_5.txt')
+            X_tif_paths = self._read_paths_from_file('../datasets/paths/X_paths_val_5_v2.txt')
+            Y_tif_paths = self._read_paths_from_file('../datasets/paths/Y_paths_val_5_v2.txt')
+            senti_data_paths = self._read_paths_from_file('../datasets/paths/senti_data_paths_val_5_v2.txt')
+            senti_mask_paths = self._read_paths_from_file('../datasets/paths/senti_mask_paths_val_5_v2.txt')
+            senti_dates_paths = self._read_paths_from_file('../datasets/paths/senti_dates_paths_val_5_v2.txt')
         elif part == 'test' or config.dataset.dataset_size == 1.0:
             XX_tif_paths = self._read_paths(X_BASE_PATH, '.tif')
             Y_tif_paths = self._read_paths(Y_BASE_PATH, '.tif')
