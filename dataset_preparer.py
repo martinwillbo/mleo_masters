@@ -85,6 +85,15 @@ class DatasetPreparer:
         with open(f'dataset/paths/Y_paths_{part}_5.txt', 'w') as f:
             for path in Y_tif_paths:
                 f.write("%s\n" % path)
+        with open(f'dataset/paths/senti_data_paths_{part}_5.txt', 'w') as f:
+            for path in senti_data_paths:
+                f.write("%s\n" % path)        
+        with open(f'dataset/paths/senti_mask_paths_{part}_5.txt', 'w') as f:
+            for path in senti_mask_paths:
+                f.write("%s\n" % path)  
+        with open(f'dataset/paths/senti_dates_paths_{part}_5.txt', 'w') as f:
+            for path in senti_dates_paths:
+                f.write("%s\n" % path)              
 # Example usage
 config = {
     'path': '../datasets/flair',
