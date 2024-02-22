@@ -79,19 +79,19 @@ class DatasetPreparer:
             senti_dates_paths= senti_dates_paths[0:data_stop_point]
 
         # Save the paths to files
-        with open(f'dataset/paths/X_paths_{part}_5.txt', 'w') as f:
+        with open(f'../datasets/paths/X_paths_{part}_5.txt', 'w') as f:
             for path in X_tif_paths:
                 f.write("%s\n" % path)
-        with open(f'dataset/paths/Y_paths_{part}_5.txt', 'w') as f:
+        with open(f'../datasets/paths/Y_paths_{part}_5.txt', 'w') as f:
             for path in Y_tif_paths:
                 f.write("%s\n" % path)
-        with open(f'dataset/paths/senti_data_paths_{part}_5.txt', 'w') as f:
+        with open(f'../datasets/paths/senti_data_paths_{part}_5.txt', 'w') as f:
             for path in senti_data_paths:
                 f.write("%s\n" % path)        
-        with open(f'dataset/paths/senti_mask_paths_{part}_5.txt', 'w') as f:
+        with open(f'../datasets/paths/senti_mask_paths_{part}_5.txt', 'w') as f:
             for path in senti_mask_paths:
                 f.write("%s\n" % path)  
-        with open(f'dataset/paths/senti_dates_paths_{part}_5.txt', 'w') as f:
+        with open(f'../datasets/paths/senti_dates_paths_{part}_5.txt', 'w') as f:
             for path in senti_dates_paths:
                 f.write("%s\n" % path)              
 # Example usage
