@@ -15,7 +15,7 @@ import math
 import random
 import cv2
 import matplotlib.pyplot as plt
-from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, label_image, save_image
+from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, label_image, save_image, save_senti_image
 
 
 def loop3(config, writer, hydra_log_dir):
@@ -169,14 +169,15 @@ def loop3(config, writer, hydra_log_dir):
                 l_CE =  CE_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())
-                CE_val_loss.append(l_CE.item())
-                
+                CE_val_loss.append(l_CE.item()) 
         
                 if counter in idx_list and epoch % 30 == 0:
                     x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
+                    senti_cpu = senti[0, 6, :, :, :].cpu().detach().contiguous().numpy() # only july
                     y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
                     y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
-                    save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)                    
+                    save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)
+                    save_senti_image(counter, senti_cpu, y_pred, y, epoch, config, writer)                    
 
                 y_pred = y_pred.to(torch.uint8).cpu().contiguous().detach().numpy()
                 y = y.to(torch.uint8).cpu().contiguous().detach().numpy()
