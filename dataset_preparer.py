@@ -43,7 +43,7 @@ class DatasetPreparer:
     def prepare_dataset(self, part):
         X_BASE_PATH = os.path.join(self.config['path'], self.config['X_path'] + '_' + 'train')
         Y_BASE_PATH = os.path.join(self.config['path'], self.config['Y_path'] + '_' + 'train')
-        SENTI_BASE_PATH = os.path.join(self.config.dataset.path, self.config.dataset.senti_path + '_' + 'train')
+        SENTI_BASE_PATH = os.path.join(self.config['path'], self.config['senti_path'] + '_' + 'train')
 
         X_tif_paths = self._read_paths(X_BASE_PATH, '.tif')
         Y_tif_paths = self._read_paths(Y_BASE_PATH, '.tif')
@@ -99,7 +99,8 @@ config = {
     'path': '../datasets/flair',
     'X_path': 'flair_aerial',
     'Y_path': 'flair_labels',
-    'dataset_size': 0.05  # Use 1.0 for full dataset, less for a fraction
+    'dataset_size': 0.05,  # Use 1.0 for full dataset, less for a fraction
+    'senti_path': 'flair_sen'
 }
 random.seed(42)
 preparer = DatasetPreparer(config)
