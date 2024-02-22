@@ -30,7 +30,6 @@ loss_function: tversky
 beta1: 0.9
 momentum: 0.9
 
-
 model:
   name: unet_senti
   pretrained: DeepLabV3_ResNet50_Weights.DEFAULT #None does not work, but they seem to want it
