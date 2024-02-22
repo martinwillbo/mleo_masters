@@ -80,9 +80,9 @@ def loop2(config, writer, hydra_log_dir):
 
         
         for batch in tqdm(train_iter):
-            x,y, mtd = batch
+            x,y, mtd,senti = batch
 
-            if config.noise.on:
+            if config.noise.noise:
 
                 if config.noise.noise_type == 'zero_out':
                     model= zero_out(noise_level, model)
@@ -101,6 +101,7 @@ def loop2(config, writer, hydra_log_dir):
             x = x.to(config.device)
             y = y.to(config.device)
             mtd = mtd.to(config.device)
+            senti = senti.to(config.device)
             
             with autocast():
                 if config.model.name == 'resnet50':
@@ -109,6 +110,8 @@ def loop2(config, writer, hydra_log_dir):
                     y_pred = model(x)
                 elif config.model.name == 'unet_mtd' or config.model.name == 'unet_mtd_feature' or config.model.name == 'unet_mtd_feature_2':
                     y_pred = model(x, mtd)
+                elif config.model.name == 'unet_senti':
+                    y_pred = model(x,senti)
                 l = train_loss(y_pred, y)
             optimizer.zero_grad()
             scaler.scale(l).backward()
@@ -154,9 +157,9 @@ def loop2(config, writer, hydra_log_dir):
 
             val_iter = iter(val_loader)
             for batch in tqdm(val_iter):
-                x,y, mtd = batch
+                x,y, mtd, senti = batch
 
-                if config.noise.on:
+                if config.noise.noise:
                     if config.noise.noise_type == 'zero_out':
                         #test:)))
                         x[:, 3:5, :, :] = image_wise_fade(x[:, 3:5, :, :], 1.0)
@@ -167,6 +170,7 @@ def loop2(config, writer, hydra_log_dir):
                 x = x.to(config.device)
                 y = y.to(config.device)
                 mtd = mtd.to(config.device)
+                senti = senti.to(config.device)
 
                 if config.model.name == 'resnet50':
                     y_pred = model(x)['out']
@@ -174,6 +178,8 @@ def loop2(config, writer, hydra_log_dir):
                     y_pred = model(x)
                 elif config.model.name == 'unet_mtd' or config.model.name == 'unet_mtd_feature' or config.model.name == 'unet_mtd_feature_2':
                     y_pred = model(x, mtd)
+                elif config.model.name == 'unet_senti':
+                    y_pred = model(x, senti)
 
                 l = eval_loss(y_pred, y)
                 CE_l, tversky_l = CE_loss(y_pred, y), tversky_loss(y_pred, y)
