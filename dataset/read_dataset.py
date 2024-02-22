@@ -116,7 +116,7 @@ class DatasetClass(Dataset):
 
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
-            #senti = self._normalize_senti(senti)
+            senti = self._normalize_senti(senti)
             monthly_senti = self._monthly_image(senti, dates)
 
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(monthly_senti, dtype= torch.float)
@@ -135,16 +135,11 @@ class DatasetClass(Dataset):
             x, y, senti = self.transform.apply(x,y, senti)
            
         #NOTE: These operations expect shape (H,W,C)
+            
         #Normalize images, after transform
         x = self._normalize(x)    
-        #senti = self._normalize_senti(senti)
+        senti = self._normalize_senti(senti)
         monthly_senti = self._monthly_image(senti, dates)
-
-        #x = np.transpose(x, (1,2,0)).astype(float)
-        #x -= self.layer_means
-        #x /= self.layer_stds
-        #NOTE: Pytorch models typically expect shape (C, H, W)
-        #x = np.transpose(x, (2,0,1))
         
         return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(monthly_senti, dtype = torch.float)
     
