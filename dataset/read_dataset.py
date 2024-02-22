@@ -79,20 +79,19 @@ class DatasetClass(Dataset):
             senti_mask_paths = [path for path in senti_mask_paths if not any(s in path for s in val_set_paths)]
             senti_dates_paths = [path for path in senti_dates_paths if not any(s in path for s in val_set_paths)]
 
-        if len(X_tif_paths) % config.batch_size == 1:
-            X_tif_paths = [path for path in X_tif_paths if not any(s in path for s in val_set_paths)][:-1]
-            Y_tif_paths = [path for path in Y_tif_paths if not any(s in path for s in val_set_paths)][:-1]
-            senti_data_paths = [path for path in senti_data_paths if not any(s in path for s in val_set_paths)][:-1]
-            senti_mask_paths = [path for path in senti_mask_paths if not any(s in path for s in val_set_paths)][:-1]
-            senti_dates_paths = [path for path in senti_dates_paths if not any(s in path for s in val_set_paths)][:-1]
-
-
         data_stop_point = math.floor(len(X_tif_paths)*(self.config.dataset.dataset_size))
         X_tif_paths = X_tif_paths[0:data_stop_point]
         Y_tif_paths = Y_tif_paths[0:data_stop_point]
         senti_data_paths = senti_data_paths[0:data_stop_point]
         senti_mask_paths = senti_mask_paths[0:data_stop_point]
         senti_dates_paths= senti_dates_paths[0:data_stop_point]
+
+        if len(X_tif_paths) % config.batch_size == 1:
+            X_tif_paths = [path for path in X_tif_paths if not any(s in path for s in val_set_paths)][:-1]
+            Y_tif_paths = [path for path in Y_tif_paths if not any(s in path for s in val_set_paths)][:-1]
+            senti_data_paths = [path for path in senti_data_paths if not any(s in path for s in val_set_paths)][:-1]
+            senti_mask_paths = [path for path in senti_mask_paths if not any(s in path for s in val_set_paths)][:-1]
+            senti_dates_paths = [path for path in senti_dates_paths if not any(s in path for s in val_set_paths)][:-1]
         
         # This is for determenistic cropping - curr. not used
         if config.dataset.det_crop and self.part == 'train': #THIS IS BROKEN WITH THE SHUFFLING
