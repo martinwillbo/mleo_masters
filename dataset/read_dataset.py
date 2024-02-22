@@ -53,7 +53,6 @@ class DatasetClass(Dataset):
         senti_mask_paths = self._read_paths(SENTI_BASE_PATH, "masks.npy", X_BASE_PATH)# sentinel image so redundant to store one for each 
         senti_dates_paths = self._read_paths(SENTI_BASE_PATH, "products.txt", X_BASE_PATH) 
 
-
         aerial_to_senti_path = os.path.join(self.config.dataset.path, 'flair-2_centroids_sp_to_patch.json') # load the dictionary wwith mapping from sentinel to aerial patches
         with open(aerial_to_senti_path) as file:
             self.aerial_to_senti = json.load(file)
@@ -95,8 +94,6 @@ class DatasetClass(Dataset):
         senti_mask_paths = senti_mask_paths[0:data_stop_point]
         senti_dates_paths= senti_dates_paths[0:data_stop_point]
         
-
-        #print('Constructing ' + self.part + ' set...')
         # This is for determenistic cropping - curr. not used
         if config.dataset.det_crop and self.part == 'train': #THIS IS BROKEN WITH THE SHUFFLING
             self.crop_coordinates = self._get_crop_coordinates(self._read_data(X_tif_paths[0], is_label=False)) #use one img for cropping coords
@@ -112,15 +109,11 @@ class DatasetClass(Dataset):
         self.senti_dates_paths = senti_dates_paths
 
     def __getitem__(self, index):
-        #print(index)
+       
         x = self._read_data(self.X_tif_paths[index], is_label = False)
-        #x = self.X[index]
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
-
         senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index]) # this takes the data and masks and concatinates along dim=1
-        dates = self._read_dates(self.senti_dates_paths[index])         
-        assert len(senti) == len(dates)    
-
+        dates = self._read_dates(self.senti_dates_paths[index])           
 
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
@@ -146,7 +139,6 @@ class DatasetClass(Dataset):
         #Normalize images, after transform
         x = self._normalize(x)    
         senti = self._normalize_senti(senti)
-        #print(senti.shape)
         monthly_senti = self._monthly_image(senti, dates)
 
         #x = np.transpose(x, (1,2,0)).astype(float)
@@ -161,14 +153,6 @@ class DatasetClass(Dataset):
         assert len(self.X_tif_paths) == len(self.Y_tif_paths)
         return len(self.X_tif_paths)
     
-    def _read_paths_2(self, BASE_PATH, ending, X_paths = None):
-        paths = []
-        count = 0
-        for root, dirs, files in os.walk(BASE_PATH):
-            for file in sorted(files):
-                if file.endswith(ending):
-                    paths.append(os.path.join(root, file))
-        return paths
     
     def _read_paths(self, BASE_PATH, ending, X_path = None):
         
@@ -181,7 +165,7 @@ class DatasetClass(Dataset):
 
         elif ending == 'data.npy' or ending == 'masks.npy' or ending == 'products.txt':
     
-            #Stores the number of times a sentinel image should be added to path list
+            #Stores the number of times a sentinel image/mask/time series info should be added to path list
             area_counts = self._count_files(X_path)
 
             for root, dirs, files in os.walk(BASE_PATH):
@@ -199,6 +183,7 @@ class DatasetClass(Dataset):
     
     def _count_files(self, base_path):
 
+        #This function counts files in subdirectories
         aerial_counts = {}
         
         for root, dirs, files in os.walk(base_path):
@@ -358,8 +343,6 @@ class DatasetClass(Dataset):
         senti = np.concatenate((data, mask), axis=1)
 
         return senti
-
-
     
     def _get_crop_coordinates(self, data):
         h, w = data.shape[1], data.shape[2] #x,y has the same shape
