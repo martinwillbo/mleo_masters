@@ -132,7 +132,7 @@ class DatasetClass(Dataset):
             x = self._rescale(x, is_label = False)
             y = self._rescale(y, is_label = True)
         if self.config.use_transform:            
-            x, y = self.transform.apply(x,y)
+            x, y, senti = self.transform.apply(x,y, senti)
            
         #NOTE: These operations expect shape (H,W,C)
         #Normalize images, after transform
