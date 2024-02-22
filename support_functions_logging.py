@@ -289,13 +289,14 @@ def save_image(index, x, y_pred, y, epoch, config, writer):
 def save_senti_image(index, senti, epoch, config, writer):
             
             #Unnormalize x and divide by 255 to get range [0,1]
-            BGR_indeces = [0,1,3]
-            senti_temp = np.transpose(senti[BGR_indeces], (1,2,0)).astype(float)
+            BGR_indeces = [2,1,0]
+            senti_temp = senti[BGR_indeces].astype(float)
+           # senti_temp = np.transpose(senti[BGR_indeces], (1,2,0)).astype(float)
            # senti_temp *= np.array(config.dataset.std_senti)[BGR_indeces]
            # senti_temp += np.array(config.dataset.mean_senti)[BGR_indeces]
            # senti_temp = np.floor(senti_temp)
-            senti_temp = cv2.cvtColor(senti_temp.astype(np.uint8), cv2.COLOR_BGR2RGB) #convert from BGR to RGB
-            senti_temp = np.transpose(senti_temp, (2,0,1))
+           # senti_temp = cv2.cvtColor(senti_temp.astype(np.uint8), cv2.COLOR_BGR2RGB) #convert from BGR to RGB
+           # senti_temp = np.transpose(senti_temp, (2,0,1))
             #senti[BGR_indeces] = senti_temp/255.0
             senti_plot = senti_temp/255.0
             senti_tensor = torch.from_numpy(senti_plot)            
