@@ -177,7 +177,7 @@ def loop3(config, writer, hydra_log_dir):
                     y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
                     y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
                     save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)
-                    save_senti_image(counter, senti_cpu, y_pred, y, epoch, config, writer)                    
+                    save_senti_image(counter, senti_cpu, epoch, config, writer)                    
 
                 y_pred = y_pred.to(torch.uint8).cpu().contiguous().detach().numpy()
                 y = y.to(torch.uint8).cpu().contiguous().detach().numpy()
