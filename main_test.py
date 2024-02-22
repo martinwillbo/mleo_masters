@@ -18,10 +18,10 @@ def main(config):
     #NOTE: Don't have to use tensorboard to log experiments, but should implement something else if so (Aleksis have code for this).
     training_path = '/raid/dlgroupmsc/logs/2024-02-14_10-01-55'
     log_dir = os.path.join(training_path, 'tensorboard_test') #DON'T CHANGE, RISK OF OVERWRITING ALL PREVIOUSLY LOGGED DATA
-    log_dir = log_dir  +'_' + str(config.eval_type)
+    log_dir = log_dir  +'_' + str(config.eval.eval_type)
     print(log_dir)
     writer = SummaryWriter(log_dir=log_dir)
-    eval_type = config.eval_type
+    eval_type = config.eval.eval_type
     
     eval_model(config, writer, training_path, eval_type)
     #test.eval_on_test(config, writer, training_path)

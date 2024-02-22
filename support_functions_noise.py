@@ -127,7 +127,7 @@ def custom_sine(x):
     return amplitude * np.sin(2 * np.pi * (x/period) + phase_shift) + vertical_shift
 
 
-def set_noise(config, x, noise_level, noise_type):
+def set_noise(x, noise_level, noise_type):
     if noise_type == "salt_n_pepper":
         x[:, 3:5, :, :] = salt_n_pepper(x[:, 3:5, :, :], noise_level)
 

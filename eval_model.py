@@ -9,6 +9,7 @@ from tqdm import tqdm
 import numpy as np
 from support_functions_noise import set_noise, zero_out
 import segmentation_models_pytorch as smp
+from support_functions_loop import set_model
 
 def eval_model(config, writer, training_path, eval_type):
     dataset_module = util.load_module(config.dataset.script_location)
@@ -18,19 +19,7 @@ def eval_model(config, writer, training_path, eval_type):
                             pin_memory = True)
 
 
-    #Initialize model
-    #model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
-    #                            dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
-    
-    #model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
-    #model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-
-    model = smp.Unet(
-            encoder_weights="imagenet",
-            encoder_name="efficientnet-b4",
-            in_channels = config.model.n_channels,
-            classes= config.model.n_class
-        )
+    model = set_model(config, model_name=config.eval.eval_model, n_channels=config.eval.eval_channels)
 
     #Load and overwrite model
     saved_model_path = os.path.join(training_path, 'best_model.pth')
@@ -52,11 +41,11 @@ def eval_model(config, writer, training_path, eval_type):
 
     model.eval()
 
-    if config.loss_function == "CE":
+    if config.eval.eval_loss == "CE":
         eval_loss_f = nn.CrossEntropyLoss()
     
-    if config.loss_function == 'tversky':
-        eval_loss_f = smp.losses.TverskyLoss(mode='multiclass', alpha=config.model.tversky_a, beta=config.model.tversky_b)
+    if config.leval.eval_loss == 'tversky':
+        eval_loss_f = smp.losses.TverskyLoss(mode='multiclass')
 
     eval_loss = []
     val_iter = iter(val_loader)
@@ -70,7 +59,7 @@ def eval_model(config, writer, training_path, eval_type):
         x, y, _ = batch
 
         if eval_type != 'normal':
-            x = set_noise(config, x, noise_level, eval_type)
+            x = set_noise(x, noise_level, eval_type)
 
         x = x.to(config.device)
         y = y.to(config.device)

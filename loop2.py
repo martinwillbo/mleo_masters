@@ -3,18 +3,17 @@ import torch.nn as nn
 import numpy as np
 import util
 from tqdm import tqdm
-from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 from torch.utils.data import DataLoader
 from torch.optim import Adam, SGD
 from torch.cuda.amp import autocast, GradScaler
-from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 import os
 import math
 import random
 import segmentation_models_pytorch as smp
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, label_image
 from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2, custom_sine, image_wise_fade
-from unet_module import UNetWithMetadata, UnetFeatureMetadata, UnetFeatureMetadata_2
+from support_functions_loop import set_model
+
 from CE_tversky_loss import CE_tversky_Loss
 
 def loop2(config, writer, hydra_log_dir):
@@ -30,36 +29,7 @@ def loop2(config, writer, hydra_log_dir):
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers, 
                             pin_memory = True)
     
-    if config.model.name == 'resnet50':
-    
-        model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
-                                    dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
-        
-        model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
-        if config.dropout:
-            dropout_rate = 0.5  # Example dropout rate, adjust as needed
-            classifier = list(model.classifier.children())
-            classifier.insert(-1, nn.Dropout(dropout_rate))  # Insert dropout before the last layer in the classifier
-            model.classifier = nn.Sequential(*classifier)
-        
-        model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-    
-    elif config.model.name == 'FCN8':
-        model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
-
-    elif config.model.name == 'unet':
-        model = smp.Unet(
-            encoder_weights="imagenet",
-            encoder_name="efficientnet-b4",
-            in_channels = config.model.n_channels,
-            classes= config.model.n_class
-        )
-    elif config.model.name == 'unet_mtd':
-        model = UNetWithMetadata(n_channels=config.model.n_channels, n_class=config.model.n_class, n_metadata=6, device=config.device, reweight=config.model.reweight_late, mtd_weighting = config.model.mtd_weighting)
-    elif config.model.name == 'unet_mtd_feature':
-        model = UnetFeatureMetadata(n_channels=config.model.n_channels, n_class=config.model.n_class, n_metadata=6)
-    elif config.model.name == 'unet_mtd_feature_2':
-        model = UnetFeatureMetadata_2(n_channels=config.model.n_channels, n_class=config.model.n_class, feature_block=config.model.feature_block, linear_mtd_preprocess=config.model.linear_mtd_preprocess)
+    model = set_model(config, config.model.name, config.model.n_channels)
 
     model.to(config.device)
     scaler = GradScaler()
@@ -78,8 +48,8 @@ def loop2(config, writer, hydra_log_dir):
         train_loss = nn.CrossEntropyLoss()
         eval_loss = nn.CrossEntropyLoss()
     elif config.loss_function == 'tversky':
-        train_loss = smp.losses.TverskyLoss(mode='multiclass', alpha=config.model.tversky_a, beta=config.model.tversky_b)
-        eval_loss = smp.losses.TverskyLoss(mode='multiclass', alpha=config.model.tversky_a, beta=config.model.tversky_b)
+        train_loss = smp.losses.TverskyLoss(mode='multiclass')
+        eval_loss = smp.losses.TverskyLoss(mode='multiclass')
         CE_loss, tversky_loss = nn.CrossEntropyLoss(), smp.losses.TverskyLoss(mode='multiclass')
     elif config.loss_function == 'CE_tversky':
         train_loss = CE_tversky_Loss()
@@ -100,31 +70,30 @@ def loop2(config, writer, hydra_log_dir):
 
         y_pred_list = [] #list to save for an entire epoch
         y_list = []
-        if config.stepwise_linear_function == 'function_1':
+        if config.noise.stepwise_linear_function == 'function_1':
             noise_level = stepwise_linear_function_1(epoch, config.max_epochs)
-        elif config.stepwise_linear_function == 'function_2':
+        elif config.noise.stepwise_linear_function == 'function_2':
             noise_level = stepwise_linear_function_2(epoch, config.max_epochs)
-        elif config.stepwise_linear_function == 'sine':
+        elif config.noise.stepwise_linear_function == 'sine':
             noise_level = custom_sine(epoch)
             print(noise_level)
 
         
-        
         for batch in tqdm(train_iter):
             x,y, mtd = batch
 
-            if config.noise:
+            if config.noise.on:
 
-                if config.noise_type == 'zero_out':
+                if config.noise.noise_type == 'zero_out':
                     model= zero_out(noise_level, model)
             
-                elif config.noise_distribution_type == 'image':
-                    x = set_noise(config, x, noise_level, config.noise_type)
+                elif config.noise.noise_distribution_type == 'image':
+                    x = set_noise(x, noise_level, config.noise.noise_type)
 
-                elif config.noise_distribution_type == 'batch':
+                elif config.noise.noise_distribution_type == 'batch':
                     num_rows_to_noise = math.ceil(noise_level * x.shape[0])
                     rows_to_noise = random.sample(range(x.shape[0]), num_rows_to_noise)
-                    x[rows_to_noise, :, :, :] = set_noise(config, x[rows_to_noise, :, :, :], noise_level, config.noise_type)
+                    x[rows_to_noise, :, :, :] = set_noise(x[rows_to_noise, :, :, :], noise_level, config.noise.noise_type)
 
                 else:
                     print("Invalid noise_distribution_type or noise_type")
@@ -139,10 +108,7 @@ def loop2(config, writer, hydra_log_dir):
                 elif config.model.name == 'FCN8' or config.model.name == 'unet':
                     y_pred = model(x)
                 elif config.model.name == 'unet_mtd' or config.model.name == 'unet_mtd_feature' or config.model.name == 'unet_mtd_feature_2':
-                    if config.model.name == 'unet_mtd':
-                        y_pred = model(x, mtd, epoch)
-                    else:
-                        y_pred = model(x, mtd)
+                    y_pred = model(x, mtd)
                 l = train_loss(y_pred, y)
             optimizer.zero_grad()
             scaler.scale(l).backward()
@@ -190,13 +156,13 @@ def loop2(config, writer, hydra_log_dir):
             for batch in tqdm(val_iter):
                 x,y, mtd = batch
 
-                if config.noise:
-                    if config.noise_type == 'zero_out':
+                if config.noise.on:
+                    if config.noise.noise_type == 'zero_out':
                         #test:)))
                         x[:, 3:5, :, :] = image_wise_fade(x[:, 3:5, :, :], 1.0)
                         model = zero_out(1.0, model)
                     else:
-                        x = set_noise(config, x, 1.0, config.noise_type)
+                        x = set_noise(x, 1.0, config.noise.noise_type)
 
                 x = x.to(config.device)
                 y = y.to(config.device)
@@ -207,10 +173,7 @@ def loop2(config, writer, hydra_log_dir):
                 elif config.model.name == 'FCN8' or config.model.name == 'unet':
                     y_pred = model(x)
                 elif config.model.name == 'unet_mtd' or config.model.name == 'unet_mtd_feature' or config.model.name == 'unet_mtd_feature_2':
-                    if config.model.name == 'unet_mtd':
-                        y_pred = model(x, mtd, epoch)
-                    else:
-                        y_pred = model(x, mtd)
+                    y_pred = model(x, mtd)
 
                 l = eval_loss(y_pred, y)
                 CE_l, tversky_l = CE_loss(y_pred, y), tversky_loss(y_pred, y)
@@ -266,8 +229,6 @@ def loop2(config, writer, hydra_log_dir):
 
         
 
-
-   
 
     
 

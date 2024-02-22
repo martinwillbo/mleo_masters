@@ -27,15 +27,6 @@ optimizer: adam
 beta1: 0.9
 momentum: 0.9
 loss_function: tversky
-dropout: False
-
-eval_type: normal #for evaluation
-
-noise: False
-noise_type: zero_out #for training
-noise_distribution_type: None #for training
-stepwise_linear_function: function_2
-
 
 model:
   pretrained: DeepLabV3_ResNet50_Weights.DEFAULT #None does not work, but they seem to want it
@@ -47,7 +38,17 @@ model:
   mtd_weighting: 0.65
   linear_mtd_preprocess: None
   feature_block: 1
-  tversky_a: 0.5
-  tversky_b: 0.5
-  
+
+noise:
+  on: False
+  noise_type: zero_out #for training
+  noise_distribution_type: None #for training
+  stepwise_linear_function: function_2
+
+eval:
+  eval_type: normal
+  eval_model: unet
+  eval_loss: tversky
+  eval_channels: 5
+
 

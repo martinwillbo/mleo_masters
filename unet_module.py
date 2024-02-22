@@ -41,10 +41,7 @@ class UNetWithMetadata(nn.Module):
         self.class_freq = class_freq
 
 
-    def forward(self, x, mtd, epoch):
-        succ_w = epoch/200
-        if succ_w > 1.0:
-            succ_w = 1.0
+    def forward(self, x, mtd):
         # Forward pass through the original U-Net
         unet_output = self.unet(x)  # Shape: [batch_size, 19, 512, 512]
 
