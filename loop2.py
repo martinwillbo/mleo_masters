@@ -15,6 +15,7 @@ import segmentation_models_pytorch as smp
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, label_image
 from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2, custom_sine, image_wise_fade
 from unet_module import UNetWithMetadata, UnetFeatureMetadata, UnetFeatureMetadata_2
+from CE_tversky_loss import CE_tversky_Loss
 
 def loop2(config, writer, hydra_log_dir):
     dataset_module = util.load_module(config.dataset.script_location)
@@ -54,11 +55,11 @@ def loop2(config, writer, hydra_log_dir):
             classes= config.model.n_class
         )
     elif config.model.name == 'unet_mtd':
-        model = UNetWithMetadata(n_channels=config.model.n_channels, n_class=config.model.n_class, n_metadata=6)
+        model = UNetWithMetadata(n_channels=config.model.n_channels, n_class=config.model.n_class, n_metadata=6, device=config.device, reweight=config.model.reweight_late, mtd_weighting = config.model.mtd_weighting)
     elif config.model.name == 'unet_mtd_feature':
         model = UnetFeatureMetadata(n_channels=config.model.n_channels, n_class=config.model.n_class, n_metadata=6)
     elif config.model.name == 'unet_mtd_feature_2':
-        model = UnetFeatureMetadata_2(n_channels=config.model.n_channels, n_class=config.model.n_class, linear_mtd_preprocess=config.model.linear_mtd_preprocess)
+        model = UnetFeatureMetadata_2(n_channels=config.model.n_channels, n_class=config.model.n_class, feature_block=config.model.feature_block, linear_mtd_preprocess=config.model.linear_mtd_preprocess)
 
     model.to(config.device)
     scaler = GradScaler()
@@ -79,7 +80,11 @@ def loop2(config, writer, hydra_log_dir):
     elif config.loss_function == 'tversky':
         train_loss = smp.losses.TverskyLoss(mode='multiclass', alpha=config.model.tversky_a, beta=config.model.tversky_b)
         eval_loss = smp.losses.TverskyLoss(mode='multiclass', alpha=config.model.tversky_a, beta=config.model.tversky_b)
-        CE_loss = nn.CrossEntropyLoss()
+        CE_loss, tversky_loss = nn.CrossEntropyLoss(), smp.losses.TverskyLoss(mode='multiclass')
+    elif config.loss_function == 'CE_tversky':
+        train_loss = CE_tversky_Loss()
+        eval_loss = CE_tversky_Loss()
+        CE_loss, tversky_loss = nn.CrossEntropyLoss(), smp.losses.TverskyLoss(mode='multiclass')
     epoch = 0
     best_val_loss = np.inf
 
@@ -134,7 +139,10 @@ def loop2(config, writer, hydra_log_dir):
                 elif config.model.name == 'FCN8' or config.model.name == 'unet':
                     y_pred = model(x)
                 elif config.model.name == 'unet_mtd' or config.model.name == 'unet_mtd_feature' or config.model.name == 'unet_mtd_feature_2':
-                    y_pred = model(x, mtd)
+                    if config.model.name == 'unet_mtd':
+                        y_pred = model(x, mtd, epoch)
+                    else:
+                        y_pred = model(x, mtd)
                 l = train_loss(y_pred, y)
             optimizer.zero_grad()
             scaler.scale(l).backward()
@@ -167,7 +175,7 @@ def loop2(config, writer, hydra_log_dir):
         if epoch % config.eval_every == 0:
             model.eval()
             val_loss = []
-            val_CE_loss = []
+            val_CE_loss, val_tversky_loss = [], []
             val_y_pred_list = []
             val_y_list = []
 
@@ -199,13 +207,17 @@ def loop2(config, writer, hydra_log_dir):
                 elif config.model.name == 'FCN8' or config.model.name == 'unet':
                     y_pred = model(x)
                 elif config.model.name == 'unet_mtd' or config.model.name == 'unet_mtd_feature' or config.model.name == 'unet_mtd_feature_2':
-                    y_pred = model(x, mtd)
+                    if config.model.name == 'unet_mtd':
+                        y_pred = model(x, mtd, epoch)
+                    else:
+                        y_pred = model(x, mtd)
 
                 l = eval_loss(y_pred, y)
-                CE_l = CE_loss(y_pred, y)
+                CE_l, tversky_l = CE_loss(y_pred, y), tversky_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())
                 val_CE_loss.append(CE_l.item())
+                val_tversky_loss.append(tversky_l.item())
         
                 if counter in idx_list and epoch % 15 == 0:
                     x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
@@ -223,8 +235,10 @@ def loop2(config, writer, hydra_log_dir):
             #Save loss
             l_val = np.mean(val_loss)
             l_CE_val = np.mean(val_CE_loss)
+            l_tversky_val = np.mean(val_tversky_loss)
             writer.add_scalar('val/loss', l_val, epoch)
-            writer.add_scalar('CE/loss', l_CE_val, epoch)
+            writer.add_scalar('loss/CE', l_CE_val, epoch)
+            writer.add_scalar('loss/tversky', l_tversky_val, epoch)
             print('Val loss: '+str(l_val))
 
             miou_prec_rec_writing(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)

@@ -47,24 +47,29 @@ import statistics
 def metadata_stats():
     with open('/raid/aleksispi/master-theses/agnes-malte-spring2024/flair_aerial_metadata.json', 'r') as f: 
         metadata_dict = json.load(f)
+
+    val_set_doms = ["D004", "D014", "D029", "D031", "D058", "D066", "D067", "D077"]
+    test_set_doms = ["D015", "D026", "D061", "D068", "D071", "D022", "D036", "D064", "D069", "D084"]
     x_coord_list = []
     y_coord_list = []
     alt_list = []
     date_list = []
     time_list = []
     for img in metadata_dict:
-        x_coord_list.append(metadata_dict[img]["patch_centroid_x"])
-        y_coord_list.append(metadata_dict[img]["patch_centroid_y"])
-        alt_list.append(metadata_dict[img]["patch_centroid_z"])
-        
-        date = metadata_dict[img]["date"]
-        _, mm, dd = date.split('-')
-        date_list.append( int(mm)*30 + int(dd))
+        dom = metadata_dict[img]["domain"][0:4]
+        if dom not in val_set_doms and dom not in test_set_doms: 
+            x_coord_list.append(metadata_dict[img]["patch_centroid_x"])
+            y_coord_list.append(metadata_dict[img]["patch_centroid_y"])
+            alt_list.append(metadata_dict[img]["patch_centroid_z"])
+            
+            date = metadata_dict[img]["date"]
+            _, mm, dd = date.split('-')
+            date_list.append( int(mm)*30 + int(dd))
 
-        time = metadata_dict[img]["time"]
-        hh = int(time.split('h')[0]) 
-        mm = int(time.split('h')[1]) 
-        time_list.append(hh*60 + mm)
+            time = metadata_dict[img]["time"]
+            hh = int(time.split('h')[0]) 
+            mm = int(time.split('h')[1]) 
+            time_list.append(hh*60 + mm)
 
     print(statistics.mean(x_coord_list), statistics.mean(y_coord_list), statistics.mean(alt_list), statistics.mean(date_list), statistics.mean(time_list))
     print(statistics.stdev(x_coord_list), statistics.stdev(y_coord_list), statistics.stdev(alt_list), statistics.stdev(date_list), statistics.stdev(time_list))

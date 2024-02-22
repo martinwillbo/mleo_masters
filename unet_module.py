@@ -4,9 +4,6 @@ import torch.nn.functional as F
 import segmentation_models_pytorch as smp
 from segmentation_models_pytorch.base.modules import Conv2dReLU, Attention
 
-class_freq = torch.tensor([8.14, 8.25, 13.72, 3.47, 4.88, 2.74, 15.38, 6.95, 3.13, 17.84, 10.98, 3.88, 0.01, 0.15, 0.15, 0.05, 0.01, 0.12, 0.14])
-class_freq /= 100
-class_freq = class_freq.to("cuda:5")
 
 
 class AdditionalHead(nn.Module):
@@ -15,27 +12,39 @@ class AdditionalHead(nn.Module):
         # Define your layers here, e.g., fully connected layers
         self.fc1 = nn.Linear(n_metadata, 128)  # Example layer
         self.fc2 = nn.Linear(128, 64)  # Example layer
-        self.fc3 = nn.Linear(64, n_class)  # Output layer for 19 classes
+        #self.fc3 = nn.Linear(128, 64) #added, updated sizes used 256, 128, 64
+        self.fc4 = nn.Linear(64, n_class)  # Output layer for 19 classes
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        #x = F.relu(self.fc3(x))
+        x = self.fc4(x)
         output = F.softmax(x, dim=1)
         return output
 
 class UNetWithMetadata(nn.Module):
-    def __init__(self, n_channels, n_class, n_metadata):
+    def __init__(self, n_channels, n_class, n_metadata, device, reweight, mtd_weighting):
+        self.w = mtd_weighting
+        self.reweight=reweight
         super(UNetWithMetadata, self).__init__()
         self.unet = smp.Unet(
             encoder_weights="imagenet",
             encoder_name="efficientnet-b4",
             in_channels = n_channels,
-            classes= n_class
+            classes= n_class, 
         )  # Your existing U-Net model
         self.additional_head = AdditionalHead(n_metadata, n_class)  # The additional head you defined
+        class_freq = torch.tensor([8.14, 8.25, 13.72, 3.47, 4.88, 2.74, 15.38, 6.95, 3.13, 17.84, 10.98, 3.88, 0.01, 0.15, 0.15, 0.05, 0.01, 0.12, 0.14])
+        class_freq /= 100
+        class_freq = class_freq.to(device)
+        self.class_freq = class_freq
 
-    def forward(self, x, mtd):
+
+    def forward(self, x, mtd, epoch):
+        succ_w = epoch/200
+        if succ_w > 1.0:
+            succ_w = 1.0
         # Forward pass through the original U-Net
         unet_output = self.unet(x)  # Shape: [batch_size, 19, 512, 512]
 
@@ -43,21 +52,19 @@ class UNetWithMetadata(nn.Module):
         mtd_output = self.additional_head(mtd)  # Shape: [batch_size, 19]
         #gives high probabilities to normal classes - reasonable, we want to show how much more likely
 
-        reweight = True
-        if reweight:
-            mtd_output = mtd_output/class_freq
+        if self.reweight:
+            mtd_output = mtd_output/self.class_freq
          
         mtd_output = mtd_output.unsqueeze(-1).unsqueeze(-1)  # Shape: [batch_size, 19, 1, 1]
-        if reweight:
+        if self.reweight:
             reweighted_pred = mtd_output*unet_output
             # Optionally expand to match the U-Net output shape
             reweighted_pred_expanded = reweighted_pred.expand(-1, -1, 512, 512)
-            combined_output = unet_output*0.3 + (reweighted_pred_expanded/reweighted_pred_expanded.sum())*0.7
+            combined_output = unet_output*(1-self.w) + torch.softmax(reweighted_pred_expanded, dim=1)*self.w
 
         else:
-            w = 0.3
             mtd_expanded = mtd_output.expand(-1, -1, 512, 512)        
-            combined_output = unet_output*(1-w) + mtd_expanded*w #(w=0.3 > w=0.1)
+            combined_output = unet_output*(1-self.w) + mtd_expanded*self.w #(w=0.3 > w=0.1)
         #do this mult before expansion? 
 
         return combined_output
@@ -121,12 +128,13 @@ class SEBlockWithMetadata(nn.Module):
     
 
 class SEBlockLinear(nn.Module):
-    def __init__(self, n_channels, n_metadata, reduction_ratio=16):
+    def __init__(self, n_channels, n_metadata, reduction_ratio=8):
         super(SEBlockLinear, self).__init__()
         self.metadata_processor = nn.Sequential(
-            nn.Linear(n_metadata, 32),  # Example transformation to an intermediate size
+            nn.Linear(n_metadata, 64),  # Example transformation to an intermediate size
             nn.ReLU(),
-            nn.Linear(32, n_channels)  # Match the dimensionality to feature maps' channels
+            nn.Linear(64, n_channels),  # Match the dimensionality to feature maps' channels
+            #nn.ReLU() #seems reasonable? was not in before
         )
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.fc1 = nn.Linear(n_channels * 2, n_channels // reduction_ratio)  # Adjust for concatenated size
@@ -155,18 +163,22 @@ class SEBlockLinear(nn.Module):
 
 
 class UnetFeatureMetadata_2(nn.Module):
-    def __init__(self, n_channels, n_class, linear_processing=False):
+    def __init__(self, n_channels, n_class, feature_block=1, linear_mtd_preprocess=False):
+        self.feature_block = feature_block
+        feature_channel_list = [5, 48, 32, 56, 160, 448]
+       
         super(UnetFeatureMetadata_2, self).__init__()
-        if linear_processing:
-            self.SEBlock = SEBlockLinear(48, 16)
+        if linear_mtd_preprocess:
+            self.SEBlock = SEBlockLinear(feature_channel_list[feature_block], 6)
         else:
-            self.SEBlock = SEBlockWithMetadata(48, 6)
+            self.SEBlock = SEBlockWithMetadata(feature_channel_list[feature_block], 6)
         self.unet = smp.Unet(
             encoder_weights="imagenet",
             encoder_name="efficientnet-b4",
             in_channels = n_channels,
             classes= n_class
         )  # Your existing U-Net model
+        
 
     def forward(self, x, mtd):
         #get features from encoder
@@ -175,7 +187,7 @@ class UnetFeatureMetadata_2(nn.Module):
         #    print(f.shape)
 
         #print(features[1].shape)
-        features[1] = self.SEBlock(features[1], mtd)
+        features[self.feature_block] = self.SEBlock(features[self.feature_block], mtd)
         
         #print(self.unet.decoder.blocks[4])
         #print(self.unet.segmentation_head)

@@ -67,7 +67,7 @@ def eval_model(config, writer, training_path, eval_type):
     c = 0
     
     for batch in tqdm(val_iter):
-        x, y = batch
+        x, y, _ = batch
 
         if eval_type != 'normal':
             x = set_noise(config, x, noise_level, eval_type)
