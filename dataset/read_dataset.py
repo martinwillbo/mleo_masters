@@ -76,6 +76,21 @@ class DatasetClass(Dataset):
         X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths, senti_dates_paths = list(X_tif_paths), list(Y_tif_paths), list(senti_data_paths), list(senti_mask_paths), list(senti_dates_paths)
         assert len(X_tif_paths) == len(Y_tif_paths) == len(senti_data_paths) == len(senti_mask_paths) == len(senti_dates_paths)
 
+        val_set_paths = ["D004", "D014", "D029", "D031", "D058", "D066", "D067", "D077"]
+
+        if part == 'val':
+            X_tif_paths = [path for path in X_tif_paths if any(s in path for s in val_set_paths)]
+            Y_tif_paths = [path for path in Y_tif_paths if any(s in path for s in val_set_paths)]
+            senti_data_paths = [path for path in senti_data_paths if any(s in path for s in val_set_paths)]
+            senti_mask_paths = [path for path in senti_mask_paths if any(s in path for s in val_set_paths)]
+            senti_dates_paths = [path for path in senti_dates_paths if any(s in path for s in val_set_paths)] 
+        elif part == 'train':
+            X_tif_paths = [path for path in X_tif_paths if not any(s in path for s in val_set_paths)]
+            Y_tif_paths = [path for path in Y_tif_paths if not any(s in path for s in val_set_paths)]
+            senti_data_paths = [path for path in senti_data_paths if not any(s in path for s in val_set_paths)]
+            senti_mask_paths = [path for path in senti_mask_paths if not any(s in path for s in val_set_paths)]
+            senti_dates_paths = [path for path in senti_dates_paths if not any(s in path for s in val_set_paths)]
+
         if len(X_tif_paths) % config.batch_size == 1 and part == 'train':
             self.X_tif_paths = X_tif_paths[:-1]
             self.Y_tif_paths = Y_tif_paths[:-1]
