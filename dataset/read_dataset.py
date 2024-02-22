@@ -119,7 +119,7 @@ class DatasetClass(Dataset):
             senti = self._normalize_senti(senti)
             monthly_senti = self._monthly_image(senti, dates)
 
-            return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(monthly_senti, dtype= torch.long)
+            return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(monthly_senti, dtype= torch.float)
         
         if self.config.dataset.det_crop:
             #get exactly one crop
