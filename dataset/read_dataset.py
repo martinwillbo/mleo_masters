@@ -116,7 +116,7 @@ class DatasetClass(Dataset):
 
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
-            senti = self._normalize_senti(senti)
+            #senti = self._normalize_senti(senti)
             monthly_senti = self._monthly_image(senti, dates)
 
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(monthly_senti, dtype= torch.float)
