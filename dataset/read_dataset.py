@@ -46,12 +46,25 @@ class DatasetClass(Dataset):
             X_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_aerial_test')
             Y_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_labels_test')
             SENTI_BASE_PATH = os.path.join(self.config.dataset.path, 'flair_2_sen_test')
-   
-        X_tif_paths = self._read_paths(X_BASE_PATH, ".tif")
-        Y_tif_paths = self._read_paths(Y_BASE_PATH, ".tif")
-        senti_data_paths = self._read_paths(SENTI_BASE_PATH, "data.npy", X_BASE_PATH) # all aerial images within the same area have the same 
-        senti_mask_paths = self._read_paths(SENTI_BASE_PATH, "masks.npy", X_BASE_PATH)# sentinel image so redundant to store one for each 
-        senti_dates_paths = self._read_paths(SENTI_BASE_PATH, "products.txt", X_BASE_PATH) 
+
+        if part == 'train' and config.dataset.dataset_size == 0.05:
+            X_tif_paths = self._read_paths_from_file('../datasets/paths/X_paths_train_5.txt')
+            Y_tif_paths = self._read_paths_from_file('../datasets/paths/Y_paths_train_5.txt')
+            senti_data_paths = self._read_paths_from_file('../datasets/paths/senti_data_paths_train_5.txt')
+            senti_mask_paths = self._read_paths_from_file('../datasets/paths/senti_mask_paths_train_5.txt')
+            senti_dates_paths = self._read_paths_from_file('../datasets/paths/senti_dates_paths_train_5.txt')
+        elif part == 'val' and config.dataset.dataset_size == 0.05:
+            X_tif_paths = self._read_paths_from_file('../datasets/paths/X_paths_val_5.txt')
+            Y_tif_paths = self._read_paths_from_file('../datasets/paths/Y_paths_val_5.txt')
+            senti_data_paths = self._read_paths_from_file('../datasets/paths/senti_data_paths_val_5.txt')
+            senti_mask_paths = self._read_paths_from_file('../datasets/paths/senti_mask_paths_val_5.txt')
+            senti_dates_paths = self._read_paths_from_file('../datasets/paths/senti_dates_paths_val_5.txt')
+        elif part == 'test' or config.dataset.dataset_size == 1.0:
+            XX_tif_paths = self._read_paths(X_BASE_PATH, '.tif')
+            Y_tif_paths = self._read_paths(Y_BASE_PATH, '.tif')
+            senti_data_paths = self._read_paths(SENTI_BASE_PATH, "data.npy", X_BASE_PATH) # all aerial images within the same area have the same 
+            senti_mask_paths = self._read_paths(SENTI_BASE_PATH, "masks.npy", X_BASE_PATH)# sentinel image so redundant to store one for each 
+            senti_dates_paths = self._read_paths(SENTI_BASE_PATH, "products.txt", X_BASE_PATH) 
 
         aerial_to_senti_path = os.path.join(self.config.dataset.path, 'flair-2_centroids_sp_to_patch.json') # load the dictionary wwith mapping from sentinel to aerial patches
         with open(aerial_to_senti_path) as file:
@@ -62,29 +75,6 @@ class DatasetClass(Dataset):
         X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths, senti_dates_paths = zip(*combined)
         X_tif_paths, Y_tif_paths, senti_data_paths, senti_mask_paths, senti_dates_paths = list(X_tif_paths), list(Y_tif_paths), list(senti_data_paths), list(senti_mask_paths), list(senti_dates_paths)
         assert len(X_tif_paths) == len(Y_tif_paths) == len(senti_data_paths) == len(senti_mask_paths) == len(senti_dates_paths)
-
-        val_set_paths = ["D004", "D014", "D029", "D031", "D058", "D066", "D067", "D077"] # defined in flair paper
-
-        if part == 'val':
-            X_tif_paths = [path for path in X_tif_paths if any(s in path for s in val_set_paths)]
-            Y_tif_paths = [path for path in Y_tif_paths if any(s in path for s in val_set_paths)]
-            senti_data_paths = [path for path in senti_data_paths if any(s in path for s in val_set_paths)]
-            senti_mask_paths = [path for path in senti_mask_paths if any(s in path for s in val_set_paths)]
-            senti_dates_paths = [path for path in senti_dates_paths if any(s in path for s in val_set_paths)] 
-
-        elif part == 'train':
-            X_tif_paths = [path for path in X_tif_paths if not any(s in path for s in val_set_paths)]
-            Y_tif_paths = [path for path in Y_tif_paths if not any(s in path for s in val_set_paths)]
-            senti_data_paths = [path for path in senti_data_paths if not any(s in path for s in val_set_paths)]
-            senti_mask_paths = [path for path in senti_mask_paths if not any(s in path for s in val_set_paths)]
-            senti_dates_paths = [path for path in senti_dates_paths if not any(s in path for s in val_set_paths)]
-
-        data_stop_point = math.floor(len(X_tif_paths)*(self.config.dataset.dataset_size))
-        X_tif_paths = X_tif_paths[0:data_stop_point]
-        Y_tif_paths = Y_tif_paths[0:data_stop_point]
-        senti_data_paths = senti_data_paths[0:data_stop_point]
-        senti_mask_paths = senti_mask_paths[0:data_stop_point]
-        senti_dates_paths= senti_dates_paths[0:data_stop_point]
 
         if len(X_tif_paths) % config.batch_size == 1 and part == 'train':
             self.X_tif_paths = X_tif_paths[:-1]
@@ -187,6 +177,11 @@ class DatasetClass(Dataset):
                             for i in range(count):
                                 paths.append(os.path.join(root, file))         
                       
+        return paths
+    
+    def _read_paths_from_file(self, file_path):
+        with open(file_path, 'r') as file:
+            paths = [line.strip() for line in file.readlines()]
         return paths
     
     def _count_files(self, base_path):

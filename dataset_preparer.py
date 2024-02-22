@@ -58,6 +58,7 @@ class DatasetPreparer:
         assert len(X_tif_paths) == len(Y_tif_paths) == len(senti_data_paths) == len(senti_mask_paths) == len(senti_dates_paths)
 
         val_set_paths = ["D004", "D014", "D029", "D031", "D058", "D066", "D067", "D077"]
+        
         if part == 'val':
             X_tif_paths = [path for path in X_tif_paths if any(s in path for s in val_set_paths)]
             Y_tif_paths = [path for path in Y_tif_paths if any(s in path for s in val_set_paths)]
