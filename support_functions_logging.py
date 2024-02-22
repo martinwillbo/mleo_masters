@@ -289,7 +289,7 @@ def save_image(index, x, y_pred, y, epoch, config, writer):
 def save_senti_image(index, senti, epoch, config, writer):
             
             #Unnormalize x and divide by 255 to get range [0,1]
-            BGR_indeces = [0]
+            BGR_indeces = [1]
             senti_temp = senti[BGR_indeces].astype(float)
            # senti_temp = np.transpose(senti[BGR_indeces], (1,2,0)).astype(float)
            # senti_temp *= np.array(config.dataset.std_senti)[BGR_indeces]
