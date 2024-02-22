@@ -298,35 +298,7 @@ def save_senti_image(index, senti, y_pred, y, epoch, config, writer):
             senti_temp = np.transpose(senti_temp, (2,0,1))
             #senti[BGR_indeces] = senti_temp/255.0
             senti_plot = senti_temp/255.0
-
-            colored_y = np.zeros((3, y.shape[0], y.shape[1]), dtype=np.uint8)
-            colored_y_pred = np.zeros((3, y_pred.shape[0], y_pred.shape[1]), dtype=np.uint8)
-
-            # Iterate over each class and color the masks
-            for class_label in range(config.model.n_class):
-                # Create boolean masks for the current class
-                class_mask_y = (y == class_label)
-                class_mask_y_pred = (y_pred == class_label)
-
-                # Color the masks
-                for c in range(3):  # Iterate over color channels (R, G, B)
-                    colored_y[c][class_mask_y] = colormap[class_label][c]
-                    colored_y_pred[c][class_mask_y_pred] = colormap[class_label][c]
-
             senti_tensor = torch.from_numpy(senti_plot)            
-            colored_y_tensor = torch.from_numpy(colored_y)
-            colored_y_pred_tensor = torch.from_numpy(colored_y_pred)
-            colored_y_tensor = colored_y_tensor/255.0 
-            colored_y_pred_tensor = colored_y_pred_tensor/255.0
-            #print('shapes')
-            #print(x_tensor.shape)
-            #print(colored_y_tensor.shape)
-            #print(colored_y_pred_tensor.shape)
-            #print(type(x_tensor), x_tensor.dtype)
-            #print(type(colored_y_tensor), colored_y_tensor.dtype)
-            #print(type(colored_y_pred_tensor), colored_y_tensor.dtype)
-            #print(f"colored_y_tensor: max={colored_y_tensor.max().item()}, min={colored_y_tensor.min().item()}")
-            #print(f"colored_y_pred_tensor: max={colored_y_pred_tensor.max().item()}, min={colored_y_pred_tensor.min().item()}")
 
             writer.add_image('Epoch: ' + str(epoch) + ', Val/senti, batch: ' + str(index), senti_tensor, epoch)
             writer.flush()
