@@ -127,7 +127,7 @@ config = {
 preparer = DatasetPreparer(config)
 #preparer.prepare_dataset('train')
 #preparer.prepare_dataset('val')
-preparer.redo('../datasets/paths/X_paths_train_5_v2.txt')
+preparer.redo("../datasets/paths/X_paths_train_5_v2.txt")
 preparer.redo('../datasets/paths/X_paths_val_5_v2.txt')
 preparer.redo('../datasets/paths/Y_paths_train_5_v2.txt')
 preparer.redo('../datasets/paths/Y_paths_val_5_v2.txt') 
