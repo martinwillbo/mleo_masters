@@ -155,6 +155,7 @@ class DatasetClass(Dataset):
            
         #NOTE: These operations expect shape (H,W,C)  
         #Normalize images, after transform
+        # transofrm in what order??
         x = self._normalize(x)    
         senti = self._normalize_senti(senti)
         monthly_senti = self._monthly_image(senti, dates)

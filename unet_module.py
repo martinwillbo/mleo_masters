@@ -103,16 +103,16 @@ class UnetSentiUnet(nn.Module):
         features = self.unet.encoder(x)
         #get features from senti_encoder
         features_senti = self.unet_senti.encoder(senti)
-        
         decoded_senti = self.unet_senti.decoder(features_senti)
+
         print(decoded_senti[1].shape)
         #SE_features = 0*features.copy()
         #SE_features[0] = features[0]
-        features[1] = self.SEBlock_1(features[1], decoded_senti[1])
-        features[2] = self.SEBlock_2(features[2], decoded_senti[2])
-        features[3] = self.SEBlock_3(features[3], decoded_senti[3])
-        features[4] = self.SEBlock_4(features[4], decoded_senti[4])
-        features[5] = self.SEBlock_5(features[5], decoded_senti[5])
+        features[1] = self.SEBlock_1(features[1], decoded_senti)
+        features[2] = self.SEBlock_2(features[2], decoded_senti)
+        features[3] = self.SEBlock_3(features[3], decoded_senti)
+        features[4] = self.SEBlock_4(features[4], decoded_senti)
+        features[5] = self.SEBlock_5(features[5], decoded_senti)
         
        # for i in range(1,6):
        #     features[i] = self.SEBlock_list[i](features[i], features_senti[i])
