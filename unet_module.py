@@ -91,9 +91,9 @@ class UnetSentiDoubleLoss(nn.Module):
         self.SEBlock_4 = SEBlock(feature_channel_list[4], feature_senti_channel_list[4])
         self.SEBlock_5 = SEBlock(feature_channel_list[5], feature_senti_channel_list[5])
 
-        #self.reshape_senti_output = nn.Sequential(nn.Upsample(size=(512,512), mode='nearest'),
-        #                                        nn.Conv2d(self.arch_hr.encoder_widths[0], n_classes, 1) 
-        #                                        )
+        self.reshape_senti_output = nn.Sequential(nn.Upsample(size=(512,512), mode='nearest'),
+                                                nn.Conv2d(16, n_classes, 1) 
+                                                )
 
     def forward(self, x, senti):    
         senti = senti.view(senti.shape[0], -1 , senti.shape[-2], senti.shape[-1])   
@@ -114,7 +114,7 @@ class UnetSentiDoubleLoss(nn.Module):
 
         transform = T.CenterCrop((10, 10))
         senti_out = transform(decoded_senti)  
-        senti_pred_out = self.reshape_utae_output(utae_out)
+        senti_pred_out = self.reshape_utae_output(senti_out)
 
         #y_pred_senti = self.unet_senti.segmentation_head(decoded_senti)
 
@@ -122,7 +122,7 @@ class UnetSentiDoubleLoss(nn.Module):
         decoded = self.unet.decoder(*features)
         y_pred = self.unet.segmentation_head(decoded)
         
-        return y_pred, y_pred_senti
+        return y_pred, senti_pred_out
 
 class UnetSentiUnet(nn.Module):
 
