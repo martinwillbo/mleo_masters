@@ -115,7 +115,7 @@ def loop3(config, writer, hydra_log_dir):
                     y_pred, y_pred_senti = model(x, senti)
                   
                 if config.loss_function == 'senti_loss':
-                    l = train_loss(y_pred, y_pred_senti)
+                    l = train_loss(y_pred, y_pred_senti, y)
                 else:
                     l = train_loss(y_pred, y)
             
@@ -176,7 +176,7 @@ def loop3(config, writer, hydra_log_dir):
                 y_pred = y_pred.to(torch.float32)
 
                 if config.loss_function == 'senti_loss':
-                    l = eval_loss(y_pred, y_pred_senti)
+                    l = eval_loss(y_pred, y_pred_senti, y)
                 else:
                     l = eval_loss(y_pred, y)
                 
