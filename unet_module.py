@@ -9,7 +9,7 @@ from segmentation_models_pytorch.encoders import get_encoder
 
 class SEBlock(nn.Module):
 
-    def __init__(self, n_channels, n_senti, reduction_ratio=16): #n_senti is sze of feature output
+    def __init__(self, n_channels, n_senti, reduction_ratio=2): #n_senti is sze of feature output
         super(SEBlock, self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)  # Squeeze operation
         self.fc1 = nn.Linear(n_channels + n_senti, n_channels // reduction_ratio)  # First linear layer
@@ -63,7 +63,64 @@ class UnetFeatureMetadata_2(nn.Module):
         return y_pred
     
 
+class UnetSentiUnet(nn.Module):
+
+    def __init__(self, n_channels, n_senti_channels, n_classes):
+        super(UnetFeatureSenti, self).__init__()
+        self.unet = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = n_channels,
+            classes= n_classes
+        )  # Your existing U-Net model
+
+        self.unet_senti = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b0",
+            in_channels = n_senti_channels,
+            classes= n_classes
+        ) #
+        #overwrite
+        #self.senti_encoder = get_encoder('efficientnet-b0', weights = 'imagenet', encoder_depth=5, in_channels=n_senti_channels)
+        feature_channel_list = [5, 48, 32, 56, 160, 448]
+        feature_senti_channel_list = [10, 10, 10, 10, 10, 10] #????
+
+        self.SEBlock_1 = SEBlock(feature_channel_list[1], feature_senti_channel_list[1])
+        self.SEBlock_2 = SEBlock(feature_channel_list[2], feature_senti_channel_list[2])
+        self.SEBlock_3 = SEBlock(feature_channel_list[3], feature_senti_channel_list[3])
+        self.SEBlock_4 = SEBlock(feature_channel_list[4], feature_senti_channel_list[4])
+        self.SEBlock_5 = SEBlock(feature_channel_list[5], feature_senti_channel_list[5])
+
+#        self.SEBlock_list = [self.SEBlock_1, SEBlock_2, SEBlock_3, SEBlock_4, SEBlock_5]
+
+    def forward(self, x, senti):
+        #print(senti.shape)
+        
+        senti = senti.view(senti.shape[0], -1 , senti.shape[-2], senti.shape[-1])
+        #print(senti.shape)
+        #get features from encoder
+        features = self.unet.encoder(x)
+        #get features from senti_encoder
+        features_senti = self.unet_senti.encoder(senti)
+        decoded_senti = self.unet_senti.decoder(features_senti)
+        print(decoded_senti.shape)
+        #SE_features = 0*features.copy()
+        #SE_features[0] = features[0]
+        features[1] = self.SEBlock_1(features[1], decoded_senti[1])
+        features[2] = self.SEBlock_2(features[2], decoded_senti[2])
+        features[3] = self.SEBlock_3(features[3], decoded_senti[3])
+        features[4] = self.SEBlock_4(features[4], decoded_senti[4])
+        features[5] = self.SEBlock_5(features[5], decoded_senti[5])
+        
+       # for i in range(1,6):
+       #     features[i] = self.SEBlock_list[i](features[i], features_senti[i])
+
+        y_pred = self.unet.decoder(*features)
+        y_pred = self.unet.segmentation_head(y_pred)
+        
+        return y_pred
     
+
 class UnetFeatureSenti(nn.Module):
 
     def __init__(self, n_channels, n_senti_channels, n_classes):
@@ -74,6 +131,7 @@ class UnetFeatureSenti(nn.Module):
             in_channels = n_channels,
             classes= n_classes
         )  # Your existing U-Net model
+
         #overwrite
         self.senti_encoder = get_encoder('efficientnet-b0', weights = 'imagenet', encoder_depth=5, in_channels=n_senti_channels)
         feature_channel_list = [5, 48, 32, 56, 160, 448]
@@ -113,7 +171,6 @@ class UnetFeatureSenti(nn.Module):
         y_pred = self.unet.segmentation_head(y_pred)
         
         return y_pred
-
 
 
 
