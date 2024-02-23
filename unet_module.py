@@ -20,7 +20,7 @@ class SEBlock(nn.Module):
     def forward(self, x, senti):
         b, c, _, _ = x.size()
         # Squeeze
-        print(senti.size())
+        #print(senti.size())
         b_senti, c_senti, _, _ = senti.size()
         squeezed_features_senti = self.avg_pool(senti).view(b_senti, c_senti)
         squeezed_features = self.avg_pool(x).view(b, c)
@@ -105,7 +105,7 @@ class UnetSentiUnet(nn.Module):
         features_senti = self.unet_senti.encoder(senti)
         decoded_senti = self.unet_senti.decoder(*features_senti)
 
-        print(decoded_senti[1].shape)
+        #print(decoded_senti[1].shape)
         #SE_features = 0*features.copy()
         #SE_features[0] = features[0]
         features[1] = self.SEBlock_1(features[1], decoded_senti)
