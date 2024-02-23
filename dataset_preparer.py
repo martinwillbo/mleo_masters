@@ -96,7 +96,7 @@ class DatasetPreparer:
             for path in senti_dates_paths:
                 f.write("%s\n" % path)  
 
-    def redo (file_path):
+    def redo (self, file_path):
         with open(file_path, 'r') as f:
             paths = [line.strip() for line in f.readlines()]
 
