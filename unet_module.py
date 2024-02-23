@@ -83,7 +83,7 @@ class UnetSentiUnet(nn.Module):
         #overwrite
         #self.senti_encoder = get_encoder('efficientnet-b0', weights = 'imagenet', encoder_depth=5, in_channels=n_senti_channels)
         feature_channel_list = [5, 48, 32, 56, 160, 448]
-        feature_senti_channel_list = [10, 10, 10, 10, 10, 10] #????
+        feature_senti_channel_list = [10, 16, 16, 16, 16, 16]
 
         self.SEBlock_1 = SEBlock(feature_channel_list[1], feature_senti_channel_list[1])
         self.SEBlock_2 = SEBlock(feature_channel_list[2], feature_senti_channel_list[2])
