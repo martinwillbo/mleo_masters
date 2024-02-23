@@ -102,7 +102,7 @@ class UnetSentiUnet(nn.Module):
         features = self.unet.encoder(x)
         #get features from senti_encoder
         features_senti = self.unet_senti.encoder(senti)
-        decoded_senti = self.unet_senti.decoder(features_senti)
+        decoded_senti = self.unet_senti.decoder(*features_senti)
         print(decoded_senti.shape)
         #SE_features = 0*features.copy()
         #SE_features[0] = features[0]
