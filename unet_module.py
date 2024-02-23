@@ -66,7 +66,7 @@ class UnetFeatureMetadata_2(nn.Module):
 class UnetSentiUnet(nn.Module):
 
     def __init__(self, n_channels, n_senti_channels, n_classes):
-        super(UnetFeatureSenti, self).__init__()
+        super(UnetSentiUnet, self).__init__()
         self.unet = smp.Unet(
             encoder_weights="imagenet",
             encoder_name="efficientnet-b4",
