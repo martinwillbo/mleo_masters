@@ -94,7 +94,27 @@ class DatasetPreparer:
                 f.write("%s\n" % path)  
         with open(f'../datasets/paths/senti_dates_paths_{part}_5.txt', 'w') as f:
             for path in senti_dates_paths:
-                f.write("%s\n" % path)              
+                f.write("%s\n" % path)  
+
+    def redo (file_path):
+        with open(file_path, 'r') as f:
+            paths = [line.strip() for line in f.readlines()]
+
+        BASE_PATH = '../datasets/flair/'
+        mod_paths = []
+
+        for path in paths:
+           splits = path.split('/')  
+           new_path = os.path.join(BASE_PATH, *splits[-5:])
+           mod_paths.append() 
+
+        with open(file_path, 'w') as f:
+            for path in mod_paths:
+                f.write("%s\n" % path)  
+
+
+
+#../datasets/paths/
 # Example usage
 config = {
     'path': '../datasets/flair',
@@ -103,7 +123,17 @@ config = {
     'dataset_size': 0.05,  # Use 1.0 for full dataset, less for a fraction
     'senti_path': 'flair_sen'
 }
-random.seed(42)
+#random.seed(42)
 preparer = DatasetPreparer(config)
-preparer.prepare_dataset('train')
-preparer.prepare_dataset('val')
+#preparer.prepare_dataset('train')
+#preparer.prepare_dataset('val')
+preparer.redo('../datasets/paths/X_paths_train_5_v2.txt')
+preparer.redo('../datasets/paths/X_paths_val_5_v2.txt')
+preparer.redo('../datasets/paths/Y_paths_train_5_v2.txt')
+preparer.redo('../datasets/paths/Y_paths_val_5_v2.txt')
+preparer.redo('../datasets/paths/senti_data_paths_train_5_v2.txt')
+preparer.redo('../datasets/paths/senti_data_paths_val_5_v2.txt')
+preparer.redo('../datasets/paths/senti_dates_paths_train_5_v2.txt')
+preparer.redo('../datasets/paths/senti_dates_paths_val_5_v2.txt')
+preparer.redo('../datasets/paths/senti_mask_paths_train_5_v2.txt')
+preparer.redo('../datasets/paths/senti_mask_paths_val_5_v2.txt')
