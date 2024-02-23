@@ -153,8 +153,7 @@ class DatasetClass(Dataset):
         if self.config.use_transform:            
             x, y, senti = self.transform.apply(x,y, senti)
            
-        #NOTE: These operations expect shape (H,W,C)
-            
+        #NOTE: These operations expect shape (H,W,C)  
         #Normalize images, after transform
         x = self._normalize(x)    
         senti = self._normalize_senti(senti)
@@ -168,30 +167,23 @@ class DatasetClass(Dataset):
     
     
     def _read_paths(self, BASE_PATH, ending, X_path = None):
-        
         paths = []
         if ending == '.tif':
             for root, dirs, files in os.walk(BASE_PATH):
                 for file in sorted(files):
                     if file.endswith(ending): # should not be necessary
                         paths.append(os.path.join(root, file))
-
         elif ending == 'data.npy' or ending == 'masks.npy' or ending == 'products.txt':
-    
             #Stores the number of times a sentinel image/mask/time series info should be added to path list
             area_counts = self._count_files(X_path)
-
             for root, dirs, files in os.walk(BASE_PATH):
                 for file in sorted(files):
                         if file.endswith(ending):
-
                             path_split = root.split(os.sep)
                             area_name = os.sep.join(path_split[-3:-1]) #domain + area name - should be unique
                             count = area_counts[area_name]
-                            
                             for i in range(count):
-                                paths.append(os.path.join(root, file))         
-                      
+                                paths.append(os.path.join(root, file))        
         return paths
     
     def _read_paths_from_file(self, file_path):
@@ -200,7 +192,6 @@ class DatasetClass(Dataset):
         return paths
     
     def _count_files(self, base_path):
-
         #This function counts files in subdirectories
         aerial_counts = {}
         
@@ -230,92 +221,70 @@ class DatasetClass(Dataset):
         return data
     
     def _read_senti_patch(self, data_path, mask_path, X_path): 
-
         data = np.load(data_path) #T x C x H x W
         mask = np.load(mask_path) #T x 2 x H x W
         data = data.astype(np.uint8)
         mask = mask.astype(np.uint8)
-
         #Extract image index
         filename = os.path.basename(X_path)
         image_index = filename.split('/')[-1]
-
         #Get centroid
         x_cent, y_cent = self.aerial_to_senti[image_index]
-       
         #Extract patch
         side = self.config.dataset.senti_size
         data = data[:,:, x_cent-side:x_cent+side+1, y_cent-side:y_cent+side+1]
         mask = mask[:,:, x_cent-side:x_cent+side+1, y_cent-side:y_cent+side+1]
-
+        #Concat back together
         data = np.concatenate((data, mask), axis=1)
-        
         return data  
     
     def _read_dates(self, txt_file):
-
         #Open text file with date info
         with open(txt_file, 'r') as f:
             products= f.read().splitlines()
-        
         dates = []
-
         #save the data for each senti patch
         for file in products:
             dates.append(datetime.datetime(int(file[11:15]), int(file[15:19][:2]), int(file[15:19][2:]))) #year not relevant but expected
-
         return np.array(dates)
 
     
     def _monthly_image(self, senti_patch, senti_raw_dates):
-
         #masks last 2 channels
         mask = senti_patch[:,-2:,:,:]
         patches = senti_patch[:,:-2,:,:]
-
         #filter out dates
         dates_to_keep = self._filter_dates(mask, area_threshold=0.5, proba_threshold=60)
         dates = senti_raw_dates[dates_to_keep]
-
         #filter masks and patches to use
         mask = mask[dates_to_keep,:,:,:]
         patches = patches[dates_to_keep,:,:,:]
-
         #Initialize
         mean_patches = []
         prev_mean = None
-
         # calc mean for each month
         for m in range(1,13):
-
             month_dates = list(filter(lambda i: (dates[i].month == m), range(len(dates))))
-
             if len(month_dates)!=0:
                 prev_mean = np.mean(patches[month_dates,:,:,:], axis=0)
-                mean_patches.append(prev_mean)
-                
+                mean_patches.append(prev_mean)  
             else: 
                 if prev_mean is not None:
                     mean_patches.append(prev_mean)
                 else:
                     #print('No previous data, zero_padding instead')
                     mean_patches.append(np.zeros((10, 2*self.config.dataset.senti_size + 1, 2*self.config.dataset.senti_size + 1)))               
-                      
-
         return np.array(mean_patches)
         
         
     
     def _filter_dates(self, mask, area_threshold, proba_threshold):
-        
         dates_to_keep = []
-        
         for t in range(mask.shape[0]):
             cover = np.count_nonzero((mask[t, 0, :,:]>=proba_threshold)) + np.count_nonzero((mask[t, 1, :,:]>=proba_threshold))
             cover /= mask.shape[2]*mask.shape[3]
             if cover < area_threshold:
                 dates_to_keep.append(t)
-
         return dates_to_keep
         
     def _rescale(self, data, is_label):
@@ -342,20 +311,15 @@ class DatasetClass(Dataset):
         return data
     
     def _normalize_senti(self, senti):
-        
         #separate data and mask
         mask = senti[:,-2:,:,:]
         data = senti[:,:-2,:,:]
-
         # Transpose data 
         data = np.transpose(data, (0, 2, 3, 1)).astype(float)
-        
         # Subtract mean values
         data -= self.senti_layer_means
-        
         # Divide by standard deviation values
         data /= self.senti_layer_stds
-        
         # Transpose back 
         data = np.transpose(data, (0, 3, 1, 2))
         senti = np.concatenate((data, mask), axis=1)

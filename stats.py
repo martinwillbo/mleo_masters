@@ -40,8 +40,6 @@ def stats(config):
                             else:
                                   count += 1
 
-                    
-
     mean = np.mean(channel_lists, axis=1)
     std = np.std(channel_lists, axis=1)
 
