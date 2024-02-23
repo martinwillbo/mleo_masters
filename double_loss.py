@@ -2,7 +2,7 @@ import segmentation_models_pytorch as smp
 import torch
 import torch.nn as nn
 class senti_loss(nn.Module):
-    def __init__(self, senti_weight=0.25):
+    def __init__(self, senti_weight=0.15):
         super(senti_loss, self).__init__()
         self.senti_loss = smp.losses.TverskyLoss(mode='multiclass')
         self.unet_loss = smp.losses.TverskyLoss(mode='multiclass')
