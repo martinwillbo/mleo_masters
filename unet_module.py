@@ -114,7 +114,7 @@ class UnetSentiDoubleLoss(nn.Module):
 
         transform = T.CenterCrop((10, 10))
         senti_out = transform(decoded_senti)  
-        senti_pred_out = self.reshape_utae_output(senti_out)
+        senti_pred_out = self.reshape_senti_output(senti_out)
 
         #y_pred_senti = self.unet_senti.segmentation_head(decoded_senti)
 
