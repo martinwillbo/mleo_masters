@@ -153,7 +153,7 @@ class DatasetClass(Dataset):
         if self.config.use_transform:            
             x, y, senti = self.transform.apply(x,y, senti)
            
-        #NOTE: These operations expect shape (H,W,C)  
+        # NOTE: These operations expect shape (H,W,C)  
         #Normalize images, after transform
         # transofrm in what order??
         x = self._normalize(x)    

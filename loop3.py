@@ -9,7 +9,7 @@ from torch.optim import Adam, SGD
 import sys
 from torch.cuda.amp import autocast, GradScaler
 import segmentation_models_pytorch as smp
-from unet_module import UnetFeatureSenti, UnetSentiUnet
+from unet_module import UnetFeatureSenti, UnetSentiUnet, UnetSentiDoubleLoss
 import os
 import math
 import random
@@ -47,7 +47,7 @@ def loop3(config, writer, hydra_log_dir):
         model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
 
     if config.model.name == 'unet_senti':
-        model = UnetSentiUnet(n_channels=config.model.n_channels, n_senti_channels=120, n_classes=config.model.n_class)
+        model = UnetSentiDoubleLoss(n_channels=config.model.n_channels, n_senti_channels=120, n_classes=config.model.n_class)
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
 
     model = model.to(config.device)
@@ -106,7 +106,8 @@ def loop3(config, writer, hydra_log_dir):
                 elif config.model.name == 'unet':
                     y_pred = model(x)
                 elif config.model.name =='unet_senti':
-                    y_pred = model(x, senti)
+                    y_pred, y_pred_senti = model(x, senti)
+                    
                 
                 l = train_loss(y_pred, y)
             
@@ -162,7 +163,7 @@ def loop3(config, writer, hydra_log_dir):
                 elif config.model.name == 'unet':
                    y_pred = model(x)     
                 elif config.model.name =='unet_senti':
-                    y_pred = model(x, senti)
+                    y_pred, y_pred_senti = model(x, senti)
                      
                 y_pred = y_pred.to(torch.float32)
                 l = eval_loss(y_pred, y)

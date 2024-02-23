@@ -1,9 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision.transforms as T
 import segmentation_models_pytorch as smp
 from segmentation_models_pytorch.base.modules import Conv2dReLU, Attention
 from segmentation_models_pytorch.encoders import get_encoder
+
 
 
 
@@ -20,7 +22,6 @@ class SEBlock(nn.Module):
     def forward(self, x, senti):
         b, c, _, _ = x.size()
         # Squeeze
-        #print(senti.size())
         b_senti, c_senti, _, _ = senti.size()
         squeezed_features_senti = self.avg_pool(senti).view(b_senti, c_senti)
         squeezed_features = self.avg_pool(x).view(b, c)
@@ -63,6 +64,64 @@ class UnetFeatureMetadata_2(nn.Module):
         y_pred = self.unet.segmentation_head(y_pred)
         return y_pred
     
+class UnetSentiDoubleLoss(nn.Module):
+
+    def __init__(self, n_channels, n_senti_channels, n_classes):
+        super(UnetSentiDoubleLoss, self).__init__()
+        self.unet = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = n_channels,
+            classes= n_classes
+        )  # Your existing U-Net model
+
+        self.unet_senti = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b0",
+            in_channels = n_senti_channels,
+            classes= n_classes
+        )
+        #overwrite
+        feature_channel_list = [5, 48, 32, 56, 160, 448]
+        feature_senti_channel_list = [120, 16, 16, 16, 16, 16]
+
+        self.SEBlock_1 = SEBlock(feature_channel_list[1], feature_senti_channel_list[1])
+        self.SEBlock_2 = SEBlock(feature_channel_list[2], feature_senti_channel_list[2])
+        self.SEBlock_3 = SEBlock(feature_channel_list[3], feature_senti_channel_list[3])
+        self.SEBlock_4 = SEBlock(feature_channel_list[4], feature_senti_channel_list[4])
+        self.SEBlock_5 = SEBlock(feature_channel_list[5], feature_senti_channel_list[5])
+
+        #self.reshape_senti_output = nn.Sequential(nn.Upsample(size=(512,512), mode='nearest'),
+        #                                        nn.Conv2d(self.arch_hr.encoder_widths[0], n_classes, 1) 
+        #                                        )
+
+    def forward(self, x, senti):    
+        #get features from encoder
+        features = self.unet.encoder(x)
+        #get features from senti_encoder
+        features_senti = self.unet_senti.encoder(senti)
+        #pass senti through decoder
+        decoded_senti = self.unet_senti.decoder(*features_senti)
+        print(decoded_senti.shape)
+        # squeeze and excite decoded senti and encoded aerial
+        features[1] = self.SEBlock_1(features[1], decoded_senti)
+        features[2] = self.SEBlock_2(features[2], decoded_senti)
+        features[3] = self.SEBlock_3(features[3], decoded_senti)
+        features[4] = self.SEBlock_4(features[4], decoded_senti)
+        features[5] = self.SEBlock_5(features[5], decoded_senti)
+        #predict using senti
+
+        transform = T.CenterCrop((10, 10))
+        senti_out = transform(decoded_senti)  
+        senti_pred_out = self.reshape_utae_output(utae_out)
+
+        y_pred_senti = self.unet_senti.segmentation_head(decoded_senti)
+
+        #predict using aerial
+        decoded = self.unet.decoder(*features)
+        y_pred = self.unet.segmentation_head(decoded)
+        
+        return y_pred, y_pred_senti
 
 class UnetSentiUnet(nn.Module):
 
@@ -80,9 +139,8 @@ class UnetSentiUnet(nn.Module):
             encoder_name="efficientnet-b0",
             in_channels = n_senti_channels,
             classes= n_classes
-        ) #
+        )
         #overwrite
-        #self.senti_encoder = get_encoder('efficientnet-b0', weights = 'imagenet', encoder_depth=5, in_channels=n_senti_channels)
         feature_channel_list = [5, 48, 32, 56, 160, 448]
         feature_senti_channel_list = [120, 16, 16, 16, 16, 16]
 
@@ -92,37 +150,27 @@ class UnetSentiUnet(nn.Module):
         self.SEBlock_4 = SEBlock(feature_channel_list[4], feature_senti_channel_list[4])
         self.SEBlock_5 = SEBlock(feature_channel_list[5], feature_senti_channel_list[5])
 
-#        self.SEBlock_list = [self.SEBlock_1, SEBlock_2, SEBlock_3, SEBlock_4, SEBlock_5]
+#       self.SEBlock_list = [self.SEBlock_1, SEBlock_2, SEBlock_3, SEBlock_4, SEBlock_5]
 
-    def forward(self, x, senti):
-        #print(senti.shape)
-        
-        senti = senti.view(senti.shape[0], -1 , senti.shape[-2], senti.shape[-1])
-        #print(senti.shape)
+    def forward(self, x, senti):    
         #get features from encoder
         features = self.unet.encoder(x)
         #get features from senti_encoder
         features_senti = self.unet_senti.encoder(senti)
+        #pass senti through decoder
         decoded_senti = self.unet_senti.decoder(*features_senti)
-
-        #print(decoded_senti[1].shape)
-        #SE_features = 0*features.copy()
-        #SE_features[0] = features[0]
+        # squeeze and excite decoded senti and encoded aerial
         features[1] = self.SEBlock_1(features[1], decoded_senti)
         features[2] = self.SEBlock_2(features[2], decoded_senti)
         features[3] = self.SEBlock_3(features[3], decoded_senti)
         features[4] = self.SEBlock_4(features[4], decoded_senti)
         features[5] = self.SEBlock_5(features[5], decoded_senti)
         
-       # for i in range(1,6):
-       #     features[i] = self.SEBlock_list[i](features[i], features_senti[i])
-
         y_pred = self.unet.decoder(*features)
         y_pred = self.unet.segmentation_head(y_pred)
         
         return y_pred
     
-
 class UnetFeatureSenti(nn.Module):
 
     def __init__(self, n_channels, n_senti_channels, n_classes):
