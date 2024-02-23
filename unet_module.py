@@ -96,6 +96,7 @@ class UnetSentiDoubleLoss(nn.Module):
         #                                        )
 
     def forward(self, x, senti):    
+        senti = senti.view(senti.shape[0], -1 , senti.shape[-2], senti.shape[-1])   
         #get features from encoder
         features = self.unet.encoder(x)
         #get features from senti_encoder
@@ -115,7 +116,7 @@ class UnetSentiDoubleLoss(nn.Module):
         senti_out = transform(decoded_senti)  
         senti_pred_out = self.reshape_utae_output(utae_out)
 
-        y_pred_senti = self.unet_senti.segmentation_head(decoded_senti)
+        #y_pred_senti = self.unet_senti.segmentation_head(decoded_senti)
 
         #predict using aerial
         decoded = self.unet.decoder(*features)
@@ -152,7 +153,8 @@ class UnetSentiUnet(nn.Module):
 
 #       self.SEBlock_list = [self.SEBlock_1, SEBlock_2, SEBlock_3, SEBlock_4, SEBlock_5]
 
-    def forward(self, x, senti):    
+    def forward(self, x, senti): 
+        senti = senti.view(senti.shape[0], -1 , senti.shape[-2], senti.shape[-1])   
         #get features from encoder
         features = self.unet.encoder(x)
         #get features from senti_encoder
