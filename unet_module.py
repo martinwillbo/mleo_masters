@@ -54,11 +54,9 @@ class UnetFeatureMetadata_2(nn.Module):
         #get features from encoder
         features = self.unet.encoder(x)
         #for f in features:
-        #    print(f.shape)
-        #print(features[1].shape)
+        
         features[self.feature_block] = self.SEBlock(features[self.feature_block], mtd)
-        #print(self.unet.decoder.blocks[4])
-        #print(self.unet.segmentation_head)
+        
         #input features to decoder
         y_pred = self.unet.decoder(*features)
         y_pred = self.unet.segmentation_head(y_pred)
@@ -109,7 +107,7 @@ class UnetSentiDoubleLoss(nn.Module):
         features[3] = self.SEBlock_3(features[3], decoded_senti)
         features[4] = self.SEBlock_4(features[4], decoded_senti)
         features[5] = self.SEBlock_5(features[5], decoded_senti)
-        #predict using senti
+    
 
         #predict with senti
         transform = T.CenterCrop((10, 10))
@@ -196,10 +194,10 @@ class UnetFeatureSenti(nn.Module):
 #        self.SEBlock_list = [self.SEBlock_1, SEBlock_2, SEBlock_3, SEBlock_4, SEBlock_5]
 
     def forward(self, x, senti):
-        #print(senti.shape)
+        
         
         senti = senti.view(senti.shape[0], -1 , senti.shape[-2], senti.shape[-1])
-        #print(senti.shape)
+       
         #get features from encoder
         features = self.unet.encoder(x)
         #get features from senti_encoder
@@ -242,7 +240,7 @@ class UnetFeatureMetadata(nn.Module):
         #get features from encoder
         features = self.unet.encoder(x)
         #for f in features:
-        #    print(f.shape)
+       
         #initially shape 8, 6 -> 8,6,16,16 (as in 5th feature of 8, 448, 16, 16)
         mtd = mtd.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, 16, 16)
         features[5] = torch.cat((features[5], mtd), dim=1)

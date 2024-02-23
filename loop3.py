@@ -10,6 +10,7 @@ import sys
 from torch.cuda.amp import autocast, GradScaler
 import segmentation_models_pytorch as smp
 from unet_module import UnetFeatureSenti, UnetSentiUnet, UnetSentiDoubleLoss
+from double_loss import senti_loss
 import os
 import math
 import random
@@ -75,6 +76,11 @@ def loop3(config, writer, hydra_log_dir):
         eval_loss = smp.losses.TverskyLoss(mode='multiclass')
         CE_loss = nn.CrossEntropyLoss() 
     
+    if config.loss_function == 'senti_loss':
+        train_loss = senti_loss()
+        eval_loss = senti_loss()
+        CE_loss = nn.CrossEntropyLoss() 
+
     print(train_loss)
     print(eval_loss)
 
@@ -107,9 +113,11 @@ def loop3(config, writer, hydra_log_dir):
                     y_pred = model(x)
                 elif config.model.name =='unet_senti':
                     y_pred, y_pred_senti = model(x, senti)
-                    
-                
-                l = train_loss(y_pred, y)
+                  
+                if config.loss_function == 'senti_loss':
+                    l = train_loss(y_pred, y_pred_senti)
+                else:
+                    l = train_loss(y_pred, y)
             
             y_pred = torch.argmax(y_pred, dim=1)
             optimizer.zero_grad()
@@ -166,7 +174,12 @@ def loop3(config, writer, hydra_log_dir):
                     y_pred, y_pred_senti = model(x, senti)
                      
                 y_pred = y_pred.to(torch.float32)
-                l = eval_loss(y_pred, y)
+
+                if config.loss_function == 'senti_loss':
+                    l = eval_loss(y_pred, y_pred_senti)
+                else:
+                    l = eval_loss(y_pred, y)
+                
                 l_CE =  CE_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())
