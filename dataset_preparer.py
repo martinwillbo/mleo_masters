@@ -106,7 +106,7 @@ class DatasetPreparer:
         for path in paths:
            splits = path.split('/')  
            new_path = os.path.join(BASE_PATH, *splits[-5:])
-           mod_paths.append() 
+           mod_paths.append(new_path) 
 
         with open(file_path, 'w') as f:
             for path in mod_paths:
