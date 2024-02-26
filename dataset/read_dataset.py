@@ -136,9 +136,9 @@ class DatasetClass(Dataset):
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
             senti = self._normalize_senti(senti)
-            monthly_senti = self._monthly_image(senti, dates)
+            #monthly_senti = self._monthly_image(senti, dates)
 
-            return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(monthly_senti, dtype= torch.float)
+            return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(senti, dtype= torch.float)
         
         if self.config.dataset.det_crop:
             #get exactly one crop
@@ -158,9 +158,9 @@ class DatasetClass(Dataset):
         # transofrm in what order??
         x = self._normalize(x)    
         senti = self._normalize_senti(senti)
-        monthly_senti = self._monthly_image(senti, dates)
+        #monthly_senti = self._monthly_image(senti, dates)
         
-        return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(monthly_senti, dtype = torch.float)
+        return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(senti, dtype = torch.float)
     
     def __len__(self):
         assert len(self.X_tif_paths) == len(self.Y_tif_paths)
@@ -233,8 +233,8 @@ class DatasetClass(Dataset):
         x_cent, y_cent = self.aerial_to_senti[image_index]
         #Extract patch
         side = self.config.dataset.senti_size
-        data = data[:,:, x_cent-side:x_cent+side+1, y_cent-side:y_cent+side+1]
-        mask = mask[:,:, x_cent-side:x_cent+side+1, y_cent-side:y_cent+side+1]
+        data = data[:,:, x_cent-side:x_cent+side, y_cent-side:y_cent+side]
+        mask = mask[:,:, x_cent-side:x_cent+side, y_cent-side:y_cent+side]
         #Concat back together
         data = np.concatenate((data, mask), axis=1)
         return data  
@@ -261,21 +261,24 @@ class DatasetClass(Dataset):
         mask = mask[dates_to_keep,:,:,:]
         patches = patches[dates_to_keep,:,:,:]
         #Initialize
-        mean_patches = []
-        prev_mean = None
+
+        
+        #mean_patches = []
+        #prev_mean = None
         # calc mean for each month
-        for m in range(1,13):
-            month_dates = list(filter(lambda i: (dates[i].month == m), range(len(dates))))
-            if len(month_dates)!=0:
-                prev_mean = np.mean(patches[month_dates,:,:,:], axis=0)
-                mean_patches.append(prev_mean)  
-            else: 
-                if prev_mean is not None:
-                    mean_patches.append(prev_mean)
-                else:
-                    #print('No previous data, zero_padding instead')
-                    mean_patches.append(np.zeros((10, 2*self.config.dataset.senti_size + 1, 2*self.config.dataset.senti_size + 1)))               
-        return np.array(mean_patches)
+        #for m in range(1,13):
+        #    month_dates = list(filter(lambda i: (dates[i].month == m), range(len(dates))))
+        #    if len(month_dates)!=0:
+        #        prev_mean = np.mean(patches[month_dates,:,:,:], axis=0)
+        #        mean_patches.append(prev_mean)  
+        #    else: 
+        #        if prev_mean is not None:
+        #            mean_patches.append(prev_mean)
+        #        else:
+        #            #print('No previous data, zero_padding instead')
+        #            mean_patches.append(np.zeros((10, 2*self.config.dataset.senti_size + 1, 2*self.config.dataset.senti_size + 1)))               
+      
+        return np.array(patches)#mean_patches)
         
         
     

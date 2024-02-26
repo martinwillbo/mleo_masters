@@ -18,6 +18,26 @@ import cv2
 import matplotlib.pyplot as plt
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, label_image, save_image, save_senti_image
 
+def collate_fn(self, batch):
+    # Find the maximum number of time-series images in the batch
+    max_time_steps = max(len(item[2]) for item in batch)
+    
+    # Pad each sample in the batch to have the same number of time steps
+    padded_time_series_batch = []
+    for item in batch:
+        padded_time_series = np.zeros((max_time_steps, *item[2].shape), dtype=np.float32)
+        padded_time_series[:len(item[2])] = item[2]
+        padded_time_series_batch.append(padded_time_series)
+
+    # Convert the padded time-series data to PyTorch tensor
+    batch_padded_time_series = torch.tensor(padded_time_series_batch)
+    
+    # Extract x_data and label_data from the original batch
+    batch_x_data = [item[0] for item in batch]
+    batch_y_data = [item[1] for item in batch]
+    
+    return torch.tensor(batch_x_data, dtype = torch.float), torch.tensor(batch_y_data, dtype = torch.long), torch.tensor(batch_padded_time_series, dtype = torch.float)
+
 
 def loop3(config, writer, hydra_log_dir):
     dataset_module = util.load_module(config.dataset.script_location)
@@ -28,9 +48,9 @@ def loop3(config, writer, hydra_log_dir):
     label_image(config, writer)
     
     train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = True, num_workers = config.num_workers,
-                              pin_memory = True)
+                              pin_memory = True, collate_fn=collate_fn)
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers, 
-                            pin_memory = True)
+                            pin_memory = True, collate_fn=collate_fn)
     
     if config.model.name == 'unet':
         model = smp.Unet(
