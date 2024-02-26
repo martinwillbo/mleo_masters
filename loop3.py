@@ -72,7 +72,7 @@ def loop3(config, writer, hydra_log_dir):
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
         
     if config.model.name == 'unet_senti_utae':
-        model = UnetSentiUTAE()
+        model = UnetSentiUTAE(n_channels=config.model.n_channels, n_senti_channels=10, n_classes=config.model.n_class)
 
     model = model.to(config.device)
     
