@@ -26,8 +26,8 @@ def collate_fn(batch):
     # Pad the time-series data
     padded_time_series_data = pad_sequence(batch_time_series_data, batch_first=True, padding_value=0)
     
-    return torch.tensor(batch_x_data, dtype = torch.float), torch.tensor(batch_y_data, dtype = torch.long), torch.tensor(padded_time_series_data, dtype = torch.float)
-    #return batch_x_data, batch_y_data, padded_time_series_data
+    #return torch.tensor(batch_x_data, dtype = torch.float), torch.tensor(batch_y_data, dtype = torch.long), torch.tensor(padded_time_series_data, dtype = torch.float)
+    return batch_x_data, batch_y_data, padded_time_series_data
 
 
 def loop3(config, writer, hydra_log_dir):
@@ -116,6 +116,8 @@ def loop3(config, writer, hydra_log_dir):
         
         for batch in tqdm(train_iter):
             x, y, senti = batch
+            print(x.dtype)
+            
             x = x.to(config.device) # dtype=torch.float32)
             y = y.to(config.device)   
             senti = senti.to(config.device)          
