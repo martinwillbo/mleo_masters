@@ -28,7 +28,7 @@ def collate_fn(batch):
     
     batch_x_data = torch.stack(batch_x_data)
     batch_y_data = torch.stack(batch_y_data)
-    batch_y_data = torch.stack(padded_time_series_data)
+    #padded_time_series_data = torch.stack(padded_time_series_data)
     #return torch.tensor(batch_x_data, dtype = torch.float), torch.tensor(batch_y_data, dtype = torch.long), torch.tensor(padded_time_series_data, dtype = torch.float)
     return batch_x_data, batch_y_data, padded_time_series_data
 
