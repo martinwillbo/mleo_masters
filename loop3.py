@@ -25,6 +25,12 @@ def collate_fn(batch):
     
     # Pad the time-series data
     padded_time_series_data = pad_sequence(batch_time_series_data, batch_first=True, padding_value=0)
+    print(batch_x_data.shape)
+    print(batch_y_data.shape)
+    print(padded_time_series_data.shape)
+
+
+
     batch_x_data = torch.tensor(batch_x_data)
     batch_y_data = torch.tensor(batch_y_data)
     batch_y_data = torch.tensor(padded_time_series_data)
