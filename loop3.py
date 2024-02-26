@@ -194,7 +194,7 @@ def loop3(config, writer, hydra_log_dir):
                      
                 y_pred = y_pred.to(torch.float32)
 
-                if config.loss_function == 'senti_loss':
+                if config.loss_function == 'senti_loss' or config.model.name == 'unet_senti_utae':
                     l = eval_loss(y_pred, y_pred_senti, y)
                 else:
                     l = eval_loss(y_pred, y)
