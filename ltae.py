@@ -18,7 +18,7 @@ class LTAE2d(nn.Module):
         d_model=256,
         T=1000,
         return_att=False,
-        positional_encoding=True,
+        positional_encoding=False, #originally true
     ):
         """
         Lightweight Temporal Attention Encoder (L-TAE) for image time series.
