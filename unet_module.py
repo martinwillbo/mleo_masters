@@ -79,7 +79,7 @@ class UnetSentiUTAE(nn.Module):
             )
         #overwrite
         feature_channel_list = [5, 48, 32, 56, 160, 448]
-        feature_senti_channel_list = [120, 16, 16, 16, 16, 16]
+        feature_senti_channel_list = [120, 20, 20, 20, 20, 20]
 
         self.SEBlock_1 = SEBlock(feature_channel_list[1], feature_senti_channel_list[1])
         self.SEBlock_2 = SEBlock(feature_channel_list[2], feature_senti_channel_list[2])
