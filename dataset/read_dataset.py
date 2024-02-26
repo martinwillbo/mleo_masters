@@ -135,7 +135,8 @@ class DatasetClass(Dataset):
 
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
-            senti = self._normalize_senti(senti[:,:10,:,:])
+            senti = self._normalize_senti(senti)
+            senti = senti[:,:-2,:,:]
             #monthly_senti = self._monthly_image(senti, dates)
 
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(senti, dtype= torch.float)
@@ -157,7 +158,8 @@ class DatasetClass(Dataset):
         #Normalize images, after transform
         # transofrm in what order??
         x = self._normalize(x)    
-        senti = self._normalize_senti(senti[:,:10,:,:])
+        senti = self._normalize_senti(senti)
+        senti = senti[:,:-2,:,:]
         #monthly_senti = self._monthly_image(senti, dates)
         
         return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(senti, dtype = torch.float)
