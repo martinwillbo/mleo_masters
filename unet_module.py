@@ -98,7 +98,7 @@ class UnetSentiUTAE(nn.Module):
         #get features from senti_encoder
         #features_senti = self.unet_senti.encoder(senti)
         #pass senti through decoder
-        decoded_senti = self.utae_senti.decoder(senti)
+        decoded_senti = self.utae_senti(senti)
         print(decoded_senti.shape)
         # squeeze and excite decoded senti and encoded aerial
         features[1] = self.SEBlock_1(features[1], decoded_senti)
