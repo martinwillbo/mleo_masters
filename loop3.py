@@ -9,7 +9,7 @@ from torch.optim import Adam, SGD
 import sys
 from torch.cuda.amp import autocast, GradScaler
 import segmentation_models_pytorch as smp
-from unet_module import UnetFeatureSenti, UnetSentiUnet, UnetSentiDoubleLoss
+from unet_module import UnetFeatureSenti, UnetSentiUnet, UnetSentiDoubleLoss, UnetSentiUTAE
 from double_loss import senti_loss
 import os
 import math
@@ -70,6 +70,9 @@ def loop3(config, writer, hydra_log_dir):
     if config.model.name == 'unet_senti':
         model = UnetSentiDoubleLoss(n_channels=config.model.n_channels, n_senti_channels=120, n_classes=config.model.n_class)
     #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
+        
+    if config.model.name == 'unet_senti_utae':
+        model = UnetSentiUTAE()
 
     model = model.to(config.device)
     
