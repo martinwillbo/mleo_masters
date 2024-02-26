@@ -17,28 +17,16 @@ import random
 import cv2
 import matplotlib.pyplot as plt
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, label_image, save_image, save_senti_image
+from torch.nn.utils.rnn import pad_sequence
 
-def collate_fn(self, batch):
-    # Find the maximum number of time-series images in the batch
-    max_time_steps = max(len(item[2]) for item in batch)
+def collate_fn(batch):
+    # Extract x_data, label_data, and time_series_data from the batch
+    batch_x_data, batch_y_data, batch_time_series_data = zip(*batch)
     
-    # Pad each sample in the batch to have the same number of time steps
-    padded_time_series_batch = []
-    for item in batch:
-        padded_time_series = np.zeros((max_time_steps, *item[2].shape), dtype=np.float32)
-        padded_time_series[:len(item[2])] = item[2]
-        padded_time_series_batch.append(padded_time_series)
-
-    # Convert the padded time-series data to PyTorch tensor
-    batch_padded_time_series = torch.tensor(padded_time_series_batch)
+    # Pad the time-series data
+    padded_time_series_data = pad_sequence(batch_time_series_data, batch_first=True, padding_value=0)
     
-    # Extract x_data and label_data from the original batch
-    batch_x_data = [item[0] for item in batch]
-    batch_y_data = [item[1] for item in batch]
-    
-    return batch_x_data, batch_y_data, batch_padded_time_series
-    #return torch.tensor(batch_x_data, dtype = torch.float), torch.tensor(batch_y_data, dtype = torch.long), torch.tensor(batch_padded_time_series, dtype = torch.float)
-
+    return batch_x_data, batch_y_data, padded_time_series_data
 
 def loop3(config, writer, hydra_log_dir):
     dataset_module = util.load_module(config.dataset.script_location)
