@@ -88,7 +88,7 @@ class UnetSentiUTAE(nn.Module):
         self.SEBlock_5 = SEBlock(feature_channel_list[5], feature_senti_channel_list[5])
 
         self.reshape_senti_output = nn.Sequential(nn.Upsample(size=(512,512), mode='nearest'),
-                                                nn.Conv2d(16, n_classes, 1) 
+                                                nn.Conv2d(20, n_classes, 1) 
                                                 )
 
     def forward(self, x, senti):    
