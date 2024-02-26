@@ -26,7 +26,9 @@ def collate_fn(batch):
     # Pad the time-series data
     padded_time_series_data = pad_sequence(batch_time_series_data, batch_first=True, padding_value=0)
     
-    return batch_x_data, batch_y_data, padded_time_series_data
+    return torch.tensor(batch_x_data, dtype = torch.float), torch.tensor(batch_y_data, dtype = torch.long), torch.tensor(padded_time_series_data, dtype = torch.float)
+    #return batch_x_data, batch_y_data, padded_time_series_data
+
 
 def loop3(config, writer, hydra_log_dir):
     dataset_module = util.load_module(config.dataset.script_location)
