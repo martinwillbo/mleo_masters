@@ -36,7 +36,8 @@ def collate_fn(self, batch):
     batch_x_data = [item[0] for item in batch]
     batch_y_data = [item[1] for item in batch]
     
-    return torch.tensor(batch_x_data, dtype = torch.float), torch.tensor(batch_y_data, dtype = torch.long), torch.tensor(batch_padded_time_series, dtype = torch.float)
+    return batch_x_data, batch_y_data, batch_padded_time_series
+    #return torch.tensor(batch_x_data, dtype = torch.float), torch.tensor(batch_y_data, dtype = torch.long), torch.tensor(batch_padded_time_series, dtype = torch.float)
 
 
 def loop3(config, writer, hydra_log_dir):
