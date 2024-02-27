@@ -187,12 +187,12 @@ def loop3(config, writer, hydra_log_dir):
                    y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
                 elif config.model.name == 'unet':
                    y_pred = model(x)     
-                elif config.model.name =='unet_senti':
+                elif config.model.name =='unet_senti' or config.model.name == 'unet_senti_utae':
                     y_pred, y_pred_senti = model(x, senti)
                      
                 #y_pred = y_pred.to(torch.float32)
 
-                if config.loss_function == 'senti_loss' or config.model.name == 'unet_senti_utae':
+                if config.loss_function == 'senti_loss':
                     l = eval_loss(y_pred, y_pred_senti, y)
                 else:
                     l = eval_loss(y_pred, y)
