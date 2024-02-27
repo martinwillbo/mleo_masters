@@ -19,8 +19,8 @@ def main(config):
     log_dir = log_dir  +'_' + str(config.eval_type)
     writer = SummaryWriter(log_dir=log_dir)
     
-    #eval_model(config, writer, training_path, config.eval_type)
-    test.eval_on_test(config, writer, training_path)
+    eval_model(config, writer, training_path, config.eval_type)
+    #test.eval_on_test(config, writer, training_path)
 
 if __name__ == '__main__':
     main()
