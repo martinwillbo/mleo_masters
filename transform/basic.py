@@ -27,6 +27,11 @@ class BasicTransform():
                 if random.random() < self.config.transform.p_color_jitter:
                     #TODO: Isn't this fucked up? Shouldnt we normalize after?
                     crop[:3, :, :] = self.c_jitter(torch.tensor(crop[:3,:,:].copy())).numpy() #can't jitter more than 3 channels
+                    senti_reshaped = senti.reshape(-1, senti.shape[2], senti.shape[3])
+                    for c in range(0, senti.shape[1]*senti.shape[0]):
+                        if not c % 10 == 0 and not c % 11 == 0:
+                            senti_reshaped[c, :, :] = self.c_jitter( (torch.tensor(senti_reshaped[c, :, :].copy()).unsqueeze(0))).numpy()
+                    senti = senti_reshaped.reshape(senti.shape[0], senti.shape[1], senti.shape[2], senti.shape[3])
             elif aug == 'up-down':
                 if random.random() < self.config.transform.p_up_down_flip:
                     crop = np.flip(crop, axis=1)

@@ -44,7 +44,7 @@ def eval_model(config, writer, training_path, eval_type):
     if config.eval.eval_loss == "CE":
         eval_loss_f = nn.CrossEntropyLoss()
     
-    if config.leval.eval_loss == 'tversky':
+    if config.eval.eval_loss == 'tversky':
         eval_loss_f = smp.losses.TverskyLoss(mode='multiclass')
 
     eval_loss = []
@@ -56,7 +56,7 @@ def eval_model(config, writer, training_path, eval_type):
     c = 0
     
     for batch in tqdm(val_iter):
-        x, y, _ = batch
+        x, y, _, _ = batch
 
         if eval_type != 'normal':
             x = set_noise(x, noise_level, eval_type)

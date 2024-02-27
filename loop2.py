@@ -10,11 +10,11 @@ import os
 import math
 import random
 import segmentation_models_pytorch as smp
-from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, label_image
+from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, save_senti_image, label_image
 from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2, custom_sine, image_wise_fade
-from support_functions_loop import set_model
+from support_functions_loop import set_model, set_loss, get_loss_y_pred
 
-from CE_tversky_loss import CE_tversky_Loss
+
 
 def loop2(config, writer, hydra_log_dir):
     dataset_module = util.load_module(config.dataset.script_location)
@@ -44,17 +44,9 @@ def loop2(config, writer, hydra_log_dir):
 
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
         
-    if config.loss_function == 'CE':
-        train_loss = nn.CrossEntropyLoss()
-        eval_loss = nn.CrossEntropyLoss()
-    elif config.loss_function == 'tversky':
-        train_loss = smp.losses.TverskyLoss(mode='multiclass')
-        eval_loss = smp.losses.TverskyLoss(mode='multiclass')
-        CE_loss, tversky_loss = nn.CrossEntropyLoss(), smp.losses.TverskyLoss(mode='multiclass')
-    elif config.loss_function == 'CE_tversky':
-        train_loss = CE_tversky_Loss()
-        eval_loss = CE_tversky_Loss()
-        CE_loss, tversky_loss = nn.CrossEntropyLoss(), smp.losses.TverskyLoss(mode='multiclass')
+    train_loss, eval_loss = set_loss(config.loss_function)
+    CE_loss, tversky_loss = nn.CrossEntropyLoss(), smp.losses.TverskyLoss(mode='multiclass')
+
     epoch = 0
     best_val_loss = np.inf
 
@@ -104,15 +96,7 @@ def loop2(config, writer, hydra_log_dir):
             senti = senti.to(config.device)
             
             with autocast():
-                if config.model.name == 'resnet50':
-                    y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
-                elif config.model.name == 'FCN8' or config.model.name == 'unet':
-                    y_pred = model(x)
-                elif config.model.name == 'unet_mtd' or config.model.name == 'unet_mtd_feature' or config.model.name == 'unet_mtd_feature_2':
-                    y_pred = model(x, mtd)
-                elif config.model.name == 'unet_senti':
-                    y_pred = model(x,senti)
-                l = train_loss(y_pred, y)
+                model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, train_loss, model, x, mtd, senti, y)
             optimizer.zero_grad()
             scaler.scale(l).backward()
             scaler.step(optimizer)
@@ -172,16 +156,8 @@ def loop2(config, writer, hydra_log_dir):
                 mtd = mtd.to(config.device)
                 senti = senti.to(config.device)
 
-                if config.model.name == 'resnet50':
-                    y_pred = model(x)['out']
-                elif config.model.name == 'FCN8' or config.model.name == 'unet':
-                    y_pred = model(x)
-                elif config.model.name == 'unet_mtd' or config.model.name == 'unet_mtd_feature' or config.model.name == 'unet_mtd_feature_2':
-                    y_pred = model(x, mtd)
-                elif config.model.name == 'unet_senti':
-                    y_pred = model(x, senti)
+                model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, eval_loss, model, x, mtd, senti, y)
 
-                l = eval_loss(y_pred, y)
                 CE_l, tversky_l = CE_loss(y_pred, y), tversky_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())
@@ -192,7 +168,9 @@ def loop2(config, writer, hydra_log_dir):
                     x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
                     y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
                     y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
+                    senti_cpu = senti[0, 6, :, :, :].cpu().detach().contiguous().numpy()
                     save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)
+                    save_senti_image(counter, senti_cpu, epoch, config, writer)
 
                 y_pred = y_pred.to(torch.uint8).cpu().contiguous().detach().numpy()
                 y = y.to(torch.uint8).cpu().contiguous().detach().numpy()

@@ -60,8 +60,8 @@ class DatasetClass(Dataset):
             senti_mask_paths = self._read_paths_from_file('dataset/paths/senti_mask_paths_val_5_v2.txt')
             senti_dates_paths = self._read_paths_from_file('dataset/paths/senti_dates_paths_val_5_v2.txt')
         elif part == 'test' or config.dataset.dataset_size == 1.0:
-            X_tif_paths = self._read_paths(X_BASE_PATH)
-            Y_tif_paths = self._read_paths(Y_BASE_PATH)
+            X_tif_paths = self._read_paths(X_BASE_PATH, '.tif')
+            Y_tif_paths = self._read_paths(Y_BASE_PATH, '.tif')
             senti_data_paths = self._read_paths(SENTI_BASE_PATH, "data.npy", X_BASE_PATH) # all aerial images within the same area have the same 
             senti_mask_paths = self._read_paths(SENTI_BASE_PATH, "masks.npy", X_BASE_PATH)# sentinel image so redundant to store one for each 
             senti_dates_paths = self._read_paths(SENTI_BASE_PATH, "products.txt", X_BASE_PATH) 
@@ -141,6 +141,7 @@ class DatasetClass(Dataset):
         mtd_list = self._read_metadata(self.X_tif_paths[index][-14:-4])
 
         senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index]) # this takes the data and masks and concatinates along dim=1
+        
         dates = self._read_dates(self.senti_dates_paths[index])
 
         if self.part == 'val' or self.part == 'test':
