@@ -75,4 +75,4 @@ def eval_on_test(config, writer, training_path):
     writer.add_scalar('test/loss', l_test)
     miou_prec_rec_writing(config, y_pred_list, y_list, 'test', writer, 0)
     miou_prec_rec_writing_13(config, y_pred_list, y_list, 'test', writer, 0) 
-    conf_matrix(config, y_pred_list, y_list, writer, epoch = 0)
+  #  conf_matrix(config, y_pred_list, y_list, writer, epoch = 0)
