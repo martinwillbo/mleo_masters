@@ -132,7 +132,7 @@ class DatasetClass(Dataset):
        
         x = self._read_data(self.X_tif_paths[index], is_label = False)
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
-        if self.config.using_senti:
+        if self.config.dataset.using_senti:
             senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index]) # this takes the data and masks and concatinates along dim=1
             dates = self._read_dates(self.senti_dates_paths[index])
         #dates_to_keep = self._filter_dates(senti[:,-2:,:,:], area_threshold=0.5, proba_threshold=60) 
@@ -140,7 +140,7 @@ class DatasetClass(Dataset):
 
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
-            if self.config.using_senti:
+            if self.config.dataset.using_senti:
                 senti = self._normalize_senti(senti)
                 #senti = senti[:,:-2,:,:]
                 monthly_senti = self._monthly_image(senti, dates)
@@ -158,7 +158,7 @@ class DatasetClass(Dataset):
             x = self._rescale(x, is_label = False)
             y = self._rescale(y, is_label = True)
         if self.config.use_transform:
-            if self.config.using_senti:
+            if self.config.datset.using_senti:
                 x, y, senti = self.transform.apply(x, y, senti) 
             else:
                 x, y = self.transform.apply(x, y)                       
@@ -168,7 +168,7 @@ class DatasetClass(Dataset):
         #Normalize images, after transform
         # transofrm in what order??
         x = self._normalize(x) 
-        if self.config.using_senti:   
+        if self.config.dataset.using_senti:   
             senti = self._normalize_senti(senti)
             #senti = senti[:,:-2,:,:]
             monthly_senti = self._monthly_image(senti, dates)
