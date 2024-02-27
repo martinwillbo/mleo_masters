@@ -190,7 +190,7 @@ def loop3(config, writer, hydra_log_dir):
                 elif config.model.name =='unet_senti':
                     y_pred, y_pred_senti = model(x, senti)
                      
-                y_pred = y_pred.to(torch.float32)
+                #y_pred = y_pred.to(torch.float32)
 
                 if config.loss_function == 'senti_loss' or config.model.name == 'unet_senti_utae':
                     l = eval_loss(y_pred, y_pred_senti, y)
