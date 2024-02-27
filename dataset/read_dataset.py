@@ -141,7 +141,7 @@ class DatasetClass(Dataset):
             #senti = senti[:,:-2,:,:]
             monthly_senti = self._monthly_image(senti, dates)
 
-            return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(senti, dtype= torch.float)
+            return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(monthly_senti, dtype= torch.float)
         
         if self.config.dataset.det_crop:
             #get exactly one crop
@@ -164,7 +164,7 @@ class DatasetClass(Dataset):
         #senti = senti[:,:-2,:,:]
         monthly_senti = self._monthly_image(senti, dates)
         
-        return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(senti, dtype = torch.float)
+        return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(monthly_senti, dtype = torch.float)
     
     def __len__(self):
         assert len(self.X_tif_paths) == len(self.Y_tif_paths)
