@@ -4,9 +4,12 @@ import numpy as np
 import util
 from tqdm import tqdm
 from torch.utils.data import DataLoader
+from double_loss import senti_loss
+import segmentation_models_pytorch as smp
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix 
-from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
-from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
+
+from support_functions import set_model
+
 import os
 
 def eval_on_test(config, writer, training_path):
@@ -23,15 +26,24 @@ def eval_on_test(config, writer, training_path):
     saved_model_path = os.path.join(training_path, 'best_model.pth')
 
     # Load the saved model parameters into the instantiated model
-    model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
-                                dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
+    model = set_model(config, config.model.name,config.model.n_channels )
     model.load_state_dict(torch.load(saved_model_path))
     model.to(config.device)
 
     # Set the model to evaluation mode
     model.eval()
 
-    test_loss_f = nn.CrossEntropyLoss()
+    if config.loss_function =='CE':
+        test_loss_f = nn.CrossEntropyLoss()
+
+    if config.loss_function == 'tversky':
+        test_loss_f = smp.losses.TverskyLoss(mode='multiclass')
+        CE_loss = nn.CrossEntropyLoss() 
+    
+    if config.loss_function == 'senti_loss': # will this be necessary on test?
+        train_loss = senti_loss()
+        eval_loss = senti_loss()
+        CE_loss = nn.CrossEntropyLoss() 
 
     test_loss = []
     test_miou_prec_rec = []

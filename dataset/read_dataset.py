@@ -21,6 +21,8 @@ class DatasetClass(Dataset):
         self.Y = []
         self.aerial_to_senti = {}
 
+    
+
         #Read in desired transform
         transform_module = util.load_module(self.config.transform.script_location)
         self.transform = transform_module.get_transform(self.config)
@@ -130,18 +132,20 @@ class DatasetClass(Dataset):
        
         x = self._read_data(self.X_tif_paths[index], is_label = False)
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
-        senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index]) # this takes the data and masks and concatinates along dim=1
-        dates = self._read_dates(self.senti_dates_paths[index])
+        if self.config.using_senti:
+            senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index]) # this takes the data and masks and concatinates along dim=1
+            dates = self._read_dates(self.senti_dates_paths[index])
         #dates_to_keep = self._filter_dates(senti[:,-2:,:,:], area_threshold=0.5, proba_threshold=60) 
 
 
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
-            senti = self._normalize_senti(senti)
-            #senti = senti[:,:-2,:,:]
-            monthly_senti = self._monthly_image(senti, dates)
+            if self.config.using_senti:
+                senti = self._normalize_senti(senti)
+                #senti = senti[:,:-2,:,:]
+                monthly_senti = self._monthly_image(senti, dates)
 
-            return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(monthly_senti, dtype= torch.float)
+            return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)#, torch.tensor(monthly_senti, dtype= torch.float)
         
         if self.config.dataset.det_crop:
             #get exactly one crop
@@ -153,18 +157,23 @@ class DatasetClass(Dataset):
         if self.config.dataset.scale:
             x = self._rescale(x, is_label = False)
             y = self._rescale(y, is_label = True)
-        if self.config.use_transform:            
-            x, y, senti = self.transform.apply(x,y, senti)
+        if self.config.use_transform:
+            if self.config.using_senti:
+                x, y, senti = self.transform.apply(x, y, senti) 
+            else:
+                x, y = self.transform.apply(x, y)                       
+            
            
         # NOTE: These operations expect shape (H,W,C)  
         #Normalize images, after transform
         # transofrm in what order??
-        x = self._normalize(x)    
-        senti = self._normalize_senti(senti)
-        #senti = senti[:,:-2,:,:]
-        monthly_senti = self._monthly_image(senti, dates)
+        x = self._normalize(x) 
+        if self.config.using_senti:   
+            senti = self._normalize_senti(senti)
+            #senti = senti[:,:-2,:,:]
+            monthly_senti = self._monthly_image(senti, dates)
         
-        return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(monthly_senti, dtype = torch.float)
+        return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long)#, torch.tensor(monthly_senti, dtype = torch.float)
     
     def __len__(self):
         assert len(self.X_tif_paths) == len(self.Y_tif_paths)
