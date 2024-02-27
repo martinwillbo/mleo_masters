@@ -131,13 +131,15 @@ class DatasetClass(Dataset):
         x = self._read_data(self.X_tif_paths[index], is_label = False)
         y = self._read_data(self.Y_tif_paths[index], is_label = True)
         senti = self._read_senti_patch(self.senti_data_paths[index], self.senti_mask_paths[index], self.X_tif_paths[index]) # this takes the data and masks and concatinates along dim=1
-        dates = self._read_dates(self.senti_dates_paths[index])           
+        dates = self._read_dates(self.senti_dates_paths[index])
+        #dates_to_keep = self._filter_dates(senti[:,-2:,:,:], area_threshold=0.5, proba_threshold=60) 
+
 
         if self.part == 'val' or self.part == 'test':
             x = self._normalize(x)
             senti = self._normalize_senti(senti)
-            senti = senti[:,:-2,:,:]
-            #monthly_senti = self._monthly_image(senti, dates)
+            #senti = senti[:,:-2,:,:]
+            monthly_senti = self._monthly_image(senti, dates)
 
             return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(senti, dtype= torch.float)
         
@@ -159,8 +161,8 @@ class DatasetClass(Dataset):
         # transofrm in what order??
         x = self._normalize(x)    
         senti = self._normalize_senti(senti)
-        senti = senti[:,:-2,:,:]
-        #monthly_senti = self._monthly_image(senti, dates)
+        #senti = senti[:,:-2,:,:]
+        monthly_senti = self._monthly_image(senti, dates)
         
         return torch.tensor(x, dtype = torch.float), torch.tensor(y, dtype = torch.long), torch.tensor(senti, dtype = torch.float)
     
@@ -280,7 +282,7 @@ class DatasetClass(Dataset):
         #            #print('No previous data, zero_padding instead')
         #            mean_patches.append(np.zeros((10, 2*self.config.dataset.senti_size + 1, 2*self.config.dataset.senti_size + 1)))               
       
-        return np.array(patches)#mean_patches)
+        return np.array(patches) #mean_patches)
         
         
     
