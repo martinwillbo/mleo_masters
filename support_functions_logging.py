@@ -224,19 +224,46 @@ def label_image(config, writer):
     writer.add_image('Legend Image', legend_tensor, 0)
     writer.add_text("Class Names", "\n".join(class_names), 0)
 
+def is_subsequence_present(lst, subsequence):
+    """Check if subsequence is present in lst."""
+    for i in subsequence:
+        if i not in lst:
+            return False
+    return True
+
+def priv_info_image(channel, index, x_tensor, epoch, writer):
+    x_priv = x_tensor[channel-5, :, :].unsqueeze(0)
+    #print(x_priv.shape)
+    #Not ideal normalization to be honest, as we don't know how strong the signal is
+    min_vals = x_priv.view(1, -1).min(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
+    max_vals = x_priv.view(1, -1).max(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
+    x_priv = (x_priv - min_vals) / (max_vals - min_vals)
+    #print(x_priv.shape)
+    #Have to normalize x and x_priv to [0,1]
+    writer.add_image('Epoch: ' + str(epoch) + ', Val/IR priv info, batch: ' + str(index), x_priv, epoch)
+    writer.add_image('Epoch: ' + str(epoch) + ', Val/height map priv info, batch: ' + str(index), x_priv, epoch)
+
+
 def save_image(index, x, y_pred, y, epoch, config, writer):
+    channels = np.array(config.model.channels)
     #print(x.shape) #np array, shape C,512, 512
     #print(y_pred.shape) #512,512
     #print(y.shape) #512, 512
     #Unnormalize x and divide by 255 to get range [0,1]
 
-    x_temp = np.transpose(x[:3], (1,2,0)).astype(float)
-    x_temp *= np.array(config.dataset.std)[:3]
-    x_temp += np.array(config.dataset.mean)[:3]
-    x_temp = np.floor(x_temp)
-    x_temp = cv2.cvtColor(x_temp.astype(np.uint8), cv2.COLOR_BGR2RGB) #convert from BGR to RGB
-    x_temp = np.transpose(x_temp, (2,0,1))
-    x[:3] = x_temp/255.0
+    if is_subsequence_present(channels, [0,1,2]):
+        x_temp = np.transpose(x[:3], (1,2,0)).astype(float)
+        x_temp *= np.array(config.dataset.std)[:3]
+        x_temp += np.array(config.dataset.mean)[:3]
+        x_temp = np.floor(x_temp)
+        x_temp = cv2.cvtColor(x_temp.astype(np.uint8), cv2.COLOR_BGR2RGB) #convert from BGR to RGB
+        x_temp = np.transpose(x_temp, (2,0,1))
+        
+        x[:3] = x_temp/255.0
+        x_tensor = torch.from_numpy(x)
+        #print(x_tensor.shape)
+        #print(x_tensor.dtype)
+        writer.add_image('Epoch: ' + str(epoch) + ', Val/x, batch: ' + str(index), x_tensor[:3], epoch)
 
     colored_y = np.zeros((3, y.shape[0], y.shape[1]), dtype=np.uint8)
     colored_y_pred = np.zeros((3, y_pred.shape[0], y_pred.shape[1]), dtype=np.uint8)
@@ -254,16 +281,13 @@ def save_image(index, x, y_pred, y, epoch, config, writer):
 
     x_tensor = torch.from_numpy(x)
     
-    if config.model.n_channels == 5:
-        x_priv = x_tensor[3:]
-        #Not ideal normalization to be honest, as we don't know how strong the signal is
-        min_vals = x_priv.view(x_priv.size(0), -1).min(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
-        max_vals = x_priv.view(x_priv.size(0), -1).max(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
-        x_priv = (x_priv - min_vals) / (max_vals - min_vals)
-        x_tensor = x_tensor[:3]
-        #Have to normalize x and x_priv to [0,1]
-        writer.add_image('Epoch: ' + str(epoch) + ', Val/IR priv info, batch: ' + str(index), x_priv[0,:,:].unsqueeze(0), epoch)
-        writer.add_image('Epoch: ' + str(epoch) + ', Val/height map priv info, batch: ' + str(index), x_priv[1,:,:].unsqueeze(0), epoch)
+    if 3 in channels:
+        #print('skip print')
+        priv_info_image(3, index, x_tensor, epoch, writer)
+    if 4 in channels:
+        #print('skip print')
+        priv_info_image(4, index, x_tensor, epoch, writer)
+        
     
     colored_y_tensor = torch.from_numpy(colored_y)
     colored_y_pred_tensor = torch.from_numpy(colored_y_pred)
@@ -278,9 +302,7 @@ def save_image(index, x, y_pred, y, epoch, config, writer):
     #print(type(colored_y_pred_tensor), colored_y_tensor.dtype)
     #print(f"colored_y_tensor: max={colored_y_tensor.max().item()}, min={colored_y_tensor.min().item()}")
     #print(f"colored_y_pred_tensor: max={colored_y_pred_tensor.max().item()}, min={colored_y_pred_tensor.min().item()}")
-
     
-    writer.add_image('Epoch: ' + str(epoch) + ', Val/x, batch: ' + str(index), x_tensor, epoch)
     writer.add_image('Epoch: ' + str(epoch) + ', Val/y, batch: ' + str(index), colored_y_tensor, epoch) #unsqueeze adds dim
     writer.add_image('Epoch: ' + str(epoch) + ', Val/y_pred, batch: ' + str(index), colored_y_pred_tensor, epoch)
 

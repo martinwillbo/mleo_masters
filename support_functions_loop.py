@@ -11,8 +11,8 @@ from custom_losses import CE_tversky_Loss, senti_loss, teacher_student_loss
 
 def set_model(config, model_name, n_channels):
     if model_name == 'resnet50':
-        model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
-                                    dim_input = n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)  
+        model = deeplabv3_resnet50(weights = config.model.resnet50.pretrained, progress = True, #num_classes = config.model.n_class,
+                                    dim_input = n_channels, aux_loss = None, weights_backbone = config.model.resnet50.pretrained_backbone)  
         model.classifier[4] = nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))    
         model.backbone.conv1 = nn.Conv2d(n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     
@@ -28,13 +28,13 @@ def set_model(config, model_name, n_channels):
         )
 
     elif model_name== 'unet_mtd':
-        model = UNetWithMetadata(n_channels=n_channels, n_class=config.model.n_class, n_metadata=6, device=config.device, reweight=config.model.reweight_late, mtd_weighting = config.model.mtd_weighting)
+        model = UNetWithMetadata(n_channels=n_channels, n_class=config.model.n_class, n_metadata=6, device=config.device, reweight=config.model.mtd.reweight_late, mtd_weighting = config.model.mtd.mtd_weighting)
     
     elif model_name == 'unet_mtd_feature':
         model = UnetFeatureMetadata(n_channels=n_channels, n_class=config.model.n_class, n_metadata=6)
     
     elif model_name == 'unet_mtd_feature_2':
-        model = UnetFeatureMetadata_2(n_channels=n_channels, n_class=config.model.n_class, feature_block=config.model.feature_block, linear_mtd_preprocess=config.model.linear_mtd_preprocess)
+        model = UnetFeatureMetadata_2(n_channels=n_channels, n_class=config.model.n_class, feature_block=config.model.mtd.feature_block, linear_mtd_preprocess=config.model.mtd.linear_mtd_preprocess)
     
     elif config.model.name == 'unet_senti':
         model = UnetFeatureSenti(n_channels=n_channels, n_senti_channels=120, n_classes=config.model.n_class)
@@ -43,11 +43,11 @@ def set_model(config, model_name, n_channels):
         model = UnetSentiDoubleLoss(n_channels=n_channels, n_senti_channels=120, n_classes=config.model.n_class)
 
     elif config.model.name == 'unet_senti_mtd':
-        model = UnetFeatureSentiMtd(n_channels=n_channels, n_senti_channels=120, n_metadata=6, n_classes=config.model.n_class, w=config.model.mtd_weighting)
+        model = UnetFeatureSentiMtd(n_channels=n_channels, n_senti_channels=120, n_metadata=6, n_classes=config.model.n_class, w=config.model.mtd.mtd_weighting)
 
     return model
 
-def set_loss(loss_function):
+def set_loss(loss_function, teacher_w):
     if loss_function == 'CE':
         train_loss = nn.CrossEntropyLoss()
         eval_loss = nn.CrossEntropyLoss()
@@ -61,7 +61,7 @@ def set_loss(loss_function):
         train_loss = senti_loss()
         eval_loss = senti_loss()
     elif loss_function == 'teacher_student_loss':
-        train_loss = teacher_student_loss()
+        train_loss = teacher_student_loss(teacher_weight=teacher_w)
         eval_loss = smp.losses.TverskyLoss(mode='multiclass') #let eval loss be for only student
         
     return train_loss, eval_loss
@@ -88,7 +88,7 @@ def get_loss_y_pred(model_name, loss_function, loss, model, x, mtd, senti, y):
     return model, y_pred, l
 
 def get_teacher(config, teacher_path, teacher_model_type='unet') :
-    teacher = set_model(config, teacher_model_type, config.n_channles)
+    teacher = set_model(config, teacher_model_type, config.model.n_channels)
     teacher_path = os.path.join(teacher_path, 'best_model.pth')
     teacher.load_state_dict(torch.load(teacher_path))
     return teacher
@@ -98,7 +98,7 @@ def teacher_student(teacher, student, part, loss, x, y):
     #works only with u_net
     teacher_y_pred = teacher(x)
     student_y_pred = student(x)
-
+    
     if part == 'val':
         l = loss(student_y_pred, y)
     elif part == 'train':

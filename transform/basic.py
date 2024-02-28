@@ -3,6 +3,9 @@ import numpy as np
 from torchvision.transforms import ColorJitter
 import random
 import torch
+from support_functions_logging import is_subsequence_present
+
+
 
 class BasicTransform():
 
@@ -19,12 +22,13 @@ class BasicTransform():
                 hue=(-config.transform.color_jitter_hue, config.transform.color_jitter_hue)
             )
 
-    def apply(self, crop, gt_crop, senti):
+    def apply(self, crop, gt_crop, senti, channels):
         #if self.config.save_first_batch:
             #org = crop.copy()
         for aug in self.config.transform.order:
             if aug == 'color-jitter':
-                if random.random() < self.config.transform.p_color_jitter:
+                if random.random() < self.config.transform.p_color_jitter and is_subsequence_present(channels, [0,1,2]):
+                    
                     #TODO: Isn't this fucked up? Shouldnt we normalize after?
                     crop[:3, :, :] = self.c_jitter(torch.tensor(crop[:3,:,:].copy())).numpy() #can't jitter more than 3 channels
                     senti_reshaped = senti.reshape(-1, senti.shape[2], senti.shape[3])
@@ -56,5 +60,6 @@ class BasicTransform():
 
         return crop, gt_crop, senti
     
+
 def get_transform(config):
     return BasicTransform(config)

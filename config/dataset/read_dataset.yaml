@@ -9,7 +9,6 @@ det_crop: False #don't have both det_crop and random_crop on
 crop_step_size: 512 #will not be used if random cropping is on
 crop_size: 128
 random_crop: False
-using_priv: True
 scale: False
 dataset_size: 0.05
 senti_path: 'flair_sen'

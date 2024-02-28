@@ -11,7 +11,7 @@ defaults:
   - transform: basic
 
 seed: 42
-device: cuda:2 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
+device: cuda:1 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
 use_transform: True
 batch_size: 8
 eval_every: 1
@@ -29,24 +29,34 @@ momentum: 0.9
 loss_function: tversky
 
 model:
-  pretrained: DeepLabV3_ResNet50_Weights.DEFAULT #None does not work, but they seem to want it
-  pretrained_backbone: ResNet50_Weights.IMAGENET1K_V2 #default, can also use enum, read docs
   n_class: 19 #13 for grouped, 19 for all
   n_channels: 5
+  channels: [0,1,2,3,4]
   name: unet
-  reweight_late: False
-  mtd_weighting: 0.3 #0.3 for unet_mtd_senti
-  linear_mtd_preprocess: None
-  feature_block: 1
+
+  teacher_student:
+    student_name: unet
+    teacher_path: /raid/dlgroupmsc/logs/2024-02-09_15-07-03
+    teacher_weight: 0.4
+
+  resnet50:
+    pretrained: DeepLabV3_ResNet50_Weights.DEFAULT #None does not work, but they seem to want it
+    pretrained_backbone: ResNet50_Weights.IMAGENET1K_V2 #default, can also use enum, read docs
+ 
+  mtd:
+    reweight_late: False
+    mtd_weighting: 0.3 #0.3 for unet_mtd_senti
+    linear_mtd_preprocess: None
+    feature_block: 1
 
 noise:
   noise: True
-  noise_type: salt_n_pepper #for training
-  noise_distribution_type: batch #for training
+  noise_type: zero_out #for training
+  noise_distribution_type: None #for training
   stepwise_linear_function: function_2
 
 eval:
-  eval_type: salt_n_pepper
+  eval_type: image_wise_fade
   eval_model: unet
   eval_loss: tversky
   eval_channels: 5

@@ -20,6 +20,7 @@ class DatasetClass(Dataset):
         self.part = part
         self.X = []
         self.Y = []
+        self.channels = np.array(self.config.model.channels)
         self.aerial_to_senti = {}
     
         #Read in desiread transform
@@ -31,9 +32,8 @@ class DatasetClass(Dataset):
         self.senti_layer_means = np.array(self.config.dataset.mean_senti)
         self.senti_layer_stds = np.array(self.config.dataset.std_senti)
 
-        if not self.config.dataset.using_priv:
-            self.layer_means = self.layer_means[0:3] #only bgr
-            self.layer_stds = self.layer_stds[0:3]
+        self.layer_means = self.layer_means[self.channels] #only bgr
+        self.layer_stds = self.layer_stds[self.channels]
         
         self.mtd_mean = np.array(self.config.dataset.mtd_mean)
         self.mtd_std = np.array(self.config.dataset.mtd_std)
@@ -164,7 +164,7 @@ class DatasetClass(Dataset):
             y = self._rescale(y, is_label = True)
 
         if self.config.use_transform:
-            x, y, senti = self.transform.apply(x,y, senti)
+            x, y, senti = self.transform.apply(x,y, senti, self.channels)
         
         x = self._normalize(x)
         senti = self._normalize_senti(senti)
@@ -226,8 +226,7 @@ class DatasetClass(Dataset):
             data = data - 1 
         if not is_label:
             data = np.transpose(data, (2,0,1))
-            if not self.config.dataset.using_priv:
-                data = data[:3,:,:]
+            data=data[self.channels,:,:]
         return data
     
     def _read_metadata(self, img_name): 

@@ -12,7 +12,7 @@ import random
 import segmentation_models_pytorch as smp
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, save_senti_image, label_image
 from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2, custom_sine, image_wise_fade
-from support_functions_loop import set_model, set_loss, get_loss_y_pred
+from support_functions_loop import set_model, set_loss, get_loss_y_pred, get_teacher, teacher_student
 
 
 
@@ -29,7 +29,13 @@ def loop2(config, writer, hydra_log_dir):
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers, 
                             pin_memory = True)
     
-    model = set_model(config, config.model.name, config.model.n_channels)
+    
+    if config.model.name == 'teacher_student':
+        teacher = get_teacher(config, config.model.teacher_student.teacher_path)
+        teacher.to(config.device)
+        model = set_model(config, config.model.teacher_student.student_name, config.model.n_channels)
+    else:
+        model = set_model(config, config.model.name, config.model.n_channels)
 
     model.to(config.device)
     scaler = GradScaler()
@@ -44,7 +50,7 @@ def loop2(config, writer, hydra_log_dir):
 
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
         
-    train_loss, eval_loss = set_loss(config.loss_function)
+    train_loss, eval_loss = set_loss(config.loss_function, config.model.teacher_student.teacher_weight)
     CE_loss, tversky_loss = nn.CrossEntropyLoss(), smp.losses.TverskyLoss(mode='multiclass')
 
     epoch = 0
@@ -96,7 +102,10 @@ def loop2(config, writer, hydra_log_dir):
             senti = senti.to(config.device)
             
             with autocast():
-                model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, train_loss, model, x, mtd, senti, y)
+                if config.model.name == 'teacher_student':
+                    model, y_pred, l = teacher_student(teacher, model, 'train', train_loss, x, y)
+                else:
+                    model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, train_loss, model, x, mtd, senti, y)
             optimizer.zero_grad()
             scaler.scale(l).backward()
             scaler.step(optimizer)
@@ -156,7 +165,10 @@ def loop2(config, writer, hydra_log_dir):
                 mtd = mtd.to(config.device)
                 senti = senti.to(config.device)
 
-                model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, eval_loss, model, x, mtd, senti, y)
+                if config.model.name == 'teacher_student':
+                    model, y_pred, l = teacher_student(teacher, model, 'train', eval_loss, x, y)
+                else:
+                    model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, eval_loss, model, x, mtd, senti, y)
 
                 CE_l, tversky_l = CE_loss(y_pred, y), tversky_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
