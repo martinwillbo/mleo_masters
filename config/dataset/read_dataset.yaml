@@ -16,6 +16,7 @@ crop_step_size: 512 #will not be used if random cropping is on
 crop_size: 512 #128
 random_crop: False
 using_priv: True
+channels : [0,1,2,3,4]
 scale: False
 using_senti: True
 senti_size: 20 #one-sided, so 40 in total

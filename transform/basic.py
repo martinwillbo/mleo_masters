@@ -22,6 +22,7 @@ class BasicTransform():
     def apply(self, crop, gt_crop, senti=None):
         #if self.config.save_first_batch:
             #org = crop.copy()
+        channels = self.config.dataset.channels
         for aug in self.config.transform.order:
             if aug == 'color-jitter':
                 if random.random() < self.config.transform.p_color_jitter and is_subsequence_present(channels, [0,1,2]):
@@ -67,7 +68,7 @@ def get_transform(config):
 
 def is_subsequence_present(lst, subsequence):
     """Check if subsequence is present in lst."""
-    for i in range(len(lst) - len(subsequence) + 1):
-        if lst[i:i+len(subsequence)] == subsequence:
-            return True
-    return False
+    for i in subsequence:
+        if i not in lst:
+            return False
+    return True
