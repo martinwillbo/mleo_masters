@@ -158,7 +158,7 @@ class DatasetClass(Dataset):
             x = self._rescale(x, is_label = False)
             y = self._rescale(y, is_label = True)
         if self.config.use_transform:
-            if self.config.datset.using_senti:
+            if self.config.dataset.using_senti:
                 x, y, senti = self.transform.apply(x, y, senti) 
             else:
                 x, y = self.transform.apply(x, y)                       
