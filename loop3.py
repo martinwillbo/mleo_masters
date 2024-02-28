@@ -118,11 +118,15 @@ def loop3(config, writer, hydra_log_dir):
         y_list = []
         
         for batch in tqdm(train_iter):
-            x, y, senti = batch
+            if config.dataset.using_senti:
+                x, y, senti = batch
+                senti = senti.to(config.device)
+            else:
+                x, y = batch
+
             x = x.to(config.device) # dtype=torch.float32)
             y = y.to(config.device)   
-            senti = senti.to(config.device)          
-
+                      
             with autocast():
                 if config.model.name == 'resnet50':
                     y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
@@ -178,10 +182,14 @@ def loop3(config, writer, hydra_log_dir):
             val_iter = iter(val_loader)
             for batch in tqdm(val_iter):
 
-                x, y, senti = batch
-                x = x.to(config.device)
-                y = y.to(config.device)
-                senti = senti.to(config.device)    
+                if config.dataset.using_senti:
+                    x, y, senti = batch
+                    senti = senti.to(config.device)
+                else:
+                    x, y = batch
+
+                x = x.to(config.device) # dtype=torch.float32)
+                y = y.to(config.device)    
 
                 if config.model.name == 'resnet50':
                    y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
