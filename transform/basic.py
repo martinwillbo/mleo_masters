@@ -24,10 +24,15 @@ class BasicTransform():
             #org = crop.copy()
         for aug in self.config.transform.order:
             if aug == 'color-jitter':
-                if random.random() < self.config.transform.p_color_jitter:
+                if random.random() < self.config.transform.p_color_jitter and is_subsequence_present(channels, [0,1,2]):
+                    #print('This has RGB in it!')
                     #TODO: Isn't this fucked up? Shouldnt we normalize after?
-                    crop[:3, :, :] = self.c_jitter(torch.tensor(crop[:3,:,:].copy())).numpy()
-                    #crop = self.c_jitter(torch.tensor(crop.copy())).numpy()
+                    crop[:3, :, :] = self.c_jitter(torch.tensor(crop[:3,:,:].copy())).numpy() #can't jitter more than 3 channels
+                    senti_reshaped = senti.reshape(-1, senti.shape[2], senti.shape[3])
+                    for c in range(0, senti.shape[1]*senti.shape[0]):
+                        if not c % 10 == 0 and not c % 11 == 0:
+                            senti_reshaped[c, :, :] = self.c_jitter( (torch.tensor(senti_reshaped[c, :, :].copy()).unsqueeze(0))).numpy()
+                    senti = senti_reshaped.reshape(senti.shape[0], senti.shape[1], senti.shape[2], senti.shape[3])
             elif aug == 'up-down':
                 if random.random() < self.config.transform.p_up_down_flip:
                     crop = np.flip(crop, axis=1)
@@ -59,3 +64,10 @@ class BasicTransform():
     
 def get_transform(config):
     return BasicTransform(config)
+
+def is_subsequence_present(lst, subsequence):
+    """Check if subsequence is present in lst."""
+    for i in range(len(lst) - len(subsequence) + 1):
+        if lst[i:i+len(subsequence)] == subsequence:
+            return True
+    return False
