@@ -17,7 +17,7 @@ crop_size: 512 #128
 random_crop: False
 using_priv: True
 scale: False
-using_senti: False
+using_senti: True
 senti_size: 20 #one-sided, so 40 in total
 
 mean: [113.7693, 118.0902, 109.2753, 102.3808, 16.7343] #B is the first channel, then G, then R (only on train, not val)
