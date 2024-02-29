@@ -275,22 +275,22 @@ class DatasetClass(Dataset):
         patches = patches[dates_to_keep,:,:,:]
         #Initialize
         
-        mean_patches = []
-        prev_mean = None
+        #mean_patches = []
+        #prev_mean = None
         # calc mean for each month
-        for m in range(1,13):
-            month_dates = list(filter(lambda i: (dates[i].month == m), range(len(dates))))
-            if len(month_dates)!=0:
-                prev_mean = np.mean(patches[month_dates,:,:,:], axis=0)
-                mean_patches.append(prev_mean)  
-            else: 
-                if prev_mean is not None:
-                    mean_patches.append(prev_mean)
-                else:
-                    #print('No previous data, zero_padding instead')
-                    mean_patches.append(np.zeros((10, 2*self.config.dataset.senti_size + 1, 2*self.config.dataset.senti_size + 1)))               
+        #for m in range(1,13):
+        #    month_dates = list(filter(lambda i: (dates[i].month == m), range(len(dates))))
+        #    if len(month_dates)!=0:
+        #        prev_mean = np.mean(patches[month_dates,:,:,:], axis=0)
+        #        mean_patches.append(prev_mean)  
+        #    else: 
+        #        if prev_mean is not None:
+        #            mean_patches.append(prev_mean)
+        #        else:
+        #            #print('No previous data, zero_padding instead')
+        #            mean_patches.append(np.zeros((10, 2*self.config.dataset.senti_size + 1, 2*self.config.dataset.senti_size + 1)))               
       
-        return np.array(mean_patches)
+        return np.array(patches)#mean_patches)
         
         
     
