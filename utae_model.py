@@ -18,7 +18,7 @@ class UTAE(nn.Module):
         str_conv_k=4,
         str_conv_s=2,
         str_conv_p=1,
-        agg_mode="mean",
+        agg_mode="att_group",
         encoder_norm="group",
         n_head=16,
         d_model=256,
