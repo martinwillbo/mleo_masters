@@ -15,8 +15,8 @@ det_crop: False #don't have both det_crop and random_crop on
 crop_step_size: 512 #will not be used if random cropping is on
 crop_size: 512 #128
 random_crop: False
-using_priv: False
-channels : [0,1,2]
+using_priv: True
+channels : [0,1,2,3,4]
 scale: False
 using_senti: False
 senti_size: 20 #one-sided, so 40 in total
