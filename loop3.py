@@ -87,8 +87,12 @@ def loop3(config, writer, hydra_log_dir):
     #if config.loss_function == 'dice':
     #    train_loss = DiceLoss(config) #dice loss is a modified version of jaccard
     #    eval_loss =  DiceLoss(config)
+    if config.loss_fuction == 'teacher_student_loss':
+        train_loss = (teacher_weight, ts_loss )
+        eval_loss = smp.losses.TverskyLoss(mode='multiclass')
 
     if config.loss_function == 'tversky':
+
         train_loss = smp.losses.TverskyLoss(mode='multiclass')
         eval_loss = smp.losses.TverskyLoss(mode='multiclass')
         CE_loss = nn.CrossEntropyLoss() 
@@ -97,6 +101,16 @@ def loop3(config, writer, hydra_log_dir):
         train_loss = senti_loss()
         eval_loss = senti_loss()
         CE_loss = nn.CrossEntropyLoss() 
+
+    if config.model.name == 'teacher_student':
+        teacher = get_teacher(config, teacher_path, teacher_model_type)
+        teacher.to(config.device)
+
+        
+        model = # studentmodell med config från student
+
+        
+    
 
     print(train_loss)
     print(eval_loss)
@@ -112,6 +126,10 @@ def loop3(config, writer, hydra_log_dir):
         print('Epoch: '+str(epoch))
         epoch_loss = [] 
         model.train()
+        if config.model.name == 'teacher_student':
+            teacher.eval()
+
+
         train_iter = iter(train_loader)
 
         y_pred_list = [] #list to save for an entire epoch
@@ -135,10 +153,12 @@ def loop3(config, writer, hydra_log_dir):
                     y_pred = model(x)
                 elif config.model.name =='unet_senti' or config.model.name == 'unet_senti_utae':
                     y_pred, y_pred_senti = model(x, senti)
+                elif config.model.name == 'teacher_student':
+                    model,y_pred,l = teacher_student(teacher, model, 'train', train_loss, x, y, config.model.teacher_student.teacher_channels)
                   
                 if config.loss_function == 'senti_loss':
                     l = train_loss(y_pred, y_pred_senti, y)
-                else:
+                elif config.model.name != 'teacher_student':
                     l = train_loss(y_pred, y)
             
             y_pred = torch.argmax(y_pred, dim=1)
@@ -168,6 +188,9 @@ def loop3(config, writer, hydra_log_dir):
 
         if epoch % config.eval_every == 0:
             model.eval()
+            if config.model.name == 'teacher_student':
+                teacher.eval()
+
             val_loss = []
             CE_val_loss =[]
             val_y_pred_list = []
@@ -191,21 +214,22 @@ def loop3(config, writer, hydra_log_dir):
 
                 x = x.to(config.device) # dtype=torch.float32)
                 y = y.to(config.device)    
+                with torch.no_grad():
+                    if config.model.name == 'resnet50':
+                        y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
+                    elif config.model.name == 'unet':
+                        y_pred = model(x)     
+                    elif config.model.name =='unet_senti' or config.model.name == 'unet_senti_utae':
+                        y_pred, y_pred_senti = model(x, senti)
+                    elif config.model.name == 'teacher_student':
+                        model,y_pred,l = teacher_student(teacher, model, 'val', eval_loss, x, y, config.model.teacher_student.teacher_channels)
+                        
 
-                if config.model.name == 'resnet50':
-                   y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
-                elif config.model.name == 'unet':
-                   y_pred = model(x)     
-                elif config.model.name =='unet_senti' or config.model.name == 'unet_senti_utae':
-                    y_pred, y_pred_senti = model(x, senti)
-                     
-                #y_pred = y_pred.to(torch.float32)
-
-                if config.loss_function == 'senti_loss':
-                    l = eval_loss(y_pred, y_pred_senti, y)
-                else:
-                    l = eval_loss(y_pred, y)
-                
+                    if config.loss_function == 'senti_loss':
+                        l = eval_loss(y_pred, y_pred_senti, y)
+                    elif config.model.name != 'teacher_student':
+                        l = eval_loss(y_pred, y)
+                    
                 l_CE =  CE_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())

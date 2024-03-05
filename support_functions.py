@@ -1,3 +1,4 @@
+import os
 from unet_module import UnetFeatureMetadata, UnetFeatureMetadata_2, UnetFeatureSenti, UnetSentiDoubleLoss #, UnetFeatureSentiMtd, UNetWithMetadata
 import segmentation_models_pytorch as smp
 #from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
@@ -33,3 +34,30 @@ def set_model(config, model_name, n_channels):
     #elif config.model.name == 'unet_senti_mtd':
     #    model = UnetFeatureSentiMtd(n_channels=n_channels, n_senti_channels=120, n_metadata=6, n_classes=config.model.n_class, w=config.model.mtd_weighting)
     return model
+
+def get_teacher(config, teacher_path, teacher_model_type):
+        teacher = set_model(config, teacher_model_type, config.model.teacher_student.teacher_channels)
+        teacher_path = os.path.join(teacher_path, 'best_model.pth')
+        teacher.load_state_dict(torch.load(teacher_path))
+        return teacher 
+
+def teacher_student(teacher, student, part, loss, x, y, teacher_channels):
+    #works only with u_net
+    with torch.no_grad():
+        teacher_y_pred = teacher(x[:,-teacher_channels:, :, :])
+    student_y_pred = student(x[:,:3, :, :]) #ONLY RGB!!!
+    if part == 'val':
+        l = loss(student_y_pred, y)
+    elif part == 'train':
+        l = loss(student_y_pred, teacher_y_pred, y)
+    return student, student_y_pred, l
+
+
+
+
+
+
+
+
+
+

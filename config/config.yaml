@@ -36,4 +36,11 @@ model:
   pretrained_backbone: ResNet50_Weights.IMAGENET1K_V2 #default, can also use enum, read docs. ResNet50_Weights.IMAGENET1K_V2 are improved from ...1K_V1 
   n_class: 19 #13 for grouped, 19 for all but should be for training so set 19
   n_channels: 5
+  teacher_student: 
+    student_name: unet
+    teacher_patch: dsafdjaldksja
+    teacher_weight: 0.4
+    teacher_channels: 5
+    student_channels: 3
+    ts_loss: KL
 
