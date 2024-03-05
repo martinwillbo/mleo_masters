@@ -131,7 +131,7 @@ def loop3(config, writer, hydra_log_dir):
                 if config.model.name == 'resnet50':
                     y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
                 elif config.model.name == 'unet':
-                    print(model.encoder(x).shape)
+                    print(model.encoder(x)[-1].shape)
                     y_pred = model(x)
                 elif config.model.name =='unet_senti' or config.model.name == 'unet_senti_utae':
                     y_pred, y_pred_senti = model(x, senti)
