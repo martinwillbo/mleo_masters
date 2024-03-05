@@ -42,9 +42,9 @@ def loop3(config, writer, hydra_log_dir):
     label_image(config, writer)
     
     train_loader = DataLoader(train_set, batch_size = config.batch_size, shuffle = True, num_workers = config.num_workers,
-                              pin_memory = True, collate_fn=collate_fn)
+                              pin_memory = True)#, collate_fn=collate_fn)
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers, 
-                            pin_memory = True, collate_fn=collate_fn)
+                            pin_memory = True)#, collate_fn=collate_fn)
     
     if config.model.name == 'unet':
         model = smp.Unet(
@@ -131,6 +131,7 @@ def loop3(config, writer, hydra_log_dir):
                 if config.model.name == 'resnet50':
                     y_pred = model(x)['out'] #NOTE: dlv3_r50 returns a dictionary
                 elif config.model.name == 'unet':
+                    print(model.encoder(x).shape)
                     y_pred = model(x)
                 elif config.model.name =='unet_senti' or config.model.name == 'unet_senti_utae':
                     y_pred, y_pred_senti = model(x, senti)
