@@ -23,7 +23,7 @@ def set_model(config, model_name, n_channels):
         model = smp.Unet(
             encoder_weights="imagenet",
             encoder_name="efficientnet-b4",
-            in_channels = config.model.n_channels,
+            in_channels = n_channels,
             classes= config.model.n_class
         )
 
@@ -47,7 +47,7 @@ def set_model(config, model_name, n_channels):
 
     return model
 
-def set_loss(loss_function, teacher_w):
+def set_loss(loss_function, teacher_w, ts_loss):
     if loss_function == 'CE':
         train_loss = nn.CrossEntropyLoss()
         eval_loss = nn.CrossEntropyLoss()
@@ -61,7 +61,7 @@ def set_loss(loss_function, teacher_w):
         train_loss = senti_loss()
         eval_loss = senti_loss()
     elif loss_function == 'teacher_student_loss':
-        train_loss = teacher_student_loss(teacher_weight=teacher_w)
+        train_loss = teacher_student_loss(teacher_weight=teacher_w, ts_loss=ts_loss)
         eval_loss = smp.losses.TverskyLoss(mode='multiclass') #let eval loss be for only student
         
     return train_loss, eval_loss
@@ -88,16 +88,17 @@ def get_loss_y_pred(model_name, loss_function, loss, model, x, mtd, senti, y):
     return model, y_pred, l
 
 def get_teacher(config, teacher_path, teacher_model_type='unet') :
-    teacher = set_model(config, teacher_model_type, config.model.n_channels)
+    teacher = set_model(config, teacher_model_type, config.model.teacher_student.teacher_channels)
     teacher_path = os.path.join(teacher_path, 'best_model.pth')
     teacher.load_state_dict(torch.load(teacher_path))
     return teacher
 
 
-def teacher_student(teacher, student, part, loss, x, y):
+def teacher_student(teacher, student, part, loss, x, y, teacher_channels):
     #works only with u_net
-    teacher_y_pred = teacher(x)
-    student_y_pred = student(x)
+    with torch.no_grad():
+        teacher_y_pred = teacher(x[:,-teacher_channels:, :, :])
+    student_y_pred = student(x[:,:3, :, :]) #ONLY RGB!!!
     
     if part == 'val':
         l = loss(student_y_pred, y)

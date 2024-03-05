@@ -58,7 +58,7 @@ def eval_model(config, writer, training_path, eval_type):
     for batch in tqdm(val_iter):
         x, y, _, _ = batch
 
-        if eval_type != 'normal':
+        if eval_type not in ['normal', 'zero_out', 'zero_out_5/3']:
             x = set_noise(x, noise_level, eval_type)
 
         x = x.to(config.device)

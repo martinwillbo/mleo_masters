@@ -33,7 +33,7 @@ def loop2(config, writer, hydra_log_dir):
     if config.model.name == 'teacher_student':
         teacher = get_teacher(config, config.model.teacher_student.teacher_path)
         teacher.to(config.device)
-        model = set_model(config, config.model.teacher_student.student_name, config.model.n_channels)
+        model = set_model(config, config.model.teacher_student.student_name, config.model.teacher_student.student_channels)
     else:
         model = set_model(config, config.model.name, config.model.n_channels)
 
@@ -50,7 +50,7 @@ def loop2(config, writer, hydra_log_dir):
 
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
         
-    train_loss, eval_loss = set_loss(config.loss_function, config.model.teacher_student.teacher_weight)
+    train_loss, eval_loss = set_loss(config.loss_function, config.model.teacher_student.teacher_weight, config.model.teacher_student.ts_loss)
     CE_loss, tversky_loss = nn.CrossEntropyLoss(), smp.losses.TverskyLoss(mode='multiclass')
 
     epoch = 0
@@ -64,6 +64,9 @@ def loop2(config, writer, hydra_log_dir):
         print('Epoch: '+str(epoch))
         epoch_loss = [] 
         model.train()
+        if config.model.name == teacher_student:
+            teacher.eval()
+        
         train_iter = iter(train_loader)
 
         y_pred_list = [] #list to save for an entire epoch
@@ -103,7 +106,7 @@ def loop2(config, writer, hydra_log_dir):
             
             with autocast():
                 if config.model.name == 'teacher_student':
-                    model, y_pred, l = teacher_student(teacher, model, 'train', train_loss, x, y)
+                    model, y_pred, l = teacher_student(teacher, model, 'train', train_loss, x, y, config.model.teacher_student.teacher_channels)
                 else:
                     model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, train_loss, model, x, mtd, senti, y)
             optimizer.zero_grad()
@@ -136,6 +139,10 @@ def loop2(config, writer, hydra_log_dir):
 
         if epoch % config.eval_every == 0:
             model.eval()
+
+            if config.model.name == teacher_student:
+                teacher.eval()
+            
             val_loss = []
             val_CE_loss, val_tversky_loss = [], []
             val_y_pred_list = []
@@ -165,10 +172,11 @@ def loop2(config, writer, hydra_log_dir):
                 mtd = mtd.to(config.device)
                 senti = senti.to(config.device)
 
-                if config.model.name == 'teacher_student':
-                    model, y_pred, l = teacher_student(teacher, model, 'train', eval_loss, x, y)
-                else:
-                    model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, eval_loss, model, x, mtd, senti, y)
+                with torch.no_grad():
+                    if config.model.name == 'teacher_student':
+                        model, y_pred, l = teacher_student(teacher, model, 'val', eval_loss, x, y, config.model.teacher_student.teacher_channels)
+                    else:
+                        model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, eval_loss, model, x, mtd, senti, y)
 
                 CE_l, tversky_l = CE_loss(y_pred, y), tversky_loss(y_pred, y)
                 y_pred = torch.argmax(y_pred, dim=1)
