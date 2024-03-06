@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+
 import torchvision.transforms as T
 import segmentation_models_pytorch as smp
 from segmentation_models_pytorch.base.modules import Conv2dReLU, Attention

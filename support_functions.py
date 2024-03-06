@@ -52,15 +52,23 @@ def get_teacher(config, teacher_path, teacher_model_type):
         teacher.load_state_dict(torch.load(teacher_path))
         return teacher 
 
-def teacher_student(teacher, student, part, loss, x, y, teacher_channels):
+def teacher_student(teacher, student, part, loss, x, y, teacher_channels, rep_layer = False):
     #works only with u_net
+
     with torch.no_grad():
+        if rep_layer:
+            teacher_last_feature =  teacher.encoder(x[:,-teacher_channels:, :, :])[-1]
         teacher_y_pred = teacher(x[:,-teacher_channels:, :, :])
+    if rep_layer:
+        student_last_feature = student.encoder(x[:,:3, :, :])[-1]   
     student_y_pred = student(x[:,:3, :, :]) #ONLY RGB!!!
     if part == 'val':
         l = loss(student_y_pred, y)
     elif part == 'train':
-        l = loss(student_y_pred, teacher_y_pred, y)
+        if rep_layer:
+            l = loss(student_y_pred, teacher_y_pred, y, student_last_feature, teacher_last_feature)
+        else:
+            l = loss(student_y_pred, teacher_y_pred, y)
     return student, student_y_pred, l
 
 def collate_fn(batch):
