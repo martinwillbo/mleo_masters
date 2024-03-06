@@ -46,8 +46,8 @@ class teacher_student_loss(nn.Module):
             teacher_l = self.teacher_loss(F.softmax(student_y_pred, dim=1), F.softmax(teacher_y_pred, dim=1))
 
         if self.rep_layer:
-            print(student_last_feature)
-            print(teacher_last_feature)
+            #print(student_last_feature)
+            #print(teacher_last_feature)
             rep_l = self.rep_loss(F.log_softmax(student_last_feature, dim=1), F.softmax(teacher_last_feature, dim=1))
 
         combined_loss = teacher_l*self.teacher_w + student_l*(1-self.teacher_w) + rep_l*self.rep_w
