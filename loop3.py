@@ -10,30 +10,17 @@ import sys
 from torch.cuda.amp import autocast, GradScaler
 import segmentation_models_pytorch as smp
 from unet_module import UnetFeatureSenti, UnetSentiUnet, UnetSentiDoubleLoss, UnetSentiUTAE
-from double_loss import senti_loss
+from loss_functions import senti_loss, teacher_student_loss
 import os
 import math
 import random
 import cv2
 import matplotlib.pyplot as plt
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, label_image, save_image, save_senti_image
-from torch.nn.utils.rnn import pad_sequence
-
-def collate_fn(batch):
-    # Extract x_data, label_data, and time_series_data from the batch
-    batch_x_data, batch_y_data, batch_time_series_data = zip(*batch)
-    
-    # Pad the time-series data
-    padded_time_series_data = pad_sequence(batch_time_series_data, batch_first=True, padding_value=0)
-    
-    batch_x_data = torch.stack(batch_x_data)
-    batch_y_data = torch.stack(batch_y_data)
-    #padded_time_series_data = torch.stack(padded_time_series_data)
-    #return torch.tensor(batch_x_data, dtype = torch.float), torch.tensor(batch_y_data, dtype = torch.long), torch.tensor(padded_time_series_data, dtype = torch.float)
-    return batch_x_data, batch_y_data, padded_time_series_data
-
+from support_functions import set_model, teacher_student, get_teacher, collate_fn
 
 def loop3(config, writer, hydra_log_dir):
+
     dataset_module = util.load_module(config.dataset.script_location)
     train_set = dataset_module.train_set(config)
     val_set = dataset_module.val_set(config)
@@ -46,28 +33,7 @@ def loop3(config, writer, hydra_log_dir):
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers, 
                             pin_memory = True)#, collate_fn=collate_fn)
     
-    if config.model.name == 'unet':
-        model = smp.Unet(
-            encoder_weights="imagenet", 
-            encoder_name="efficientnet-b4",
-            in_channels = config.model.n_channels,
-            classes= config.model.n_class            
-        )
-
-    if config.model.name == 'resnet50':
-        model = deeplabv3_resnet50(weights = config.model.pretrained, progress = True, #num_classes = config.model.n_class,
-                                    dim_input = config.model.n_channels, aux_loss = None, weights_backbone = config.model.pretrained_backbone)
-        
-        model.classifier[4] = torch.nn.Conv2d(256, config.model.n_class, kernel_size=(1,1), stride=(1,1))
-        model.backbone.conv1 = nn.Conv2d(config.model.n_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-
-    if config.model.name == 'unet_senti':
-        model = UnetSentiDoubleLoss(n_channels=config.model.n_channels, n_senti_channels=120, n_classes=config.model.n_class)
-    #model = FCN8s(n_class=config.model.n_class, dim_input=config.model.n_channels, weight_init='normal')
-        
-    if config.model.name == 'unet_senti_utae':
-        model = UnetSentiUTAE(n_channels=config.model.n_channels, n_senti_channels=10, n_classes=config.model.n_class)
-
+    model = set_model(config, config.name, config.model.n_channels)
     model = model.to(config.device)
     
     scaler = GradScaler()
@@ -84,39 +50,28 @@ def loop3(config, writer, hydra_log_dir):
         train_loss = nn.CrossEntropyLoss()
         eval_loss = nn.CrossEntropyLoss()   
 
-    #if config.loss_function == 'dice':
-    #    train_loss = DiceLoss(config) #dice loss is a modified version of jaccard
-    #    eval_loss =  DiceLoss(config)
     if config.loss_fuction == 'teacher_student_loss':
-        train_loss = (teacher_weight, ts_loss )
+        train_loss = teacher_student_loss(config.teacher_student.teacher_weight, config.teacher_student.ts_loss )
         eval_loss = smp.losses.TverskyLoss(mode='multiclass')
 
     if config.loss_function == 'tversky':
-
         train_loss = smp.losses.TverskyLoss(mode='multiclass')
         eval_loss = smp.losses.TverskyLoss(mode='multiclass')
-        CE_loss = nn.CrossEntropyLoss() 
     
     if config.loss_function == 'senti_loss':
         train_loss = senti_loss()
         eval_loss = senti_loss()
-        CE_loss = nn.CrossEntropyLoss() 
-
+        
     if config.model.name == 'teacher_student':
-        teacher = get_teacher(config, teacher_path, teacher_model_type)
+        teacher = get_teacher(config, config.teacher_student.teacher_path, config.teacher_student.teacher_model_type)
         teacher.to(config.device)
-
-        
-        model = # studentmodell med config från student
-
-        
-    
 
     print(train_loss)
     print(eval_loss)
 
     epoch = 0
     best_val_loss = np.inf
+    CE_loss = nn.CrossEntropyLoss() 
 
     while epoch < config.max_epochs:
         print(torch.cuda.current_device())
@@ -129,9 +84,7 @@ def loop3(config, writer, hydra_log_dir):
         if config.model.name == 'teacher_student':
             teacher.eval()
 
-
         train_iter = iter(train_loader)
-
         y_pred_list = [] #list to save for an entire epoch
         y_list = []
         

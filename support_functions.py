@@ -1,10 +1,13 @@
 import os
-from unet_module import UnetFeatureMetadata, UnetFeatureMetadata_2, UnetFeatureSenti, UnetSentiDoubleLoss #, UnetFeatureSentiMtd, UNetWithMetadata
+from unet_module import UnetFeatureMetadata, UnetFeatureMetadata_2, UnetFeatureSenti, UnetSentiDoubleLoss, UnetSentiUTAE #, UnetFeatureSentiMtd, UNetWithMetadata
 import segmentation_models_pytorch as smp
 #from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+from torch.nn.utils.rnn import pad_sequence
+
 
 def set_model(config, model_name, n_channels):
     if model_name == 'resnet50':
@@ -18,7 +21,7 @@ def set_model(config, model_name, n_channels):
         model = smp.Unet(
             encoder_weights="imagenet",
             encoder_name="efficientnet-b4",
-            in_channels = config.model.n_channels,
+            in_channels = n_channels,
             classes= config.model.n_class
         )
     #elif model_name== 'unet_mtd':
@@ -31,8 +34,16 @@ def set_model(config, model_name, n_channels):
         model = UnetFeatureSenti(n_channels=n_channels, n_senti_channels=120, n_classes=config.model.n_class)
     elif config.model.name == 'unet_senti_double':
         model = UnetSentiDoubleLoss(n_channels=n_channels, n_senti_channels=120, n_classes=config.model.n_class)
-    #elif config.model.name == 'unet_senti_mtd':
-    #    model = UnetFeatureSentiMtd(n_channels=n_channels, n_senti_channels=120, n_metadata=6, n_classes=config.model.n_class, w=config.model.mtd_weighting)
+    elif config.model.name == 'teacher_student':
+        model = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = config.teacher_student.student_channels,
+            classes= config.model.n_class
+        ) 
+    elif config.model.name == 'unet_senti_utae':
+        model = UnetSentiUTAE(n_channels=n_channels, n_senti_channels=10, n_classes=config.model.n_class)
+
     return model
 
 def get_teacher(config, teacher_path, teacher_model_type):
@@ -52,10 +63,18 @@ def teacher_student(teacher, student, part, loss, x, y, teacher_channels):
         l = loss(student_y_pred, teacher_y_pred, y)
     return student, student_y_pred, l
 
-
-
-
-
+def collate_fn(batch):
+    # Extract x_data, label_data, and time_series_data from the batch
+    batch_x_data, batch_y_data, batch_time_series_data = zip(*batch)
+    
+    # Pad the time-series data
+    padded_time_series_data = pad_sequence(batch_time_series_data, batch_first=True, padding_value=0)
+    
+    batch_x_data = torch.stack(batch_x_data)
+    batch_y_data = torch.stack(batch_y_data)
+    #padded_time_series_data = torch.stack(padded_time_series_data)
+    #return torch.tensor(batch_x_data, dtype = torch.float), torch.tensor(batch_y_data, dtype = torch.long), torch.tensor(padded_time_series_data, dtype = torch.float)
+    return batch_x_data, batch_y_data, padded_time_series_data
 
 
 

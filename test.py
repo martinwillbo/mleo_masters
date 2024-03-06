@@ -4,7 +4,7 @@ import numpy as np
 import util
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from double_loss import senti_loss
+from loss_functions import senti_loss
 import segmentation_models_pytorch as smp
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix 
 
