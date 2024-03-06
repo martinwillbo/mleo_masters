@@ -17,7 +17,7 @@ class senti_loss(nn.Module):
         return combined_loss
 
 class teacher_student_loss(nn.Module):
-    def __init__(self, teacher_weight, ts_loss, rep_weight):
+    def __init__(self, teacher_weight, ts_loss, rep_layer, rep_weight):
         super(teacher_student_loss, self).__init__()
         self.student_loss = smp.losses.TverskyLoss(mode='multiclass')
         if ts_loss == 'KL':
@@ -28,7 +28,7 @@ class teacher_student_loss(nn.Module):
             self.teacher_loss = torch.nn.CrossEntropyLoss()
         
         self.rep_loss = torch.nn.KLDivLoss(reduction='batchmean') #fult men börjar så ändå
-
+        self.rep_layer = rep_layer
         self.ts_loss = ts_loss
         self.teacher_w = teacher_weight
         self.rep_w = rep_weight
@@ -45,7 +45,9 @@ class teacher_student_loss(nn.Module):
         elif self.ts_loss == 'CE':
             teacher_l = self.teacher_loss(F.softmax(student_y_pred, dim=1), F.softmax(teacher_y_pred, dim=1))
 
-        if student_last_feature and teacher_last_feature is not None:
+        if self.rep_layer:
+            print(student_last_feature)
+            print(teacher_last_feature)
             rep_l = self.rep_loss(F.log_softmax(student_last_feature, dim=1), F.softmax(teacher_last_feature, dim=1))
 
         combined_loss = teacher_l*self.teacher_w + student_l*(1-self.teacher_w) + rep_l*self.rep_weight
