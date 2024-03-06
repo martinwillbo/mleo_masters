@@ -193,7 +193,7 @@ def loop3(config, writer, hydra_log_dir):
         
                 if counter in idx_list and epoch % 30 == 0:
                     x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
-                    senti_cpu = senti[0, 6, :, :, :].cpu().detach().contiguous().numpy() # only july
+                    #senti_cpu = senti[0, 6, :, :, :].cpu().detach().contiguous().numpy() # only july
                     y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
                     y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
                     save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)
