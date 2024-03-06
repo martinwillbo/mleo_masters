@@ -39,7 +39,7 @@ model:
   teacher_student: 
     student_name: unet
     teacher_path: '../log_res/2024-02-08_17-09-25'
-    teacher_type: 'unet'
+    teacher_model_type: 'unet'
     teacher_weight: 0.4
     teacher_channels: 5
     student_channels: 3
