@@ -33,7 +33,7 @@ def loop3(config, writer, hydra_log_dir):
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers, 
                             pin_memory = True)#, collate_fn=collate_fn)
     
-    model = set_model(config, config.name, config.model.n_channels)
+    model = set_model(config, config.model.name, config.model.n_channels)
     model = model.to(config.device)
     
     scaler = GradScaler()
