@@ -38,7 +38,7 @@ def set_model(config, model_name, n_channels):
         model = smp.Unet(
             encoder_weights="imagenet",
             encoder_name="efficientnet-b4",
-            in_channels = config.teacher_student.student_channels,
+            in_channels = config.model.teacher_student.student_channels,
             classes= config.model.n_class
         ) 
     elif config.model.name == 'unet_senti_utae':

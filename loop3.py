@@ -51,7 +51,7 @@ def loop3(config, writer, hydra_log_dir):
         eval_loss = nn.CrossEntropyLoss()   
 
     if config.loss_fuction == 'teacher_student_loss':
-        train_loss = teacher_student_loss(config.teacher_student.teacher_weight, config.teacher_student.ts_loss )
+        train_loss = teacher_student_loss(config.model.teacher_student.teacher_weight, config.model.teacher_student.ts_loss )
         eval_loss = smp.losses.TverskyLoss(mode='multiclass')
 
     if config.loss_function == 'tversky':
@@ -63,7 +63,7 @@ def loop3(config, writer, hydra_log_dir):
         eval_loss = senti_loss()
         
     if config.model.name == 'teacher_student':
-        teacher = get_teacher(config, config.teacher_student.teacher_path, config.teacher_student.teacher_model_type)
+        teacher = get_teacher(config, config.model.teacher_student.teacher_path, config.model.teacher_student.teacher_model_type)
         teacher.to(config.device)
 
     print(train_loss)
