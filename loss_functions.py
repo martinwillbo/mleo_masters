@@ -27,7 +27,8 @@ class teacher_student_loss(nn.Module):
         elif ts_loss == 'CE':
             self.teacher_loss = torch.nn.CrossEntropyLoss()
         
-        self.rep_loss = torch.nn.KLDivLoss(reduction='batchmean')
+        self.rep_loss = torch.nn.KLDivLoss(reduction='batchmean') #fult men börjar så ändå
+
         self.ts_loss = ts_loss
         self.teacher_w = teacher_weight
         self.rep_w = rep_weight

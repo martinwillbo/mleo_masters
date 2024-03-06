@@ -107,7 +107,7 @@ def loop3(config, writer, hydra_log_dir):
                 elif config.model.name =='unet_senti' or config.model.name == 'unet_senti_utae':
                     y_pred, y_pred_senti = model(x, senti)
                 elif config.model.name == 'teacher_student':
-                    model,y_pred,l = teacher_student(teacher, model, 'train', train_loss, x, y, config.model.teacher_student.teacher_channels)
+                    model,y_pred,l = teacher_student(teacher, model, 'train', train_loss, x, y, config.model.teacher_student.teacher_channels, config.model.teacher_student.rep_layer)
                   
                 if config.loss_function == 'senti_loss':
                     l = train_loss(y_pred, y_pred_senti, y)

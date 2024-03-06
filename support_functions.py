@@ -52,7 +52,7 @@ def get_teacher(config, teacher_path, teacher_model_type):
         teacher.load_state_dict(torch.load(teacher_path))
         return teacher 
 
-def teacher_student(teacher, student, part, loss, x, y, teacher_channels, rep_layer = False):
+def teacher_student(teacher, student, part, loss, x, y, teacher_channels, rep_layer):
     #works only with u_net
 
     with torch.no_grad():
