@@ -45,6 +45,6 @@ model:
     student_channels: 3
     ts_loss: KL
     rep_layer: True
-    rep_weight: 1.0
+    rep_weight: 0.0
     rep_loss: KL
 
