@@ -39,7 +39,7 @@ class teacher_student_loss(nn.Module):
         #or CE, MSE in betweem
         if self.ts_loss == 'KL':
             #log_softmax used bc KL expects log
-            teacher_l = self.teacher_loss(F.log_softmax(student_y_pred, dim=1), F.softmax(teacher_y_pred/5, dim=1))/70000
+            teacher_l = self.teacher_loss(F.log_softmax(student_y_pred/5, dim=1), F.softmax(teacher_y_pred/5, dim=1))/70000
         elif self.ts_loss == 'MSE':
             teacher_l = self.teacher_loss(F.softmax(student_y_pred, dim=1), F.softmax(teacher_y_pred, dim=1))*5
         elif self.ts_loss == 'CE':
