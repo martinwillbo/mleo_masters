@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import os
 
-from custom_losses import CE_tversky_Loss, senti_loss, teacher_student_loss
+from custom_losses import CE_tversky_Loss, senti_loss, teacher_student_loss, multi_teacher_loss
 
 
 def set_model(config, model_name, n_channels):
@@ -47,7 +47,7 @@ def set_model(config, model_name, n_channels):
 
     return model
 
-def set_loss(loss_function, teacher_w, ts_loss):
+def set_loss(loss_function, config):
     if loss_function == 'CE':
         train_loss = nn.CrossEntropyLoss()
         eval_loss = nn.CrossEntropyLoss()
@@ -61,8 +61,19 @@ def set_loss(loss_function, teacher_w, ts_loss):
         train_loss = senti_loss()
         eval_loss = senti_loss()
     elif loss_function == 'teacher_student_loss':
-        train_loss = teacher_student_loss(teacher_weight=teacher_w, ts_loss=ts_loss)
+        train_loss = teacher_student_loss(teacher_weight=config.model.teacher_student.alpha, 
+                                          ts_loss=config.model.teacher_student.ts_loss, 
+                                          student_T=config.model.teacher_student.student_T,
+                                          teacher_T=config.model.teacher_student.teacher_T,
+                                          R=config.model.teacher_student.R)
         eval_loss = smp.losses.TverskyLoss(mode='multiclass') #let eval loss be for only student
+    elif loss_function == 'multi_teacher_loss':
+        train_loss = multi_teacher_loss(teacher_weight=config.model.teacher_student.alpha, 
+                                          ts_loss=config.model.teacher_student.ts_loss, 
+                                          student_T=config.model.teacher_student.student_T,
+                                          teacher_T=config.model.teacher_student.teacher_T,
+                                          R=config.model.teacher_student.R)
+        eval_loss = smp.losses.TverskyLoss(mode='multiclass')
         
     return train_loss, eval_loss
 
@@ -87,18 +98,18 @@ def get_loss_y_pred(model_name, loss_function, loss, model, x, mtd, senti, y):
 
     return model, y_pred, l
 
-def get_teacher(config, teacher_path, teacher_model_type='unet') :
-    teacher = set_model(config, teacher_model_type, config.model.teacher_student.teacher_channels)
+def get_teacher(config, teacher_path, teacher_channels, teacher_model_type='unet') :
+    teacher = set_model(config, teacher_model_type, teacher_channels)
     teacher_path = os.path.join(teacher_path, 'best_model.pth')
     teacher.load_state_dict(torch.load(teacher_path))
     return teacher
 
 
-def teacher_student(teacher, student, part, loss, x, y, teacher_channels):
+def teacher_student(teacher, student, part, loss, x, y, student_spec_channels, teacher_spec_channels):
     #works only with u_net
     with torch.no_grad():
-        teacher_y_pred = teacher(x[:,-teacher_channels:, :, :])
-    student_y_pred = student(x[:,:3, :, :]) #ONLY RGB!!!
+        teacher_y_pred = teacher(x[:,teacher_spec_channels:, :, :])
+    student_y_pred = student(x[:,student_spec_channels, :, :]) #ONLY RGB!!!
     
     if part == 'val':
         l = loss(student_y_pred, y)
@@ -106,5 +117,21 @@ def teacher_student(teacher, student, part, loss, x, y, teacher_channels):
         l = loss(student_y_pred, teacher_y_pred, y)
 
     return student, student_y_pred, l
+
+def multi_teacher(teacher_1, teacher_2, student, part, loss, x, y, student_spec_channels, teacher_1_spec_channels, teacher_2_spec_channels):
+    student_y_pred = student(x[:,student_spec_channels,:,:])
+    if part == 'val':
+        l = loss(student_y_pred, y)
+        return student, student_y_pred, l
+    
+    with torch.no_grad():
+        teacher_1_y_pred = teacher_1(x[:, teacher_1_spec_channels, :, :])
+        teacher_2_y_pred = teacher_2(x[:, teacher_2_spec_channels, :, :])
+    
+    l = loss(student_y_pred, teacher_1_y_pred, teacher_2_y_pred, y)
+
+    return student, student_y_pred, l
+
+
 
 

@@ -16,7 +16,7 @@ def main(config):
     torch.cuda.manual_seed(config.seed)
 
     #NOTE: Don't have to use tensorboard to log experiments, but should implement something else if so (Aleksis have code for this).
-    training_path = '/raid/dlgroupmsc/logs/2024-02-29_14-21-48'
+    training_path = config.eval.eval_path
     log_dir = os.path.join(training_path, 'tensorboard_test') #DON'T CHANGE, RISK OF OVERWRITING ALL PREVIOUSLY LOGGED DATA
     log_dir = log_dir  +'_' + str(config.eval.eval_type)
     print(log_dir)

@@ -12,7 +12,7 @@ import random
 import segmentation_models_pytorch as smp
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, save_senti_image, label_image
 from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2, custom_sine, image_wise_fade
-from support_functions_loop import set_model, set_loss, get_loss_y_pred, get_teacher, teacher_student
+from support_functions_loop import set_model, set_loss, get_loss_y_pred, get_teacher, teacher_student, multi_teacher
 
 
 
@@ -31,9 +31,15 @@ def loop2(config, writer, hydra_log_dir):
     
     
     if config.model.name == 'teacher_student':
-        teacher = get_teacher(config, config.model.teacher_student.teacher_path)
+        teacher = get_teacher(config, config.model.teacher_student.teacher_path, config.model.teacher_student.teacher_channels)
         teacher.to(config.device)
         model = set_model(config, config.model.teacher_student.student_name, config.model.teacher_student.student_channels)
+    if config.model.name == 'multi_teacher':
+        teacher_1 = get_teacher(config, config.model.multi_teacher.teacher_1_path, config.model.multi_teacher.teacher_1_channels)
+        teacher_2 = get_teacher(config, config.model.multi_teacher.teacher_2_path, config.model.multi_teacher.teacher_2_channels)
+        teacher_1.to(config.device)
+        teacher_2.to(config.device)
+        model = set_model(config, config.model.multi_teacher.student_name, config.model.multi_teacher.student_channels)
     else:
         model = set_model(config, config.model.name, config.model.n_channels)
 
@@ -50,7 +56,7 @@ def loop2(config, writer, hydra_log_dir):
 
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
         
-    train_loss, eval_loss = set_loss(config.loss_function, config.model.teacher_student.teacher_weight, config.model.teacher_student.ts_loss)
+    train_loss, eval_loss = set_loss(config.loss_function, config)
     CE_loss, tversky_loss = nn.CrossEntropyLoss(), smp.losses.TverskyLoss(mode='multiclass')
 
     epoch = 0
@@ -106,7 +112,15 @@ def loop2(config, writer, hydra_log_dir):
             
             with autocast():
                 if config.model.name == 'teacher_student':
-                    model, y_pred, l = teacher_student(teacher, model, 'train', train_loss, x, y, config.model.teacher_student.teacher_channels)
+                    model, y_pred, l = teacher_student(teacher, model, 'train', train_loss, x, y, 
+                                                       config.model.teacher_student.student_spec_channels,
+                                                       config.model.teacher_student.teacher_spec_channels)
+                
+                elif config.model.name == 'multi_teacher':
+                    model, y_pred, l = multi_teacher(teacher_1, teacher_2, model, 'train', train_loss, x, y, 
+                                                     config.model.multi_teacher.student_spec_channels,
+                                                     config.model.multi_teacher.teacher_1_spec_channels,
+                                                     config.model.multi_teacher.teacher_2_spec_channels)
                 else:
                     model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, train_loss, model, x, mtd, senti, y)
             optimizer.zero_grad()
@@ -174,7 +188,14 @@ def loop2(config, writer, hydra_log_dir):
 
                 with torch.no_grad():
                     if config.model.name == 'teacher_student':
-                        model, y_pred, l = teacher_student(teacher, model, 'val', eval_loss, x, y, config.model.teacher_student.teacher_channels)
+                        model, y_pred, l = teacher_student(teacher, model, 'val', eval_loss, x, y, 
+                                                        config.model.teacher_student.student_spec_channels,
+                                                        config.model.teacher_student.teacher_spec_channels)
+                    elif config.model.name == 'multi_teacher':
+                        model, y_pred, l = multi_teacher(teacher_1, teacher_2, model, 'val', eval_loss, x, y, 
+                                                     config.model.multi_teacher.student_spec_channels,
+                                                     config.model.multi_teacher.teacher_1_spec_channels,
+                                                     config.model.multi_teacher.teacher_2_spec_channels)
                     else:
                         model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, eval_loss, model, x, mtd, senti, y)
 

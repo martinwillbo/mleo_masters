@@ -26,21 +26,43 @@ weight_decay: 0
 optimizer: adam
 beta1: 0.9
 momentum: 0.9
-loss_function: teacher_student_loss
+loss_function: multi_teacher_loss
 
 model:
   n_class: 19 #13 for grouped, 19 for all
   n_channels: 5 #for TS we do a split of how the data is handled
   channels: [0,1,2,3,4]
-  name: teacher_student
+  name: multi_teacher
 
   teacher_student:
     student_name: unet
     teacher_path: /raid/dlgroupmsc/logs/2024-02-09_15-07-03  #best_100_w_priv
-    teacher_weight: 0.4
     teacher_channels: 5
+    teacher_spec_channels: [0,1,2,3,4]
     student_channels: 3
+    student_spec_channels: [0,1,2]
+    alpha: 0.4
     ts_loss: KL
+    student_T: 2
+    teacher_T: 7
+    R: 65000
+
+  multi_teacher:
+    student_name: unet
+    teacher_1_path: /raid/dlgroupmsc/logs/2024-02-09_15-09-09
+    teacher_2_path: /raid/dlgroupmsc/logs/2024-02-10_12-43-00
+    teacher_1_channels: 3
+    teacher_1_spec_channels: [0,1,2]
+    teacher_2_channels: 3
+    teacher_2_spec_channels: [0,1,2]
+    student_channels: 3
+    student_spec_channels: [0,1,2]
+    alpha: 0.4
+    ts_loss: KL
+    student_T: 2
+    teacher_T: 7
+    R: 65000
+
 
   resnet50:
     pretrained: DeepLabV3_ResNet50_Weights.DEFAULT #None does not work, but they seem to want it
@@ -63,5 +85,6 @@ eval:
   eval_model: unet
   eval_loss: tversky
   eval_channels: 3
+  eval_path: /raid/dlgroupmsc/logs/2024-03-07_13-47-35
 
 
