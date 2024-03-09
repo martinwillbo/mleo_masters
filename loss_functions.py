@@ -54,6 +54,6 @@ class teacher_student_loss(nn.Module):
         combined_loss = teacher_l*self.teacher_w + student_l*(1-self.teacher_w) + rep_l*self.rep_w
         #print('t', teacher_l.item())
         #print('s', student_l.item())
-        print('r', rep_l.item())
+        #print('r', rep_l.item())
 
         return combined_loss
