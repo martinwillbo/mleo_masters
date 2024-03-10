@@ -17,7 +17,7 @@ class senti_loss(nn.Module):
         return combined_loss
 
 class teacher_student_loss(nn.Module):
-    def __init__(self, teacher_weight, ts_loss, rep_layer, rep_weight):
+    def __init__(self, teacher_weight, ts_loss, rep_layer):
         super(teacher_student_loss, self).__init__()
         self.student_loss = smp.losses.TverskyLoss(mode='multiclass')
         if ts_loss == 'KL':
