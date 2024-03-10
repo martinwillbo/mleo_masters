@@ -53,7 +53,8 @@ def loop3(config, writer, hydra_log_dir):
     if config.loss_function == 'teacher_student_loss':
         train_loss = teacher_student_loss(config.model.teacher_student.teacher_weight,
                                           config.model.teacher_student.ts_loss,
-                                          config.model.teacher_student.rep_layer)
+                                          config.model.teacher_student.rep_layer,
+                                          config.model.teacher_student.rep_loss)
         eval_loss = smp.losses.TverskyLoss(mode='multiclass')
 
     if config.loss_function == 'tversky':
