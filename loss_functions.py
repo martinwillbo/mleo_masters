@@ -31,7 +31,7 @@ class teacher_student_loss(nn.Module):
         self.rep_layer = rep_layer
         self.ts_loss = ts_loss
         self.teacher_w = teacher_weight
-        self.rep_w = rep_weight
+        
         
     def forward(self, student_y_pred, teacher_y_pred, target, student_last_feature=None, teacher_last_feature=None):
         student_l = self.student_loss(student_y_pred, target)
@@ -39,19 +39,20 @@ class teacher_student_loss(nn.Module):
         #or CE, MSE in betweem
         if self.ts_loss == 'KL':
             #log_softmax used bc KL expects log
-            teacher_l = self.teacher_loss(F.log_softmax(student_y_pred/5, dim=1), F.softmax(teacher_y_pred/5, dim=1))/70000
+            teacher_l = self.teacher_loss(F.log_softmax(student_y_pred/2, dim=1), F.softmax(teacher_y_pred/7, dim=1))/65000
         elif self.ts_loss == 'MSE':
             teacher_l = self.teacher_loss(F.softmax(student_y_pred, dim=1), F.softmax(teacher_y_pred, dim=1))*5
         elif self.ts_loss == 'CE':
             teacher_l = self.teacher_loss(F.softmax(student_y_pred, dim=1), F.softmax(teacher_y_pred, dim=1))
 
-        if self.rep_layer:
-            #print(student_last_feature)
-            #print(teacher_last_feature)
-            rep_l = self.rep_loss(F.softmax(student_last_feature, dim=1), F.softmax(teacher_last_feature, dim=1))
-            #rep_l = self.rep_loss(F.log_softmax(student_last_feature, dim=1), F.softmax(teacher_last_feature, dim=1))
-
-        combined_loss = teacher_l*self.teacher_w + student_l*(1-self.teacher_w) + rep_l*self.rep_w
+        if self.rep_loss == 'KL':
+            rep_l = self.rep_loss(F.log_softmax(student_last_feature, dim=1), F.softmax(teacher_last_feature, dim=1))*0.003
+        elif self.rep_loss == 'MSE':
+            rep_l = self.rep_loss(F.softmax(student_last_feature, dim=1), F.softmax(teacher_last_feature, dim=1))*5000
+        elif self.rep_loss == 'CE':
+            rep_l = self.rep_loss(F.softmax(student_last_feature, dim=1), F.softmax(teacher_last_feature, dim=1))*0.5        
+            
+        combined_loss = teacher_l*self.teacher_w + student_l*(1-self.teacher_w) + rep_l
         #print('t', teacher_l.item())
         #print('s', student_l.item())
         #print('r', rep_l.item())
