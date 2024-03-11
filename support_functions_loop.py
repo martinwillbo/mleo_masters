@@ -1,4 +1,4 @@
-from unet_module import UNetWithMetadata, UnetFeatureMetadata, UnetFeatureMetadata_2, UnetFeatureSenti, UnetSentiDoubleLoss, UnetFeatureSentiMtd
+from unet_module import UnetPredictPriv, UNetWithMetadata, UnetFeatureMetadata, UnetFeatureMetadata_2, UnetFeatureSenti, UnetSentiDoubleLoss, UnetFeatureSentiMtd
 import segmentation_models_pytorch as smp
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import os
 
-from custom_losses import CE_tversky_Loss, senti_loss, teacher_student_loss, multi_teacher_loss
+from custom_losses import CE_tversky_Loss, senti_loss, teacher_student_loss, multi_teacher_loss, predict_priv_loss
 
 
 def set_model(config, model_name, n_channels):
@@ -36,14 +36,17 @@ def set_model(config, model_name, n_channels):
     elif model_name == 'unet_mtd_feature_2':
         model = UnetFeatureMetadata_2(n_channels=n_channels, n_class=config.model.n_class, feature_block=config.model.mtd.feature_block, linear_mtd_preprocess=config.model.mtd.linear_mtd_preprocess)
     
-    elif config.model.name == 'unet_senti':
+    elif model_name == 'unet_senti':
         model = UnetFeatureSenti(n_channels=n_channels, n_senti_channels=120, n_classes=config.model.n_class)
 
-    elif config.model.name == 'unet_senti_double':
+    elif model_name == 'unet_senti_double':
         model = UnetSentiDoubleLoss(n_channels=n_channels, n_senti_channels=120, n_classes=config.model.n_class)
 
-    elif config.model.name == 'unet_senti_mtd':
+    elif model_name == 'unet_senti_mtd':
         model = UnetFeatureSentiMtd(n_channels=n_channels, n_senti_channels=120, n_metadata=6, n_classes=config.model.n_class, w=config.model.mtd.mtd_weighting)
+
+    elif model_name == 'unet_predict_priv':
+        model = UnetPredictPriv(n_channels=n_channels, n_classes=config.model.n_class)
 
     return model
 
@@ -73,6 +76,10 @@ def set_loss(loss_function, config):
                                           student_T=config.model.teacher_student.student_T,
                                           teacher_T=config.model.teacher_student.teacher_T,
                                           R=config.model.teacher_student.R)
+        eval_loss = smp.losses.TverskyLoss(mode='multiclass')
+    
+    elif loss_function == 'predict_priv_loss':
+        train_loss = predict_priv_loss(config.dataset.mean[3:], config.dataset.std[3:])
         eval_loss = smp.losses.TverskyLoss(mode='multiclass')
         
     return train_loss, eval_loss

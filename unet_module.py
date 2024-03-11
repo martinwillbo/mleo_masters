@@ -380,3 +380,57 @@ class UnetSentiDoubleLoss(nn.Module):
         decoded = self.unet.decoder(*features)
         y_pred = self.unet.segmentation_head(decoded)
         return y_pred, senti_pred_out
+    
+
+class UnetPredictPriv(nn.Module):
+    def __init__(self, n_channels, n_classes):
+        super(UnetPredictPriv, self).__init__()
+        self.unet = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = n_channels,
+            classes= n_classes
+        )
+        self.NIR_decoder = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = n_channels,
+            classes= 1 #one scalar per priv channel
+        ).decoder
+        self.NIR_segmentation_head = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = n_channels,
+            classes= 1 #entire eight bit
+        ).segmentation_head
+
+        self.elev_decoder = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = n_channels,
+            classes= 1 #one scalar per priv channel
+        ).decoder
+        self.elev_segmentation_head = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = n_channels,
+            classes= 1 #entire eight bit
+        ).segmentation_head
+
+
+    def forward(self, x):
+        features = self.unet.encoder(x[:,:3,:,:])
+
+        unet_decoded = self.unet.decoder(*features)
+        y_pred = self.unet.segmentation_head(unet_decoded)
+
+        NIR_decoded = self.NIR_decoder(*features)
+        NIR_priv_pred = self.NIR_segmentation_head(NIR_decoded)
+
+        elev_decoded = self.elev_decoder(*features)
+        elev_priv_pred = self.elev_segmentation_head(elev_decoded)
+
+        y_priv_pred = torch.cat((NIR_priv_pred, elev_priv_pred), dim=1)
+
+        return y_pred, y_priv_pred
+

@@ -34,12 +34,14 @@ def loop2(config, writer, hydra_log_dir):
         teacher = get_teacher(config, config.model.teacher_student.teacher_path, config.model.teacher_student.teacher_channels)
         teacher.to(config.device)
         model = set_model(config, config.model.teacher_student.student_name, config.model.teacher_student.student_channels)
-    if config.model.name == 'multi_teacher':
+    elif config.model.name == 'multi_teacher':
         teacher_1 = get_teacher(config, config.model.multi_teacher.teacher_1_path, config.model.multi_teacher.teacher_1_channels)
         teacher_2 = get_teacher(config, config.model.multi_teacher.teacher_2_path, config.model.multi_teacher.teacher_2_channels)
         teacher_1.to(config.device)
         teacher_2.to(config.device)
         model = set_model(config, config.model.multi_teacher.student_name, config.model.multi_teacher.student_channels)
+    elif config.model.name == 'unet_predict_priv':
+        model = set_model(config, config.model.name, config.model.unet_predict_priv.unet_channels)
     else:
         model = set_model(config, config.model.name, config.model.n_channels)
 
@@ -121,6 +123,9 @@ def loop2(config, writer, hydra_log_dir):
                                                      config.model.multi_teacher.student_spec_channels,
                                                      config.model.multi_teacher.teacher_1_spec_channels,
                                                      config.model.multi_teacher.teacher_2_spec_channels)
+                elif config.model.name == 'unet_predict_priv':
+                    y_pred, x_priv_pred = model(x)
+                    l = train_loss(y_pred, x_priv_pred, y, x[:,3:,:,:])
                 else:
                     model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, train_loss, model, x, mtd, senti, y)
             optimizer.zero_grad()
@@ -196,6 +201,8 @@ def loop2(config, writer, hydra_log_dir):
                                                      config.model.multi_teacher.student_spec_channels,
                                                      config.model.multi_teacher.teacher_1_spec_channels,
                                                      config.model.multi_teacher.teacher_2_spec_channels)
+                    elif config.model.name == 'unet_predict_priv':
+                        y_pred, x_priv_pred = model(x)
                     else:
                         model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, eval_loss, model, x, mtd, senti, y)
 
