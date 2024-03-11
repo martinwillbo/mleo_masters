@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import os
 
-from custom_losses import CE_tversky_Loss, senti_loss, teacher_student_loss, multi_teacher_loss, predict_priv_loss
+from custom_losses import CE_tversky_Loss, senti_loss, teacher_student_loss, multi_teacher_loss, avg_teacher_loss, predict_priv_loss
 
 
 def set_model(config, model_name, n_channels):
@@ -72,6 +72,14 @@ def set_loss(loss_function, config):
         eval_loss = smp.losses.TverskyLoss(mode='multiclass') #let eval loss be for only student
     elif loss_function == 'multi_teacher_loss':
         train_loss = multi_teacher_loss(teacher_weight=config.model.teacher_student.alpha, 
+                                          ts_loss=config.model.teacher_student.ts_loss, 
+                                          student_T=config.model.teacher_student.student_T,
+                                          teacher_T=config.model.teacher_student.teacher_T,
+                                          R=config.model.teacher_student.R)
+        eval_loss = smp.losses.TverskyLoss(mode='multiclass')
+    
+    elif loss_function == 'avg_teacher_loss':
+        train_loss = avg_teacher_loss(teacher_weight=config.model.teacher_student.alpha, 
                                           ts_loss=config.model.teacher_student.ts_loss, 
                                           student_T=config.model.teacher_student.student_T,
                                           teacher_T=config.model.teacher_student.teacher_T,

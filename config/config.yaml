@@ -11,7 +11,7 @@ defaults:
   - transform: basic
 
 seed: 42
-device: cuda:2 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
+device: cuda:3 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
 use_transform: True
 batch_size: 8
 eval_every: 1
@@ -26,13 +26,13 @@ weight_decay: 0
 optimizer: adam
 beta1: 0.9
 momentum: 0.9
-loss_function: predict_priv_loss
+loss_function: avg_teacher_loss
 
 model:
   n_class: 19 #13 for grouped, 19 for all
   n_channels: 5 #for TS we do a split of how the data is handled
   channels: [0,1,2,3,4]
-  name: unet_predict_priv
+  name: multi_teacher
 
   unet_predict_priv:
     unet_channels: 3
@@ -53,11 +53,11 @@ model:
   multi_teacher:
     student_name: unet
     teacher_1_path: /raid/dlgroupmsc/logs/2024-02-09_15-07-03
-    teacher_2_path: /raid/dlgroupmsc/logs/2024-02-27_16-01-36
+    teacher_2_path: /raid/dlgroupmsc/logs/2024-02-10_12-44-22
     teacher_1_channels: 5
     teacher_1_spec_channels: [0,1,2,3,4]
-    teacher_2_channels: 2
-    teacher_2_spec_channels: [3,4]
+    teacher_2_channels: 5
+    teacher_2_spec_channels: [0,1,2,3,4]
     student_channels: 3
     student_spec_channels: [0,1,2]
     alpha: 0.4

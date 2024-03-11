@@ -203,6 +203,7 @@ def loop2(config, writer, hydra_log_dir):
                                                      config.model.multi_teacher.teacher_2_spec_channels)
                     elif config.model.name == 'unet_predict_priv':
                         y_pred, x_priv_pred = model(x)
+                        l = eval_loss(y_pred, y)
                     else:
                         model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, eval_loss, model, x, mtd, senti, y)
 
