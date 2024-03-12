@@ -21,7 +21,7 @@ def scalars_to_dataframe(log_dir):
             all_scalars_df = pd.merge(all_scalars_df, df, on='Step', how='outer')
     return all_scalars_df
 # Directory where your TensorBoard logs are stored
-model_folder = '2024-03-07_10-18-55/'
+model_folder = '2024-03-11_11-34-00/'
 log_dir = '../log_res/'+model_folder+'/tensorboard'
 # Convert all scalar data to a pandas DataFrame
 scalar_data_df = scalars_to_dataframe(log_dir)
