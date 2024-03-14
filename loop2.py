@@ -10,9 +10,10 @@ import os
 import math
 import random
 import segmentation_models_pytorch as smp
-from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, save_senti_image, label_image
+from support_functions_logging import priv_info_image,miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, save_senti_image, label_image
 from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2, custom_sine, image_wise_fade
-from support_functions_loop import set_model, set_loss, get_loss_y_pred, get_teacher, teacher_student, multi_teacher
+from support_functions_loop import set_model, set_loss, get_loss_y_pred, get_teacher, teacher_student, multi_teacher, generate_priv
+from unet_module import UnetPrivGenerator
 
 
 
@@ -42,6 +43,10 @@ def loop2(config, writer, hydra_log_dir):
         model = set_model(config, config.model.multi_teacher.student_name, config.model.multi_teacher.student_channels)
     elif config.model.name == 'unet_predict_priv':
         model = set_model(config, config.model.name, config.model.unet_predict_priv.unet_channels)
+    elif config.model.name == 'unet_generate_priv':
+        model = set_model(config, config.model.name, 5)
+        priv_generator = UnetPrivGenerator()
+        priv_generator.to(config.device)
     else:
         model = set_model(config, config.model.name, config.model.n_channels)
 
@@ -52,13 +57,19 @@ def loop2(config, writer, hydra_log_dir):
     if config.optimizer == 'adam':
         #TODO: Introduce config option for betas
         optimizer = Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay, betas=(config.beta1, 0.999))
+        if config.model.name == 'unet_generate_priv':
+            gen_priv_optimizer = Adam(priv_generator.parameters(), lr=config.lr, weight_decay=config.weight_decay, betas=(config.beta1, 0.999))
+            gen_priv_scaler = GradScaler()
 
     if config.optimizer == 'SGD':
         optimizer = SGD(model.parameters(), lr=config.lr, momentum=config.momentum, weight_decay=config.weight_decay)
 
     #NOTE: CE loss might not be the best to use for semantic segmentation, look into jaccard losses.
-        
-    train_loss, eval_loss = set_loss(config.loss_function, config)
+
+    if config.loss_function == 'generate_priv_loss':
+        train_loss, priv_train_loss, eval_loss, priv_eval_loss = set_loss(config.loss_function, config)
+    else:
+        train_loss, eval_loss = set_loss(config.loss_function, config)
     CE_loss, tversky_loss = nn.CrossEntropyLoss(), smp.losses.TverskyLoss(mode='multiclass')
 
     epoch = 0
@@ -76,6 +87,9 @@ def loop2(config, writer, hydra_log_dir):
             teacher.eval()
         
         train_iter = iter(train_loader)
+
+        if config.model.name == 'unet_generate_priv':
+            priv_generator.train()
 
         y_pred_list = [] #list to save for an entire epoch
         y_list = []
@@ -126,10 +140,30 @@ def loop2(config, writer, hydra_log_dir):
                 elif config.model.name == 'unet_predict_priv':
                     y_pred, x_priv_pred = model(x)
                     l = train_loss(y_pred, x_priv_pred, y, x[:,3:,:,:])
+                elif config.model.name == 'unet_generate_priv':
+                    model, priv_generator, y_pred, l, generated_priv_l, first_generated_priv_l, priv_loss_mean, priv_loss_std, _ = generate_priv(priv_generator, model, priv_train_loss, train_loss, x, y)
+                   
                 else:
                     model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, train_loss, model, x, mtd, senti, y)
+            
+            if config.model.name == 'unet_generate_priv':
+                gen_priv_optimizer.zero_grad()
+                gen_priv_scaler.scale(generated_priv_l).backward()  # Removed retain_graph=True unless you have a specific need for it
+                #gen_priv_scaler.unscale_(gen_priv_optimizer)
+
+                # Clip gradients; you can adjust 'max_norm' to your needs
+                #torch.nn.utils.clip_grad_norm_(priv_generator.parameters(), max_norm=1.0)
+
+                gen_priv_scaler.step(gen_priv_optimizer)
+                gen_priv_scaler.update()
+              
             optimizer.zero_grad()
-            scaler.scale(l).backward()
+            scaler.scale(l).backward()  # Assumes `l` does not require `retain_graph=True` due to the previous comment
+            #if config.model.name =='unet_generate_priv':
+            #    scaler.unscale_(optimizer)
+                # Clip gradients; you can adjust 'max_norm' to your needs
+            #    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
             scaler.step(optimizer)
             scaler.update()
 
@@ -161,6 +195,9 @@ def loop2(config, writer, hydra_log_dir):
 
             if config.model.name == teacher_student:
                 teacher.eval()
+            if config.model.name == 'unet_generate_priv':
+                priv_generator.eval()
+                val_generated_priv_l, val_first_generated_priv_l, val_priv_loss_mean, val_priv_loss_std = [], [], [], []
             
             val_loss = []
             val_CE_loss, val_tversky_loss = [], []
@@ -204,6 +241,12 @@ def loop2(config, writer, hydra_log_dir):
                     elif config.model.name == 'unet_predict_priv':
                         y_pred, x_priv_pred = model(x)
                         l = eval_loss(y_pred, y)
+                    elif config.model.name == 'unet_generate_priv':
+                        model, priv_generator, y_pred, l, generated_priv_l, first_generated_priv_l, priv_loss_mean, priv_loss_std, generated_priv = generate_priv(priv_generator, model, priv_eval_loss, eval_loss, x, y)
+                        val_generated_priv_l.append(generated_priv_l.item())
+                        val_first_generated_priv_l.append(first_generated_priv_l.item())
+                        val_priv_loss_mean.append(priv_loss_mean.item())
+                        val_priv_loss_std.append(priv_loss_std.item())
                     else:
                         model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, eval_loss, model, x, mtd, senti, y)
 
@@ -220,6 +263,16 @@ def loop2(config, writer, hydra_log_dir):
                     senti_cpu = senti[0, 6, :, :, :].cpu().detach().contiguous().numpy()
                     save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)
                     save_senti_image(counter, senti_cpu, epoch, config, writer)
+                    if config.model.name == 'unet_generate_priv':
+                        #give index w. an extra 0 to not overwrite
+                        x_priv_detached = generated_priv[0,:,:,:].detach().contiguous()
+                        priv_info_image(0,counter*10, x_priv_detached, epoch, writer)
+                        priv_info_image(1,counter*10, x_priv_detached, epoch, writer)
+                    if config.model.name == 'unet_predict_priv':
+                        x_priv_detached = x_priv_pred[0,:,:,:].detach().contiguous()
+                        priv_info_image(0,counter*10, x_priv_detached, epoch, writer)
+                        priv_info_image(1,counter*10, x_priv_detached, epoch, writer)
+                        
 
                 y_pred = y_pred.to(torch.uint8).cpu().contiguous().detach().numpy()
                 y = y.to(torch.uint8).cpu().contiguous().detach().numpy()
@@ -236,6 +289,18 @@ def loop2(config, writer, hydra_log_dir):
             writer.add_scalar('loss/CE', l_CE_val, epoch)
             writer.add_scalar('loss/tversky', l_tversky_val, epoch)
             print('Val loss: '+str(l_val))
+            print('Max batch CE loss: ' + str(np.max(val_CE_loss)))
+            print('Max batch tversky loss: ' + str(np.max(val_tversky_loss)))
+
+            if config.model.name == 'unet_generate_priv':
+                l_val_generated_priv = np.mean(val_generated_priv_l)
+                l_val_first_generated_priv = np.mean(val_first_generated_priv_l)
+                l_val_priv_mean = np.mean(val_priv_loss_mean)
+                l_val_priv_std = np.mean(val_priv_loss_std)
+                writer.add_scalar('loss/generated priv', l_val_generated_priv, epoch)
+                writer.add_scalar('loss/first generated priv', l_val_first_generated_priv, epoch)
+                writer.add_scalar('loss/priv mean', l_val_priv_mean, epoch)
+                writer.add_scalar('loss/priv std', l_val_priv_std, epoch)
 
             miou_prec_rec_writing(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
             miou_prec_rec_writing_13(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)

@@ -434,3 +434,39 @@ class UnetPredictPriv(nn.Module):
 
         return y_pred, y_priv_pred
 
+
+class UnetPrivGenerator(nn.Module):
+    def __init__(self):
+        super(UnetPrivGenerator, self).__init__()
+        self.priv_and_NIR = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = 3,
+            classes= 1 #one scalar per priv channel
+        )
+
+        self.elev_decoder = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = 3,
+            classes= 1 #one scalar per priv channel
+        ).decoder
+        self.elev_segmentation_head = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = 3,
+            classes= 1 #entire eight bit
+        ).segmentation_head
+
+    def forward(self, x):
+        features = self.priv_and_NIR.encoder(x[:,:3,:,:])
+        NIR_decoded = self.priv_and_NIR.decoder(*features)
+        NIR_priv_pred = self.priv_and_NIR.segmentation_head(NIR_decoded)
+
+        elev_decoded = self.elev_decoder(*features)
+        elev_priv_pred = self.elev_segmentation_head(elev_decoded)
+
+        generated_priv = torch.cat((NIR_priv_pred, elev_priv_pred), dim=1)
+        
+        return generated_priv 
+

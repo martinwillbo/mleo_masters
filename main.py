@@ -9,7 +9,8 @@ from datetime import datetime
 
 @hydra.main(config_path='config', config_name='config', version_base = '1.3.2')
 def main(config):
-    
+    #os.environ['TMPDIR'] = '/raid/dlgroupmsc/exjobb/tmp'
+
     random.seed(config.seed)
     np.random.seed(config.seed)
     torch.manual_seed(config.seed)

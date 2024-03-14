@@ -232,7 +232,7 @@ def is_subsequence_present(lst, subsequence):
     return True
 
 def priv_info_image(channel, index, x_tensor, epoch, writer):
-    x_priv = x_tensor[channel-5, :, :].unsqueeze(0)
+    x_priv = x_tensor[channel, :, :].unsqueeze(0)
     #print(x_priv.shape)
     #Not ideal normalization to be honest, as we don't know how strong the signal is
     min_vals = x_priv.view(1, -1).min(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
