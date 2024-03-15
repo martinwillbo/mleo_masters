@@ -1,4 +1,4 @@
-from unet_module import UnetPredictPriv, UNetWithMetadata, UnetFeatureMetadata, UnetFeatureMetadata_2, UnetFeatureSenti, UnetSentiDoubleLoss, UnetFeatureSentiMtd
+from unet_module import UnetPredictPriv, UnetPrivForward, UNetWithMetadata, UnetFeatureMetadata, UnetFeatureMetadata_2, UnetFeatureSenti, UnetSentiDoubleLoss, UnetFeatureSentiMtd
 import segmentation_models_pytorch as smp
 from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
@@ -55,6 +55,8 @@ def set_model(config, model_name, n_channels):
             in_channels = n_channels,
             classes= config.model.n_class
         )
+    elif model_name == 'unet_priv_forward':
+        model = UnetPrivForward(n_classes=config.model.n_class)
 
     return model
 
@@ -104,6 +106,10 @@ def set_loss(loss_function, config):
         model_eval_loss = smp.losses.TverskyLoss(mode='multiclass')
         priv_eval_loss = generate_priv_loss()
         return model_train_loss, priv_train_loss, model_eval_loss, priv_eval_loss
+
+    elif loss_function =='priv_forward_loss':
+        train_loss = generate_priv_loss()
+        eval_loss = smp.losses.TverskyLoss(mode='multiclass')
         
     return train_loss, eval_loss
 
@@ -163,7 +169,7 @@ def multi_teacher(teacher_1, teacher_2, student, part, loss, x, y, student_spec_
     return student, student_y_pred, l
 
 def generate_priv(priv_generator, model, priv_generator_loss, model_loss, x, y):
-    generated_priv = priv_generator(x[:, :3, :, :])
+    generated_priv, y_pred_1 = priv_generator(x[:, :3, :, :])
     detached_gen_priv = generated_priv.detach()
     all_channels = torch.cat( (x[:,:3,:,:],detached_gen_priv), dim=1)
     if torch.isnan(x).any():
@@ -174,13 +180,25 @@ def generate_priv(priv_generator, model, priv_generator_loss, model_loss, x, y):
         print("NaN detected in output")
 
     y_pred = model(all_channels)
-    y_pred_detached = y_pred.detach()
 
     model_l = model_loss(y_pred, y)
 
-    generated_priv_l, first_generated_priv_l, priv_loss_mean, priv_loss_std = priv_generator_loss(y_pred_detached, generated_priv, y, x[:,3:,:,:])
+    generated_priv_l, first_generated_priv_l, priv_loss_mean, priv_loss_std = priv_generator_loss(y_pred_1, generated_priv, y, x[:,3:,:,:])
 
     return model, priv_generator, y_pred, model_l, generated_priv_l, first_generated_priv_l, priv_loss_mean, priv_loss_std, generated_priv
+
+def priv_forward(model, train_loss, eval_loss, part, x, y):
+    y_pred, generated_priv = model(x[:,:3,:,:])
+    if part == 'train':
+        l, first_priv_loss, priv_loss_mean, priv_loss_std = train_loss(y_pred, generated_priv, y, x[:,3:,:,:])
+        return model, y_pred, l, first_priv_loss, priv_loss_mean, priv_loss_std, generated_priv
+    elif part =='val':
+        l = eval_loss(y_pred,y)
+        generated_priv_l, first_priv_loss, priv_loss_mean, priv_loss_std = train_loss(y_pred, generated_priv, y, x[:,3:,:,:])
+        return model, y_pred, l, generated_priv_l, first_priv_loss, priv_loss_mean, priv_loss_std, generated_priv
+
+   
+
 
 
 

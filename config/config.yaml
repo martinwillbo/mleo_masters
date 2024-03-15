@@ -11,7 +11,7 @@ defaults:
   - transform: basic
 
 seed: 42
-device: cuda:1 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
+device: cuda:2 #cuda:0 #or cpu, or cuda:# on machines with more than one GPU
 use_transform: True
 batch_size: 8
 eval_every: 1
@@ -26,13 +26,13 @@ weight_decay: 0 #1e-5
 optimizer: adam
 beta1: 0.9
 momentum: 0.9
-loss_function: generate_priv_loss
+loss_function: priv_forward_loss
 
 model:
   n_class: 19 #13 for grouped, 19 for all
   n_channels: 5 #for TS we do a split of how the data is handled
   channels: [0,1,2,3,4]
-  name: unet_generate_priv
+  name: unet_priv_forward
 
   unet_predict_priv:
     unet_channels: 3

@@ -12,7 +12,7 @@ import random
 import segmentation_models_pytorch as smp
 from support_functions_logging import priv_info_image,miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image, save_senti_image, label_image
 from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2, custom_sine, image_wise_fade
-from support_functions_loop import set_model, set_loss, get_loss_y_pred, get_teacher, teacher_student, multi_teacher, generate_priv
+from support_functions_loop import set_model, set_loss, get_loss_y_pred, get_teacher, teacher_student, multi_teacher, generate_priv, priv_forward
 from unet_module import UnetPrivGenerator
 
 
@@ -142,7 +142,8 @@ def loop2(config, writer, hydra_log_dir):
                     l = train_loss(y_pred, x_priv_pred, y, x[:,3:,:,:])
                 elif config.model.name == 'unet_generate_priv':
                     model, priv_generator, y_pred, l, generated_priv_l, first_generated_priv_l, priv_loss_mean, priv_loss_std, _ = generate_priv(priv_generator, model, priv_train_loss, train_loss, x, y)
-                   
+                elif config.model.name == 'unet_priv_forward':
+                    model, y_pred, l, _, _, _, _ = priv_forward(model, train_loss, eval_loss, 'train',x,y)
                 else:
                     model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, train_loss, model, x, mtd, senti, y)
             
@@ -195,8 +196,9 @@ def loop2(config, writer, hydra_log_dir):
 
             if config.model.name == teacher_student:
                 teacher.eval()
-            if config.model.name == 'unet_generate_priv':
-                priv_generator.eval()
+            if config.model.name == 'unet_generate_priv' or config.model.name == 'unet_priv_forward':
+                if config.model.name == 'unet_generate_priv':
+                    priv_generator.eval()
                 val_generated_priv_l, val_first_generated_priv_l, val_priv_loss_mean, val_priv_loss_std = [], [], [], []
             
             val_loss = []
@@ -247,6 +249,13 @@ def loop2(config, writer, hydra_log_dir):
                         val_first_generated_priv_l.append(first_generated_priv_l.item())
                         val_priv_loss_mean.append(priv_loss_mean.item())
                         val_priv_loss_std.append(priv_loss_std.item())
+                    elif config.model.name == 'unet_priv_forward':
+                        model, y_pred, l, generated_priv_l, first_generated_priv_l, priv_loss_mean, priv_loss_std, generated_priv = priv_forward(model, train_loss, eval_loss, 'val', x, y)
+                        val_generated_priv_l.append(generated_priv_l.item())
+                        val_first_generated_priv_l.append(first_generated_priv_l.item())
+                        val_priv_loss_mean.append(priv_loss_mean.item())
+                        val_priv_loss_std.append(priv_loss_std.item())
+                    
                     else:
                         model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, eval_loss, model, x, mtd, senti, y)
 
@@ -263,7 +272,7 @@ def loop2(config, writer, hydra_log_dir):
                     senti_cpu = senti[0, 6, :, :, :].cpu().detach().contiguous().numpy()
                     save_image(counter, x_cpu, y_pred_cpu, y_cpu, epoch, config, writer)
                     save_senti_image(counter, senti_cpu, epoch, config, writer)
-                    if config.model.name == 'unet_generate_priv':
+                    if config.model.name == 'unet_generate_priv' or config.model.name == 'unet_priv_forward':
                         #give index w. an extra 0 to not overwrite
                         x_priv_detached = generated_priv[0,:,:,:].detach().contiguous()
                         priv_info_image(0,counter*10, x_priv_detached, epoch, writer)
@@ -291,8 +300,10 @@ def loop2(config, writer, hydra_log_dir):
             print('Val loss: '+str(l_val))
             print('Max batch CE loss: ' + str(np.max(val_CE_loss)))
             print('Max batch tversky loss: ' + str(np.max(val_tversky_loss)))
+            print('Min batch CE loss: ' + str(np.min(val_CE_loss)))
+            print('Min batch tversky loss: ' + str(np.min(val_tversky_loss)))
 
-            if config.model.name == 'unet_generate_priv':
+            if config.model.name == 'unet_generate_priv' or config.model.name == 'unet_priv_forward':
                 l_val_generated_priv = np.mean(val_generated_priv_l)
                 l_val_first_generated_priv = np.mean(val_first_generated_priv_l)
                 l_val_priv_mean = np.mean(val_priv_loss_mean)

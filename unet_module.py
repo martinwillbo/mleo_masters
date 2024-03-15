@@ -438,12 +438,26 @@ class UnetPredictPriv(nn.Module):
 class UnetPrivGenerator(nn.Module):
     def __init__(self):
         super(UnetPrivGenerator, self).__init__()
-        self.priv_and_NIR = smp.Unet(
+        self.pred = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = 3,
+            classes= 19 #one scalar per priv channel
+        )
+
+        self.NIR_decoder = smp.Unet(
             encoder_weights="imagenet",
             encoder_name="efficientnet-b4",
             in_channels = 3,
             classes= 1 #one scalar per priv channel
-        )
+        ).decoder
+        self.NIR_segmentation_head = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = 3,
+            classes= 1 #entire eight bit
+        ).segmentation_head
+
 
         self.elev_decoder = smp.Unet(
             encoder_weights="imagenet",
@@ -459,14 +473,80 @@ class UnetPrivGenerator(nn.Module):
         ).segmentation_head
 
     def forward(self, x):
-        features = self.priv_and_NIR.encoder(x[:,:3,:,:])
-        NIR_decoded = self.priv_and_NIR.decoder(*features)
-        NIR_priv_pred = self.priv_and_NIR.segmentation_head(NIR_decoded)
+        features = self.pred.encoder(x[:,:3,:,:])
+        pred = self.pred.decoder(*features)
+        y_pred = self.pred.segmentation_head(pred)    
+
+        NIR_decoded = self.NIR_decoder(*features)
+        NIR_priv_pred = self.NIR_segmentation_head(NIR_decoded)
 
         elev_decoded = self.elev_decoder(*features)
         elev_priv_pred = self.elev_segmentation_head(elev_decoded)
 
         generated_priv = torch.cat((NIR_priv_pred, elev_priv_pred), dim=1)
         
-        return generated_priv 
+        return generated_priv,y_pred 
+    
+class UnetPrivForward(nn.Module):
+    def __init__(self, n_classes):
+        super(UnetPrivForward, self).__init__()
+        self.generator = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = 3,
+            classes= 1 #entire eight bit
+        ).encoder
+
+        self.NIR_decoder = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = 3,
+            classes= 1 #entire eight bit
+        ).decoder
+        self.NIR_segmentation_head=  smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = 3,
+            classes= 1 #entire eight bit
+        ).segmentation_head
+
+        self.elev_decoder = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = 3,
+            classes= 1 #entire eight bit
+        ).decoder
+        self.elev_segmentation_head=  smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = 3,
+            classes= 1 #entire eight bit
+        ).segmentation_head
+
+        self.prediction_net = smp.Unet(
+            encoder_weights="imagenet",
+            encoder_name="efficientnet-b4",
+            in_channels = 5,
+            classes= n_classes #entire eight bit
+        )
+
+    def forward(self, x):
+        features = self.generator(x[:,:3,:,:])    
+
+        NIR_decoded = self.NIR_decoder(*features)
+        NIR_priv_pred = self.NIR_segmentation_head(NIR_decoded)
+
+        elev_decoded = self.elev_decoder(*features)
+        elev_priv_pred = self.elev_segmentation_head(elev_decoded)
+
+        generated_priv = torch.cat((NIR_priv_pred, elev_priv_pred), dim=1)
+        all_channels = torch.cat((x[:,:3,:,:],generated_priv), dim=1)
+        y_pred = self.prediction_net(all_channels)
+
+        return y_pred, generated_priv
+
+
+
+
+
 
