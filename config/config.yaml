@@ -38,7 +38,7 @@ model:
   n_channels: 5
   teacher_student: 
     student_name: unet
-    teacher_path: '../log_res/best_model_5_channels_100'
+    teacher_path: '../log_res/2024-02-08_17-09-25'
     teacher_model_type: 'unet'
     teacher_weight: 0.4
     teacher_channels: 5
@@ -46,4 +46,7 @@ model:
     ts_loss: KL
     rep_layer: True
     rep_loss: MSE
+  GAN: 
+    net_D: basic
+    net_G: unet_256
 

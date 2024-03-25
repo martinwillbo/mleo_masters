@@ -206,11 +206,12 @@ def loop3(config, writer, hydra_log_dir):
 
                 counter += 1
                
-            #Save loss
+            #Save loss 
             l_val = np.mean(val_loss)
             writer.add_scalar('val/loss', l_val, epoch)
             print('Val loss: '+str(l_val))
 
+            #print(np.max(CE_val_loss))
             CE_val = np.mean(CE_val_loss)
             writer.add_scalar('val/Cross_Entropy', CE_val, epoch)
             print('Val CE: '+str(CE_val))

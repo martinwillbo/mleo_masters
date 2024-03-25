@@ -2,11 +2,13 @@ import os
 from unet_module import UnetFeatureMetadata, UnetFeatureMetadata_2, UnetFeatureSenti, UnetSentiDoubleLoss, UnetSentiUTAE #, UnetFeatureSentiMtd, UNetWithMetadata
 import segmentation_models_pytorch as smp
 #from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
+from GAN.pix2pix import Pix2PixModel
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
+
 
 
 def set_model(config, model_name, n_channels):
@@ -43,6 +45,9 @@ def set_model(config, model_name, n_channels):
         ) 
     elif config.model.name == 'unet_senti_utae':
         model = UnetSentiUTAE(n_channels=n_channels, n_senti_channels=10, n_classes=config.model.n_class)
+
+    elif config.model.name == 'pix2pix':
+        model = Pix2PixModel(config)
 
     return model
 
