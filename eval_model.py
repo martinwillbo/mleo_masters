@@ -77,19 +77,19 @@ def eval_model(config, writer, training_path, eval_type):
         with torch.no_grad():
             #y_pred = model(x)['out']
             y_pred = model(x)
-            print(y_pred.shape)
+            
 
         l = eval_loss_f(y_pred, y)
         eval_loss.append(l.item())
 
-    
-        y_prob = torch.softmax(y_pred, dim=1)
-        print(y_prob.shape)
-        y_pred = torch.argmax(y_pred, dim=1)
-
         # Extract probabilities for the predicted class
-        predicted_class_probs = y_prob[:, y_pred, :, :]
+        y_prob = torch.softmax(y_pred, dim=1)
+        predicted_class_probs = torch.max(y_prob, dim=1)
+        print(predicted_class_probs.shape)
 
+        #Prediction
+        y_pred = torch.argmax(y_pred, dim=1)
+    
         # Identify correct and incorrect predictions
         correct_mask = (y_pred == y)
         incorrect_mask = ~correct_mask
