@@ -2,7 +2,7 @@ import os
 from unet_module import UnetFeatureMetadata, UnetFeatureMetadata_2, UnetFeatureSenti, UnetSentiDoubleLoss, UnetSentiUTAE #, UnetFeatureSentiMtd, UNetWithMetadata
 import segmentation_models_pytorch as smp
 #from fcnpytorch.fcn8s import FCN8s as FCN8s #smaller net!
-from GAN.pix2pix import Pix2PixModel
+#from GAN.pix2pix import Pix2PixModel
 from torchvision.models.segmentation.deeplabv3 import deeplabv3_resnet50
 import torch
 import torch.nn as nn
