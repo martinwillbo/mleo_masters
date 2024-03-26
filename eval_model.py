@@ -57,8 +57,8 @@ def eval_model(config, writer, training_path, eval_type):
     y_list = []
     correct_probs = []
     incorrect_probs = []
-    correct = 0
-    incorrect = 0
+    correct_sum = 0
+    incorrect_sum = 0
 
     idx_list = [1,10,40]
     c = 0
