@@ -81,7 +81,7 @@ def eval_model(config, writer, training_path, eval_type):
         l = eval_loss_f(y_pred, y)
         eval_loss.append(l.item())
 
-        print(y_prob.shape)
+        
         y_prob = torch.softmax(y_pred, dim=1)
         print(y_prob.shape)
         y_pred = torch.argmax(y_pred, dim=1)
