@@ -39,6 +39,7 @@ def eval_model(config, writer, training_path, eval_type):
 
 
     model.to(config.device)
+    print(model)
 
     model.eval()
 
@@ -49,7 +50,7 @@ def eval_model(config, writer, training_path, eval_type):
         eval_loss_f = smp.losses.TverskyLoss(mode='multiclass')
 
     if config.loss_function == 'teacher_student_loss':
-        eval_loss = smp.losses.TverskyLoss(mode='multiclass')
+        eval_loss_f = smp.losses.TverskyLoss(mode='multiclass')
 
 
     eval_loss = []
