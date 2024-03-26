@@ -54,7 +54,7 @@ def set_model(config, model_name, n_channels):
 def get_teacher(config, teacher_path, teacher_model_type):
         teacher = set_model(config, teacher_model_type, config.model.teacher_student.teacher_channels)
         teacher_path = os.path.join(teacher_path, 'best_model.pth')
-        teacher.load_state_dict(torch.load(teacher_path), config.device)
+        teacher.load_state_dict(torch.load(teacher_path, config.device))
         return teacher 
 
 def teacher_student(teacher, student, part, loss, x, y, teacher_channels, rep_layer):
