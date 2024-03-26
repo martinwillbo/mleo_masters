@@ -88,7 +88,7 @@ def eval_model(config, writer, training_path, eval_type):
         y_pred = torch.argmax(y_pred, dim=1)
 
         # Extract probabilities for the predicted class
-        predicted_class_probs = y_prob[:, y_pred]
+        predicted_class_probs = y_prob[:, y_pred, :, :]
 
         # Identify correct and incorrect predictions
         correct_mask = (y_pred == y)
