@@ -84,8 +84,8 @@ def eval_model(config, writer, training_path, eval_type):
 
         # Extract probabilities for the predicted class
         y_prob = torch.softmax(y_pred, dim=1)
-        predicted_class_probs = torch.max(y_prob, dim=1)
-        print(predicted_class_probs)
+        predicted_class_probs = torch.max(y_prob, dim=1)[0]
+        print(predicted_class_probs.shape)
 
         #Prediction
         y_pred = torch.argmax(y_pred, dim=1)
