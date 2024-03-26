@@ -39,8 +39,6 @@ def eval_model(config, writer, training_path, eval_type):
 
 
     model.to(config.device)
-    print(model)
-
     model.eval()
 
     if config.loss_function == "CE":
@@ -66,11 +64,11 @@ def eval_model(config, writer, training_path, eval_type):
     for batch in tqdm(val_iter):
         x, y = batch
 
-        if eval_type == 'zero_out' or eval_type == 'zero_out_5/3': #make sure no data is inputed
-            x[:,3:5,:,:] = 0
+        #if eval_type == 'zero_out' or eval_type == 'zero_out_5/3': #make sure no data is inputed
+        #    x[:,3:5,:,:] = 0
 
-        if eval_type != 'normal':
-            x = set_noise(config, x, noise_level, eval_type)
+        #if eval_type != 'normal':
+        #    x = set_noise(config, x, noise_level, eval_type)
 
         x = x.to(config.device)
         y = y.to(config.device)
@@ -108,10 +106,10 @@ def eval_model(config, writer, training_path, eval_type):
             incorrect_probs.append(incorrect_avg_prob.item())
 
         #if c in idx_list:
-            #x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
-            #y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
-            #y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
-            #save_image(c, x_cpu, y_pred_cpu, y_cpu, 0, config, writer)
+        #    x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
+        #    y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
+        #    y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
+        #    save_image(c, x_cpu, y_pred_cpu, y_cpu, 0, config, writer)
 
         y_pred = y_pred.to(torch.uint8).cpu().contiguous().numpy()
         y = y.to(torch.uint8).cpu().contiguous().numpy()

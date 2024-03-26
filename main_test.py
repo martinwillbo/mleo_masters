@@ -17,8 +17,7 @@ def main(config):
     training_path = '../log_res/best_model_5_channels_100/'
     log_dir = os.path.join(training_path, 'tensorboard')
     log_dir = log_dir  +'_' + str(config.eval_type)
-    #writer = SummaryWriter(log_dir=log_dir)
-    writer=None
+    writer = SummaryWriter(log_dir=log_dir)
     
     eval_model(config, writer, training_path, config.eval_type)
     #test.eval_on_test(config, writer, training_path)
