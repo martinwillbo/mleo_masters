@@ -25,9 +25,8 @@ def eval_model(config, writer, training_path, eval_type):
     #Load and overwrite model
     saved_model_path = os.path.join(training_path, 'best_model.pth')
     print(saved_model_path)
-    model.load_state_dict(torch.load(saved_model_path, config.device), config.device)
-    model.to(config.device)
-   
+    model.load_state_dict(torch.load(saved_model_path, config.device))
+    model.to(config.device)   
 
     #Set weights to 0
     if eval_type == "zero_out":
