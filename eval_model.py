@@ -19,7 +19,8 @@ def eval_model(config, writer, training_path, eval_type):
                             pin_memory = True)
 
     model = set_model(config, config.model.name, config.model.n_channels)
-        
+    model.to(config.device)
+
     #Load and overwrite model
     saved_model_path = os.path.join(training_path, 'best_model.pth')
     print(saved_model_path)
@@ -37,9 +38,7 @@ def eval_model(config, writer, training_path, eval_type):
             model = zero_out(noise_level=1.0, model=model, three_five=True)
             #model.backbone.conv1.weight[:, 3:5, :, :] = 0
             #model.backbone.conv1.weight[:, 0:3, :, :] *= 5/3 #size up weights 
-
-
-    model.to(config.device)
+    
     model.eval()
 
     if config.loss_function == "CE":
