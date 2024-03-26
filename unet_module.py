@@ -7,9 +7,6 @@ from segmentation_models_pytorch.base.modules import Conv2dReLU, Attention
 from segmentation_models_pytorch.encoders import get_encoder
 from utae_model import UTAE
 
-
-
-
 class SEBlock(nn.Module):
 
     def __init__(self, n_channels, n_senti, reduction_ratio=2): #n_senti is sze of feature output

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from support_functions import set_model
 from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, save_image
 from torch.utils.data import DataLoader
 import util
@@ -17,13 +18,8 @@ def eval_model(config, writer, training_path, eval_type):
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers,
                             pin_memory = True)
 
-    model = smp.Unet(
-            encoder_weights="imagenet",
-            encoder_name="efficientnet-b4",
-            in_channels = config.model.n_channels,
-            classes= config.model.n_class
-        )
-
+    model = set_model(config, config.model.name, config.model.n_channels)
+        
     #Load and overwrite model
     saved_model_path = os.path.join(training_path, 'best_model.pth')
     model.load_state_dict(torch.load(saved_model_path))
@@ -55,7 +51,10 @@ def eval_model(config, writer, training_path, eval_type):
     eval_loss = []
     val_iter = iter(val_loader)
     y_pred_list = []
+    y_prob_list = []
     y_list = []
+    correct_probs = []
+    incorrect_probs = []
 
     idx_list = [1,10,40]
     c = 0
@@ -79,7 +78,27 @@ def eval_model(config, writer, training_path, eval_type):
         l = eval_loss_f(y_pred, y)
         eval_loss.append(l.item())
 
+        print(y_prob.shape)
+        y_prob = torch.softmax(y_pred, dim=1)
+        print(y_prob.shape)
         y_pred = torch.argmax(y_pred, dim=1)
+
+        # Extract probabilities for the predicted class
+        predicted_class_probs = y_prob[:, y_pred]
+
+        # Identify correct and incorrect predictions
+        correct_mask = (y_pred == y)
+        incorrect_mask = ~correct_mask
+
+        # Calculate average probability for correct predictions
+        if torch.sum(correct_mask) > 0:
+            correct_avg_prob = torch.mean(predicted_class_probs[correct_mask])
+            correct_probs.append(correct_avg_prob.item())
+
+        # Calculate average probability for incorrect predictions
+        if torch.sum(incorrect_mask) > 0:
+            incorrect_avg_prob = torch.mean(predicted_class_probs[incorrect_mask])
+            incorrect_probs.append(incorrect_avg_prob.item())
 
         if c in idx_list:
             x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
@@ -95,8 +114,15 @@ def eval_model(config, writer, training_path, eval_type):
 
     l_test = np.mean(eval_loss)
     print("loss: " + str(l_test))
-    writer.add_text("evaluation/noise level", str(noise_level), 0)
-    writer.add_scalar('evaluation/loss', l_test)
+    #writer.add_text("evaluation/noise level", str(noise_level), 0)
+    #writer.add_scalar('evaluation/loss', l_test)
     miou_prec_rec_writing(config, y_pred_list, y_list, 'evaluation', writer, 0)
     miou_prec_rec_writing_13(config, y_pred_list, y_list, 'evaluation', writer, 0)
+
+    # Calculate average probabilities
+    avg_correct_prob = sum(correct_probs) / len(correct_probs)
+    avg_incorrect_prob = sum(incorrect_probs) / len(incorrect_probs) 
+
+    print("Average Probability for Correct Predictions:", avg_correct_prob)
+    print("Average Probability for Incorrect Predictions:", avg_incorrect_prob)
     #conf_matrix(config, y_pred_list, y_list, writer, 0)
