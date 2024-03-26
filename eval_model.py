@@ -57,6 +57,8 @@ def eval_model(config, writer, training_path, eval_type):
     y_list = []
     correct_probs = []
     incorrect_probs = []
+    correct = 0
+    incorrect = 0
 
     idx_list = [1,10,40]
     c = 0
@@ -92,13 +94,15 @@ def eval_model(config, writer, training_path, eval_type):
         # Identify correct and incorrect predictions
         correct_mask = (y_pred == y)
         incorrect_mask = ~correct_mask
+        correct_sum += torch.sum(correct_mask)
+        incorrect_sum += torch.sum(incorrect_mask)
 
         # Calculate average probability for correct predictions
         if torch.sum(correct_mask) > 0:
             correct_avg_prob = torch.mean(predicted_class_probs[correct_mask])
             correct_avg_prob.to(torch.uint8).cpu().contiguous().numpy()
             correct_probs.append(correct_avg_prob.item())
-
+        
         # Calculate average probability for incorrect predictions
         if torch.sum(incorrect_mask) > 0:
             incorrect_avg_prob = torch.mean(predicted_class_probs[incorrect_mask])
@@ -128,6 +132,10 @@ def eval_model(config, writer, training_path, eval_type):
     avg_correct_prob = sum(correct_probs) / len(correct_probs)
     avg_incorrect_prob = sum(incorrect_probs) / len(incorrect_probs) 
 
+    #Accuracy
+    acc = correct_sum / (correct_sum + incorrect_sum)
+
+    print("Average Accuracy:", acc)
     print("Average Probability for Correct Predictions:", avg_correct_prob)
     print("Average Probability for Incorrect Predictions:", avg_incorrect_prob)
     #conf_matrix(config, y_pred_list, y_list, writer, 0)
