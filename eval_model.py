@@ -77,11 +77,12 @@ def eval_model(config, writer, training_path, eval_type):
         with torch.no_grad():
             #y_pred = model(x)['out']
             y_pred = model(x)
+            print(y_pred.shape)
 
         l = eval_loss_f(y_pred, y)
         eval_loss.append(l.item())
 
-        
+    
         y_prob = torch.softmax(y_pred, dim=1)
         print(y_prob.shape)
         y_pred = torch.argmax(y_pred, dim=1)
