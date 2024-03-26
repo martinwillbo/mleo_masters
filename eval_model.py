@@ -27,6 +27,8 @@ def eval_model(config, writer, training_path, eval_type):
     print(saved_model_path)
     #model.load_state_dict(torch.load(saved_model_path), 'cuda:0')
     model = torch.load(saved_model_path, 'cuda:0')
+    print(model)
+
     #Set weights to 0
     if eval_type == "zero_out":
         with torch.no_grad():
