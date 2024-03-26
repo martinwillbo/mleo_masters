@@ -48,10 +48,13 @@ def eval_model(config, writer, training_path, eval_type):
     if config.loss_function == 'tversky':
         eval_loss_f = smp.losses.TverskyLoss(mode='multiclass')
 
+    if config.loss_function == 'teacher_student_loss':
+        eval_loss = smp.losses.TverskyLoss(mode='multiclass')
+
+
     eval_loss = []
     val_iter = iter(val_loader)
     y_pred_list = []
-    y_prob_list = []
     y_list = []
     correct_probs = []
     incorrect_probs = []
@@ -100,11 +103,11 @@ def eval_model(config, writer, training_path, eval_type):
             incorrect_avg_prob = torch.mean(predicted_class_probs[incorrect_mask])
             incorrect_probs.append(incorrect_avg_prob.item())
 
-        if c in idx_list:
-            x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
-            y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
-            y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
-            save_image(c, x_cpu, y_pred_cpu, y_cpu, 0, config, writer)
+        #if c in idx_list:
+            #x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
+            #y_pred_cpu = y_pred[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
+            #y_cpu = y[0, :, :].to(torch.uint8).cpu().detach().contiguous().numpy()
+            #save_image(c, x_cpu, y_pred_cpu, y_cpu, 0, config, writer)
 
         y_pred = y_pred.to(torch.uint8).cpu().contiguous().numpy()
         y = y.to(torch.uint8).cpu().contiguous().numpy()
@@ -116,8 +119,8 @@ def eval_model(config, writer, training_path, eval_type):
     print("loss: " + str(l_test))
     #writer.add_text("evaluation/noise level", str(noise_level), 0)
     #writer.add_scalar('evaluation/loss', l_test)
-    miou_prec_rec_writing(config, y_pred_list, y_list, 'evaluation', writer, 0)
-    miou_prec_rec_writing_13(config, y_pred_list, y_list, 'evaluation', writer, 0)
+    #miou_prec_rec_writing(config, y_pred_list, y_list, 'evaluation', writer, 0)
+    #miou_prec_rec_writing_13(config, y_pred_list, y_list, 'evaluation', writer, 0)
 
     # Calculate average probabilities
     avg_correct_prob = sum(correct_probs) / len(correct_probs)
