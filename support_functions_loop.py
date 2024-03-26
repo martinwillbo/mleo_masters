@@ -63,13 +63,13 @@ def set_model(config, model_name, n_channels):
 def set_loss(loss_function, config):
     if loss_function == 'CE':
         train_loss = nn.CrossEntropyLoss()
-        eval_loss = nn.CrossEntropyLoss()
+        eval_loss = smp.losses.TverskyLoss(mode='multiclass')
     elif loss_function == 'tversky':
         train_loss = smp.losses.TverskyLoss(mode='multiclass')
         eval_loss = smp.losses.TverskyLoss(mode='multiclass')
     elif loss_function == 'CE_tversky':
         train_loss = CE_tversky_Loss()
-        eval_loss = CE_tversky_Loss()
+        eval_loss = smp.losses.TverskyLoss(mode='multiclass')
     elif loss_function == 'senti_loss':
         train_loss = senti_loss()
         eval_loss = senti_loss()
@@ -78,7 +78,8 @@ def set_loss(loss_function, config):
                                           ts_loss=config.model.teacher_student.ts_loss, 
                                           student_T=config.model.teacher_student.student_T,
                                           teacher_T=config.model.teacher_student.teacher_T,
-                                          R=config.model.teacher_student.R)
+                                          R=config.model.teacher_student.R,
+                                          student_loss=config.model.teacher_student.student_loss)
         eval_loss = smp.losses.TverskyLoss(mode='multiclass') #let eval loss be for only student
     elif loss_function == 'multi_teacher_loss':
         train_loss = multi_teacher_loss(teacher_weight=config.model.teacher_student.alpha, 

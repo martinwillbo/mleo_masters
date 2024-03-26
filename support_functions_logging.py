@@ -233,6 +233,7 @@ def is_subsequence_present(lst, subsequence):
 
 def priv_info_image(channel, index, x_tensor, epoch, writer):
     x_priv = x_tensor[channel, :, :].unsqueeze(0)
+    
     #print(x_priv.shape)
     #Not ideal normalization to be honest, as we don't know how strong the signal is
     min_vals = x_priv.view(1, -1).min(dim=1)[0].unsqueeze(-1).unsqueeze(-1)
@@ -240,8 +241,10 @@ def priv_info_image(channel, index, x_tensor, epoch, writer):
     x_priv = (x_priv - min_vals) / (max_vals - min_vals)
     #print(x_priv.shape)
     #Have to normalize x and x_priv to [0,1]
-    writer.add_image('Epoch: ' + str(epoch) + ', Val/IR priv info, batch: ' + str(index), x_priv, epoch)
-    writer.add_image('Epoch: ' + str(epoch) + ', Val/height map priv info, batch: ' + str(index), x_priv, epoch)
+    if channel == 3:
+        writer.add_image('Epoch: ' + str(epoch) + ', Val/IR priv info, batch: ' + str(index), x_priv, epoch)
+    elif channel == 4:
+        writer.add_image('Epoch: ' + str(epoch) + ', Val/height map priv info, batch: ' + str(index), x_priv, epoch)
 
 
 def save_image(index, x, y_pred, y, epoch, config, writer):

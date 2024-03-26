@@ -14,6 +14,7 @@ from support_functions_logging import priv_info_image,miou_prec_rec_writing, mio
 from support_functions_noise import set_noise, zero_out, stepwise_linear_function_1, stepwise_linear_function_2, custom_sine, image_wise_fade
 from support_functions_loop import set_model, set_loss, get_loss_y_pred, get_teacher, teacher_student, multi_teacher, generate_priv, priv_forward
 from unet_module import UnetPrivGenerator
+import torch.nn.functional as F
 
 
 
@@ -70,7 +71,7 @@ def loop2(config, writer, hydra_log_dir):
         train_loss, priv_train_loss, eval_loss, priv_eval_loss = set_loss(config.loss_function, config)
     else:
         train_loss, eval_loss = set_loss(config.loss_function, config)
-    CE_loss, tversky_loss = nn.CrossEntropyLoss(), smp.losses.TverskyLoss(mode='multiclass')
+    CE_loss, tversky_loss, focal_loss = nn.CrossEntropyLoss(), smp.losses.TverskyLoss(mode='multiclass'), smp.losses.FocalLoss(mode='multiclass')
 
     epoch = 0
     best_val_loss = np.inf
@@ -101,110 +102,112 @@ def loop2(config, writer, hydra_log_dir):
             noise_level = custom_sine(epoch)
             print(noise_level)
 
-        
-        for batch in tqdm(train_iter):
-            x,y, mtd,senti = batch
-
-            if config.noise.noise:
-
-                if config.noise.noise_type == 'zero_out':
-                    model= zero_out(noise_level, model)
-            
-                elif config.noise.noise_distribution_type == 'image':
-                    x = set_noise(x, noise_level, config.noise.noise_type)
-
-                elif config.noise.noise_distribution_type == 'batch':
-                    num_rows_to_noise = math.ceil(noise_level * x.shape[0])
-                    rows_to_noise = random.sample(range(x.shape[0]), num_rows_to_noise)
-                    x[rows_to_noise, :, :, :] = set_noise(x[rows_to_noise, :, :, :], noise_level, config.noise.noise_type)
-
-                else:
-                    print("Invalid noise_distribution_type or noise_type")
-
-            x = x.to(config.device)
-            y = y.to(config.device)
-            mtd = mtd.to(config.device)
-            senti = senti.to(config.device)
-            
-            with autocast():
-                if config.model.name == 'teacher_student':
-                    model, y_pred, l = teacher_student(teacher, model, 'train', train_loss, x, y, 
-                                                       config.model.teacher_student.student_spec_channels,
-                                                       config.model.teacher_student.teacher_spec_channels)
+        if True:
+            for batch in tqdm(train_iter):
                 
-                elif config.model.name == 'multi_teacher':
-                    model, y_pred, l = multi_teacher(teacher_1, teacher_2, model, 'train', train_loss, x, y, 
-                                                     config.model.multi_teacher.student_spec_channels,
-                                                     config.model.multi_teacher.teacher_1_spec_channels,
-                                                     config.model.multi_teacher.teacher_2_spec_channels)
-                elif config.model.name == 'unet_predict_priv':
-                    y_pred, x_priv_pred = model(x)
-                    l = train_loss(y_pred, x_priv_pred, y, x[:,3:,:,:])
-                elif config.model.name == 'unet_generate_priv':
-                    model, priv_generator, y_pred, l, generated_priv_l, first_generated_priv_l, priv_loss_mean, priv_loss_std, _ = generate_priv(priv_generator, model, priv_train_loss, train_loss, x, y)
-                elif config.model.name == 'unet_priv_forward':
-                    model, y_pred, l, _, _, _, _ = priv_forward(model, train_loss, eval_loss, 'train',x,y)
-                else:
-                    model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, train_loss, model, x, mtd, senti, y)
-            
-            if config.model.name == 'unet_generate_priv':
-                gen_priv_optimizer.zero_grad()
-                gen_priv_scaler.scale(generated_priv_l).backward()  # Removed retain_graph=True unless you have a specific need for it
-                #gen_priv_scaler.unscale_(gen_priv_optimizer)
+                x,y, mtd,senti = batch
 
-                # Clip gradients; you can adjust 'max_norm' to your needs
-                #torch.nn.utils.clip_grad_norm_(priv_generator.parameters(), max_norm=1.0)
+                if config.noise.noise:
 
-                gen_priv_scaler.step(gen_priv_optimizer)
-                gen_priv_scaler.update()
-              
-            optimizer.zero_grad()
-            scaler.scale(l).backward()  # Assumes `l` does not require `retain_graph=True` due to the previous comment
-            #if config.model.name =='unet_generate_priv':
-            #    scaler.unscale_(optimizer)
-                # Clip gradients; you can adjust 'max_norm' to your needs
-            #    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                    if config.noise.noise_type == 'zero_out':
+                        model= zero_out(noise_level, model)
+                
+                    elif config.noise.noise_distribution_type == 'image':
+                        x = set_noise(x, noise_level, config.noise.noise_type)
 
-            scaler.step(optimizer)
-            scaler.update()
+                    elif config.noise.noise_distribution_type == 'batch':
+                        num_rows_to_noise = math.ceil(noise_level * x.shape[0])
+                        rows_to_noise = random.sample(range(x.shape[0]), num_rows_to_noise)
+                        x[rows_to_noise, :, :, :] = set_noise(x[rows_to_noise, :, :, :], noise_level, config.noise.noise_type)
 
-            y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
+                    else:
+                        print("Invalid noise_distribution_type or noise_type")
 
-            #y_pred and y has shape: batch_size, crop_size, crop_size, save all values as uint8 in lists on RAM
-            y_pred = y_pred.to(torch.uint8).cpu().detach().contiguous().numpy()
-            y = y.to(torch.uint8).cpu().detach().contiguous().numpy()
-            y_pred_list.append(y_pred)
-            y_list.append(y)
+                x = x.to(config.device)
+                y = y.to(config.device)
+                mtd = mtd.to(config.device)
+                senti = senti.to(config.device)
+                
+                with autocast():
+                    if config.model.name == 'teacher_student':
+                        model, y_pred, l = teacher_student(teacher, model, 'train', train_loss, x, y, 
+                                                        config.model.teacher_student.student_spec_channels,
+                                                        config.model.teacher_student.teacher_spec_channels)
+                    
+                    elif config.model.name == 'multi_teacher':
+                        model, y_pred, l = multi_teacher(teacher_1, teacher_2, model, 'train', train_loss, x, y, 
+                                                        config.model.multi_teacher.student_spec_channels,
+                                                        config.model.multi_teacher.teacher_1_spec_channels,
+                                                        config.model.multi_teacher.teacher_2_spec_channels)
+                    elif config.model.name == 'unet_predict_priv':
+                        y_pred, x_priv_pred = model(x)
+                        l,_,_,_,_ = train_loss(y_pred, x_priv_pred, y, x[:,3:,:,:])
+                    elif config.model.name == 'unet_generate_priv':
+                        model, priv_generator, y_pred, l, generated_priv_l, first_generated_priv_l, priv_loss_mean, priv_loss_std, _ = generate_priv(priv_generator, model, priv_train_loss, train_loss, x, y)
+                    elif config.model.name == 'unet_priv_forward':
+                        model, y_pred, l, _, _, _, _ = priv_forward(model, train_loss, eval_loss, 'train',x,y)
+                    else:
+                        model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, train_loss, model, x, mtd, senti, y)
+                
+                if config.model.name == 'unet_generate_priv':
+                    gen_priv_optimizer.zero_grad()
+                    gen_priv_scaler.scale(generated_priv_l).backward()  # Removed retain_graph=True unless you have a specific need for it
+                    #gen_priv_scaler.unscale_(gen_priv_optimizer)
 
-            epoch_loss.append(l.item())
+                    # Clip gradients; you can adjust 'max_norm' to your needs
+                    #torch.nn.utils.clip_grad_norm_(priv_generator.parameters(), max_norm=1.0)
+
+                    gen_priv_scaler.step(gen_priv_optimizer)
+                    gen_priv_scaler.update()
+                
+                optimizer.zero_grad()
+                scaler.scale(l).backward()  # Assumes `l` does not require `retain_graph=True` due to the previous comment
+                #if config.model.name =='unet_generate_priv':
+                #    scaler.unscale_(optimizer)
+                    # Clip gradients; you can adjust 'max_norm' to your needs
+                #    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
+                scaler.step(optimizer)
+                scaler.update()
+
+                y_pred = torch.argmax(y_pred, dim=1) #sets class to each data point
+
+                #y_pred and y has shape: batch_size, crop_size, crop_size, save all values as uint8 in lists on RAM
+                y_pred = y_pred.to(torch.uint8).cpu().detach().contiguous().numpy()
+                y = y.to(torch.uint8).cpu().detach().contiguous().numpy()
+                y_pred_list.append(y_pred)
+                y_list.append(y)
+
+                epoch_loss.append(l.item())
             
             
 
         #Save loss
-        writer.add_scalar('train/loss', np.mean(epoch_loss), epoch)
-        print('Epoch mean loss: '+str(np.mean(epoch_loss)))
+            writer.add_scalar('train/loss', np.mean(epoch_loss), epoch)
+            print('Epoch mean loss: '+str(np.mean(epoch_loss)))
 
-        #Move model off from VRAM when performing heavy calculations
-        miou_prec_rec_writing(config, y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
-        miou_prec_rec_writing_13(config, y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
+            #Move model off from VRAM when performing heavy calculations
+            miou_prec_rec_writing(config, y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
+            miou_prec_rec_writing_13(config, y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
 
-        #clean
-        del y_list, y_pred_list
+            #clean
+            del y_list, y_pred_list
 
         if epoch % config.eval_every == 0:
             model.eval()
 
             if config.model.name == teacher_student:
                 teacher.eval()
-            if config.model.name == 'unet_generate_priv' or config.model.name == 'unet_priv_forward':
+            if config.model.name == 'unet_generate_priv' or config.model.name == 'unet_priv_forward' or config.model.name == 'unet_predict_priv':
                 if config.model.name == 'unet_generate_priv':
                     priv_generator.eval()
                 val_generated_priv_l, val_first_generated_priv_l, val_priv_loss_mean, val_priv_loss_std = [], [], [], []
             
             val_loss = []
-            val_CE_loss, val_tversky_loss = [], []
+            val_CE_loss, val_tversky_loss, val_focal_loss = [], [], []
             val_y_pred_list = []
             val_y_list = []
+            val_probs = []
 
             num_batches = math.floor(len(val_set)/config.val_batch_size)
             same_img_idx = 1
@@ -243,6 +246,11 @@ def loop2(config, writer, hydra_log_dir):
                     elif config.model.name == 'unet_predict_priv':
                         y_pred, x_priv_pred = model(x)
                         l = eval_loss(y_pred, y)
+                        _, predicted_priv_loss, first_priv_loss, priv_loss_mean, priv_loss_std = train_loss(y_pred, x_priv_pred, y, x[:,3:,:,:])
+                        val_generated_priv_l.append(predicted_priv_loss.item())
+                        val_first_generated_priv_l.append(first_priv_loss.item())
+                        val_priv_loss_mean.append(priv_loss_mean.item())
+                        val_priv_loss_std.append(priv_loss_std.item())
                     elif config.model.name == 'unet_generate_priv':
                         model, priv_generator, y_pred, l, generated_priv_l, first_generated_priv_l, priv_loss_mean, priv_loss_std, generated_priv = generate_priv(priv_generator, model, priv_eval_loss, eval_loss, x, y)
                         val_generated_priv_l.append(generated_priv_l.item())
@@ -259,11 +267,38 @@ def loop2(config, writer, hydra_log_dir):
                     else:
                         model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, eval_loss, model, x, mtd, senti, y)
 
-                CE_l, tversky_l = CE_loss(y_pred, y), tversky_loss(y_pred, y)
+                CE_l, tversky_l, focal_l = CE_loss(y_pred, y), tversky_loss(y_pred, y), focal_loss(y_pred, y)
+                y_pred_probs = F.softmax(y_pred, dim=1)
+                correct_probs = [0.0 for _ in range(config.model.n_class)]
+                total_pixels = [0 for _ in range(config.model.n_class)]
+
+                for i in range(y_pred_probs.size(0)):  # Iterate through batch
+                    for c in range(config.model.n_class):  # Iterate through each class
+                        class_mask = (y[i] == c)  # A mask where the target is class c
+                        class_probs = y_pred_probs[i, c]  # Probabilities assigned to class c
+                        assigned_class = torch.argmax(class_probs, dim=0)
+                        correctly_assigned_mask = (assigned_class == c) & class_mask
+
+                        # Extract and sum the probabilities where the mask is True
+                        correct_class_probs = class_probs[correctly_assigned_mask].sum().item()
+                        correct_probs[c] += correct_class_probs
+
+                        # Count the pixels for averaging later
+                        #total_pixels[c] += class_mask.sum().item() #like this for some average over all
+                        total_pixels[c] += correctly_assigned_mask.sum().item() #like this for some over confidence metric
+                        
+
+                # Calculate the average probability for the correct class, per class
+                average_probs = [correct_probs[c] / total_pixels[c] if total_pixels[c] > 0 else 0 for c in range(config.model.n_class)]
+                val_probs.append(average_probs)
+
+
+
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())
                 val_CE_loss.append(CE_l.item())
                 val_tversky_loss.append(tversky_l.item())
+                val_focal_loss.append(focal_l.item())
         
                 if counter in idx_list and epoch % 15 == 0:
                     x_cpu =  x[0, :, :, :].cpu().detach().contiguous().numpy()
@@ -294,16 +329,28 @@ def loop2(config, writer, hydra_log_dir):
             l_val = np.mean(val_loss)
             l_CE_val = np.mean(val_CE_loss)
             l_tversky_val = np.mean(val_tversky_loss)
+            l_focal_val = np.mean(val_focal_loss)
+
             writer.add_scalar('val/loss', l_val, epoch)
             writer.add_scalar('loss/CE', l_CE_val, epoch)
             writer.add_scalar('loss/tversky', l_tversky_val, epoch)
+            writer.add_scalar('loss/focal', l_focal_val, epoch)
+            
             print('Val loss: '+str(l_val))
             print('Max batch CE loss: ' + str(np.max(val_CE_loss)))
             print('Max batch tversky loss: ' + str(np.max(val_tversky_loss)))
             print('Min batch CE loss: ' + str(np.min(val_CE_loss)))
             print('Min batch tversky loss: ' + str(np.min(val_tversky_loss)))
+            print('Probabilities per class: ')
 
-            if config.model.name == 'unet_generate_priv' or config.model.name == 'unet_priv_forward':
+            non_zero_mask = val_probs != 0
+            mean_vals = np.mean(val_probs, axis=0,where=non_zero_mask)
+            formatted_mean_vals = ["{:.3f}".format(val) for val in mean_vals]
+            print(formatted_mean_vals)
+
+            writer.add_scalar('val/avg correct probability', np.mean(val_probs,where=non_zero_mask), epoch)
+
+            if config.model.name == 'unet_generate_priv' or config.model.name == 'unet_priv_forward' or config.model.name == 'unet_predict_priv':
                 l_val_generated_priv = np.mean(val_generated_priv_l)
                 l_val_first_generated_priv = np.mean(val_first_generated_priv_l)
                 l_val_priv_mean = np.mean(val_priv_loss_mean)
