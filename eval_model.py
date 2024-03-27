@@ -18,8 +18,10 @@ def eval_model(config, writer, training_path, eval_type):
     val_loader = DataLoader(val_set, batch_size = config.val_batch_size, shuffle = False, num_workers = config.num_workers,
                             pin_memory = True)
 
-
-    model = set_model(config, model_name=config.eval.eval_model, n_channels=config.eval.eval_channels)
+    if config.eval.eval_model == 'unet_predict_priv':
+        model = set_model(config, config.eval.eval_model, config.model.unet_predict_priv.unet_channels)
+    else:
+        model = set_model(config, model_name=config.eval.eval_model, n_channels=config.eval.eval_channels)
 
     #Load and overwrite model
     saved_model_path = os.path.join(training_path, 'best_model.pth')
@@ -66,7 +68,12 @@ def eval_model(config, writer, training_path, eval_type):
 
         with torch.no_grad():
             #y_pred = model(x)['out']
-            y_pred = model(x)
+            if config.eval.eval_model == 'unet_predict_priv':
+                y_pred, _ = model(x)
+            elif config.eval.eval_model == 'unet_priv_forward':
+                y_pred, _ = model(x[:,:3,:,:])
+            else:
+                y_pred = model(x)
 
         l = eval_loss_f(y_pred, y)
         eval_loss.append(l.item())

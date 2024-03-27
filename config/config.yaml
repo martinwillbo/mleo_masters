@@ -90,9 +90,9 @@ noise:
 
 eval:
   eval_type: normal
-  eval_model: unet
+  eval_model: unet_priv_forward
   eval_loss: tversky
   eval_channels: 3
-  eval_path: /raid/dlgroupmsc/logs/2024-03-14_16-07-11
+  eval_path: /raid/dlgroupmsc/logs/2024-03-15_11-30-23
 
 
