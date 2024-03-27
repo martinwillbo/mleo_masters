@@ -134,10 +134,11 @@ def eval_model(config, writer, training_path, eval_type):
     avg_correct_prob = sum(correct_probs) / len(correct_probs)
     avg_incorrect_prob = sum(incorrect_probs) / len(incorrect_probs) 
 
-    #Accuracy
+    #Calc accuracy
     acc = correct_sum / (correct_sum + incorrect_sum)
 
     print("Average Accuracy:", acc.item())
     print("Average Probability for Correct Predictions:", avg_correct_prob)
     print("Average Probability for Incorrect Predictions:", avg_incorrect_prob)
-    #conf_matrix(config, y_pred_list, y_list, writer, 0)
+    
+    

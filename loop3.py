@@ -16,7 +16,7 @@ import math
 import random
 import cv2
 import matplotlib.pyplot as plt
-from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, label_image, save_image, save_senti_image
+from support_functions_logging import miou_prec_rec_writing, miou_prec_rec_writing_13, conf_matrix, label_image, save_image, save_senti_image, save_probabilites
 from support_functions import set_model, teacher_student, get_teacher, collate_fn
 
 def loop3(config, writer, hydra_log_dir):
@@ -90,6 +90,7 @@ def loop3(config, writer, hydra_log_dir):
         train_iter = iter(train_loader)
         y_pred_list = [] #list to save for an entire epoch
         y_list = []
+        y_prob_list = []
         
         for batch in tqdm(train_iter):
             if config.dataset.using_senti:
@@ -117,6 +118,7 @@ def loop3(config, writer, hydra_log_dir):
                 elif config.model.name != 'teacher_student':
                     l = train_loss(y_pred, y)
             
+            #y_prob = torch.softmax(y_pred, dim=1)
             y_pred = torch.argmax(y_pred, dim=1)
             optimizer.zero_grad()
             scaler.scale(l).backward()
@@ -125,8 +127,10 @@ def loop3(config, writer, hydra_log_dir):
             
             #y_pred and y has shape: batch_size, crop_size, crop_size, save all values as uint8 in lists on RAM
             y_pred = y_pred.to(torch.uint8).cpu().detach().contiguous().numpy()
+            #y_prob = y_prob.to(torch.float32).cpu().detach().contiguous().numpy()
             y = y.to(torch.uint8).cpu().detach().contiguous().numpy()
             y_pred_list.append(y_pred)
+            #y_prob_list.append(y_prob)
             y_list.append(y)
 
             epoch_loss.append(l.item())         
@@ -138,7 +142,7 @@ def loop3(config, writer, hydra_log_dir):
         #Move model off from VRAM when performing heavy calculations
         miou_prec_rec_writing(config, y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
         miou_prec_rec_writing_13(config, y_pred_list, y_list, part='train', writer=writer, epoch=epoch)
-
+        
         #clean
         del y_list, y_pred_list
 
@@ -150,6 +154,7 @@ def loop3(config, writer, hydra_log_dir):
             val_loss = []
             CE_val_loss =[]
             val_y_pred_list = []
+            val_y_prob_list = []
             val_y_list = []
 
             num_batches = math.floor(len(val_set)/config.val_batch_size)
@@ -187,6 +192,7 @@ def loop3(config, writer, hydra_log_dir):
                         l = eval_loss(y_pred, y)
                     
                 l_CE =  CE_loss(y_pred, y)
+                y_prob = torch.softmax(y_pred, dim=1)
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())
                 CE_val_loss.append(l_CE.item()) 
@@ -200,8 +206,10 @@ def loop3(config, writer, hydra_log_dir):
                     #save_senti_image(counter, senti_cpu, epoch, config, writer)                    
 
                 y_pred = y_pred.to(torch.uint8).cpu().contiguous().detach().numpy()
+                y_prob = y_prob.to(torch.float32).cpu().contiguous().detach().numpy()
                 y = y.to(torch.uint8).cpu().contiguous().detach().numpy()
                 val_y_pred_list.append(y_pred)
+                val_y_prob_list.append(y_prob)
                 val_y_list.append(y)            
 
                 counter += 1
@@ -218,11 +226,11 @@ def loop3(config, writer, hydra_log_dir):
 
             miou_prec_rec_writing(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
             miou_prec_rec_writing_13(config, val_y_pred_list, val_y_list, part='val', writer=writer, epoch=epoch)
-
+            save_probabilites(config, val_y_pred_list, val_y_prob_list, val_y_list, part='val', writer=writer, epoch=epoch)
             #if epoch % 15 == 0:
             #    conf_matrix(config, val_y_pred_list, val_y_list, writer, epoch)
 
-            del val_y_list, val_y_pred_list, y_pred, y
+            del val_y_list, val_y_pred_list, val_y_prob_list, y_pred, y
 
             torch.cuda.empty_cache()
 

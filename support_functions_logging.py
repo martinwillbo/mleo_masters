@@ -303,3 +303,38 @@ def save_senti_image(index, senti, epoch, config, writer):
 
             writer.add_image('Epoch: ' + str(epoch) + ', Val/senti, batch: ' + str(index), senti_tensor, epoch)
             writer.flush()
+
+def save_probabilites(config, y_pred_list, y_prob_list, y_list, writer, epoch):
+     y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0))
+     y_list = torch.tensor(np.concatenate(y_list, axis=0))
+     y_prob_list = torch.tensor(np.concatenate(y_prob_list, axis=0))
+
+     y_pred_list = y_pred_list.view(-1)
+     y_list = y_list.view(-1)
+     y_prob_list = y_prob_list.view(-1)
+
+     #Calculate average probability for correct and incorrect predictions per class
+     correct_probs = []
+     incorrect_probs = []
+     acc = []
+
+     for i in range(config.model.n_class):
+         correct_mask = (y_pred_list == y_list)       
+         class_mask = (y_list == i)
+         class_correct_mask = torch.logical_and(class_mask, correct_mask)
+         class_correct_sum = torch.sum(class_correct_mask)
+         class_incorrect_mask = torch.logical_and(class_mask, ~correct_mask)
+         class_incorrect_sum = torch.sum(class_incorrect_mask)
+
+         class_acc = class_correct_sum/(class_correct_sum + class_incorrect_sum)
+         class_prob = torch.sum(y_prob_list[class_correct_mask])/class_correct_sum
+         class_incorrect_prob = torch.sum(y_prob_list[class_incorrect_mask])/class_incorrect_sum
+
+         correct_probs.append(class_prob.item())
+         incorrect_probs.append(class_incorrect_prob.item())
+         acc.append(class_acc.item())
+     
+     writer.add_text('val/ Correct prediction probabilities', ', '.join(map(str, correct_probs)), epoch)
+     writer.add_text('val/ Incorrect prediction probabilities', ', '.join(map(str, incorrect_probs)), epoch)
+     writer.add_text('val/ Accuracy per class', ', '.join(map(str, acc)), epoch)
+     writer.flush()
