@@ -207,7 +207,7 @@ def loop2(config, writer, hydra_log_dir):
             val_CE_loss, val_tversky_loss, val_focal_loss = [], [], []
             val_y_pred_list = []
             val_y_list = []
-            val_probs = []
+            correct_probs, incorrect_probs, correct_sum, incorrect_sum = [], [], 0, 0
 
             num_batches = math.floor(len(val_set)/config.val_batch_size)
             same_img_idx = 1
@@ -268,33 +268,27 @@ def loop2(config, writer, hydra_log_dir):
                         model, y_pred, l = get_loss_y_pred(config.model.name, config.loss_function, eval_loss, model, x, mtd, senti, y)
 
                 CE_l, tversky_l, focal_l = CE_loss(y_pred, y), tversky_loss(y_pred, y), focal_loss(y_pred, y)
-                y_pred_probs = F.softmax(y_pred, dim=1)
-                correct_probs = [0.0 for _ in range(config.model.n_class)]
-                total_pixels = [0 for _ in range(config.model.n_class)]
-
-                for i in range(y_pred_probs.size(0)):  # Iterate through batch
-                    for c in range(config.model.n_class):  # Iterate through each class
-                        class_mask = (y[i] == c)  # A mask where the target is class c
-                        class_probs = y_pred_probs[i, c]  # Probabilities assigned to class c
-                        assigned_class = torch.argmax(class_probs, dim=0)
-                        correctly_assigned_mask = (assigned_class == c) & class_mask
-
-                        # Extract and sum the probabilities where the mask is True
-                        correct_class_probs = class_probs[correctly_assigned_mask].sum().item()
-                        correct_probs[c] += correct_class_probs
-
-                        # Count the pixels for averaging later
-                        #total_pixels[c] += class_mask.sum().item() #like this for some average over all
-                        total_pixels[c] += correctly_assigned_mask.sum().item() #like this for some over confidence metric
-                        
-
-                # Calculate the average probability for the correct class, per class
-                average_probs = [correct_probs[c] / total_pixels[c] if total_pixels[c] > 0 else 0 for c in range(config.model.n_class)]
-                val_probs.append(average_probs)
-
-
+               
+                y_prob = F.softmax(y_pred,dim=1)
+                predicted_class_probs = torch.max(y_prob, dim=1)[0]      
 
                 y_pred = torch.argmax(y_pred, dim=1)
+
+                correct_mask = (y_pred == y)
+                incorrect_mask = ~correct_mask
+                correct_sum += torch.sum(correct_mask)
+                incorrect_sum += torch.sum(incorrect_mask) 
+
+                if torch.sum(correct_mask) > 0:
+                    correct_avg_prob = torch.mean(predicted_class_probs[correct_mask])
+                    correct_avg_prob.to(torch.uint8).cpu().contiguous().numpy()
+                    correct_probs.append(correct_avg_prob.item()) 
+
+                if torch.sum(incorrect_mask) > 0:
+                    incorrect_avg_prob = torch.mean(predicted_class_probs[incorrect_mask])
+                    incorrect_avg_prob.to(torch.uint8).cpu().contiguous().numpy()
+                    incorrect_probs.append(incorrect_avg_prob.item())
+                
                 val_loss.append(l.item())
                 val_CE_loss.append(CE_l.item())
                 val_tversky_loss.append(tversky_l.item())
@@ -343,12 +337,17 @@ def loop2(config, writer, hydra_log_dir):
             print('Min batch tversky loss: ' + str(np.min(val_tversky_loss)))
             print('Probabilities per class: ')
 
-            non_zero_mask = val_probs != 0
-            mean_vals = np.mean(val_probs, axis=0,where=non_zero_mask)
-            formatted_mean_vals = ["{:.3f}".format(val) for val in mean_vals]
-            print(formatted_mean_vals)
+            avg_correct_prob = sum(correct_probs) / len(correct_probs)
+            avg_incorrect_prob = sum(incorrect_probs) / len(incorrect_probs)
+            #Accuracy
+            acc = correct_sum / (correct_sum + incorrect_sum)
+            print("Average Accuracy:", acc.item())
+            print("Average Probability for Correct Predictions:", avg_correct_prob)
+            print("Average Probability for Incorrect Predictions:", avg_incorrect_prob)
 
-            writer.add_scalar('val/avg correct probability', np.mean(val_probs,where=non_zero_mask), epoch)
+            writer.add_scalar('val/avg correct probability', avg_correct_prob, epoch)
+            writer.add_scalar('val/avg incorrect probability', avg_incorrect_prob, epoch)
+            writer.add_scalar('val/avg accurracy', acc, epoch)
 
             if config.model.name == 'unet_generate_priv' or config.model.name == 'unet_priv_forward' or config.model.name == 'unet_predict_priv':
                 l_val_generated_priv = np.mean(val_generated_priv_l)

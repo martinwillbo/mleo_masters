@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import os
 
-from custom_losses import CE_tversky_Loss, senti_loss, teacher_student_loss, multi_teacher_loss, avg_teacher_loss, predict_priv_loss, generate_priv_loss
+from custom_losses import CE_tversky_focal_loss,CE_tversky_loss, senti_loss, teacher_student_loss, multi_teacher_loss, avg_teacher_loss, predict_priv_loss, generate_priv_loss
 
 
 def set_model(config, model_name, n_channels):
@@ -68,7 +68,10 @@ def set_loss(loss_function, config):
         train_loss = smp.losses.TverskyLoss(mode='multiclass')
         eval_loss = smp.losses.TverskyLoss(mode='multiclass')
     elif loss_function == 'CE_tversky':
-        train_loss = CE_tversky_Loss()
+        train_loss = CE_tversky_loss(ce_weight=config.loss_w.ce_w)
+        eval_loss = smp.losses.TverskyLoss(mode='multiclass')
+    elif loss_function == 'CE_tversky_focal':
+        train_loss = CE_tversky_focal_loss(ce_weight=config.loss_w.ce_w, focal_weight=config.loss_w.focal_w)
         eval_loss = smp.losses.TverskyLoss(mode='multiclass')
     elif loss_function == 'senti_loss':
         train_loss = senti_loss()
