@@ -193,6 +193,7 @@ def loop3(config, writer, hydra_log_dir):
                     
                 l_CE =  CE_loss(y_pred, y)
                 y_prob = torch.softmax(y_pred, dim=1)
+                y_prob = torch.max(y_prob, dim=1)[0]
                 y_pred = torch.argmax(y_pred, dim=1)
                 val_loss.append(l.item())
                 CE_val_loss.append(l_CE.item()) 
