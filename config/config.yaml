@@ -45,7 +45,7 @@ model:
     student_channels: 3
     ts_loss: KL
     rep_layer: True
-    rep_loss: MSE
+    rep_loss: CE
   GAN: 
     net_D: basic
     net_G: unet_256

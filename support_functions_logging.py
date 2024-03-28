@@ -304,7 +304,7 @@ def save_senti_image(index, senti, epoch, config, writer):
             writer.add_image('Epoch: ' + str(epoch) + ', Val/senti, batch: ' + str(index), senti_tensor, epoch)
             writer.flush()
 
-def save_probabilites(config, y_pred_list, y_prob_list, y_list ,writer, epoch):
+def save_probabilites(config, y_pred_list, y_prob_list, y_list, part, writer, epoch):
      y_pred_list = torch.tensor(np.concatenate(y_pred_list, axis=0))
      y_list = torch.tensor(np.concatenate(y_list, axis=0))
      y_prob_list = torch.tensor(np.concatenate(y_prob_list, axis=0))
@@ -334,7 +334,10 @@ def save_probabilites(config, y_pred_list, y_prob_list, y_list ,writer, epoch):
          incorrect_probs.append(class_incorrect_prob.item())
          acc.append(class_acc.item())
      
-     writer.add_text('val/ Correct prediction probabilities', ', '.join(map(str, correct_probs)), epoch)
-     writer.add_text('val/ Incorrect prediction probabilities', ', '.join(map(str, incorrect_probs)), epoch)
-     writer.add_text('val/ Accuracy per class', ', '.join(map(str, acc)), epoch)
+     print('Epoch mean accuracy: '+str(np.mean(acc)))
+     print('Epoch mean correct prob: '+str(np.mean(correct_probs)))
+     print('Epoch mean incorrect prob: '+str(np.mean(incorrect_probs)))
+     writer.add_text(part+'/ Correct prediction probabilities', ', '.join(map(str, correct_probs)), epoch)
+     writer.add_text(part+'/ Incorrect prediction probabilities', ', '.join(map(str, incorrect_probs)), epoch)
+     writer.add_text(part+'/ Accuracy per class', ', '.join(map(str, acc)), epoch)
      writer.flush()
